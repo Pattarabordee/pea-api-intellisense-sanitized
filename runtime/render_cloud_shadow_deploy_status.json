@@ -1,17 +1,19 @@
 {
-  "status": "BLOCKED_WAITING_FOR_RENDER_AUTH",
+  "status": "CLOUD_SHADOW_API_SMOKE_PASS_WEB_REDEPLOY_PENDING",
   "mode": "shadow",
   "production_send": "blocked",
   "source_repo": "https://github.com/Pattarabordee/pea-api-intellisense-sanitized",
-  "latest_verified_commit": "99502abaf74427576b6b1b0da33e1a766de97546",
+  "latest_verified_commit": "59127f1156d95dc182047bfedc606db852285b43",
   "github_actions": "success",
   "local_privacy_scan": "PASS",
   "local_qa": "WARN_LOCAL_GO_ABSENT_GITHUB_GO_PASSED",
+  "api_base_url": "https://pea-api-intellisense-api.onrender.com",
+  "web_console_url": "https://pea-api-intellisense-web.onrender.com",
+  "cloud_smoke_check": "PASS",
   "missing_runtime_inputs": [
-    "RENDER_API_KEY or Render UI login",
-    "Render account/billing confirmation",
-    "Render-created API host URL after deploy"
+    "Render manual sync after public URL Blueprint patch",
+    "Web console live data verification after redeploy"
   ],
   "secret_key_file_local": "D:\\PEA Intellisense data\\runtime\\private\\render_cloud_shadow_pilot_key.txt",
-  "safe_next_action": "Log in to Render or provide RENDER_API_KEY, then create Blueprint from render.yaml."
+  "safe_next_action": "Sync updated render.yaml to GitHub, run Render manual sync, then verify the web console no longer falls back to demo data."
 }

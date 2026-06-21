@@ -7,7 +7,7 @@ Production send: `blocked`
 ## Current Verified State
 
 - Source repo: `https://github.com/Pattarabordee/pea-api-intellisense-sanitized`
-- Latest verified commit: `99502abaf74427576b6b1b0da33e1a766de97546`
+- Latest verified commit: `59127f1156d95dc182047bfedc606db852285b43`
 - GitHub Actions: `success`
 - Local privacy scan: `PASS`
 - Local QA: `WARN` only because local Go CLI is absent; GitHub Actions Go lane passed.
@@ -21,6 +21,13 @@ Use the root `render.yaml` from the sanitized GitHub repo. It defines:
 - `pea-api-intellisense-postgres`
 
 The Postgres database uses Render's current `basic-256mb` instance type. Legacy Postgres plans such as `starter` are not valid for new databases.
+
+The Blueprint pins the public cloud shadow URLs because Render `fromService.property: host` returns a private-network hostname, not a public `https://*.onrender.com` URL:
+
+- API: `https://pea-api-intellisense-api.onrender.com`
+- Web console: `https://pea-api-intellisense-web.onrender.com`
+
+This keeps Next.js server-side fetches and CORS aligned during the Render cloud shadow pilot.
 
 Required Render secret:
 
@@ -60,6 +67,13 @@ powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_smoke_check.
 ```
 
 Expected result: `PASS`.
+
+Current cloud smoke result:
+
+- API base URL: `https://pea-api-intellisense-api.onrender.com`
+- Status: `PASS`
+- Health: `ok`
+- Production send: `blocked`
 
 ## AIS Handoff After PASS
 

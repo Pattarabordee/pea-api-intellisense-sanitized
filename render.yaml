@@ -18,10 +18,7 @@ services:
       - key: RATE_LIMIT_PER_MINUTE
         value: "120"
       - key: ALLOWED_ORIGIN
-        fromService:
-          type: web
-          name: pea-api-intellisense-web
-          property: host
+        value: https://pea-api-intellisense-web.onrender.com
 
   - type: web
     name: pea-api-intellisense-web
@@ -32,17 +29,11 @@ services:
     startCommand: npm run start
     envVars:
       - key: API_BASE_URL
-        fromService:
-          type: web
-          name: pea-api-intellisense-api
-          property: host
+        value: https://pea-api-intellisense-api.onrender.com
       - key: AIS_INBOUND_API_KEY
         sync: false
       - key: NEXT_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: pea-api-intellisense-api
-          property: host
+        value: https://pea-api-intellisense-api.onrender.com
 
 databases:
   - name: pea-api-intellisense-postgres
