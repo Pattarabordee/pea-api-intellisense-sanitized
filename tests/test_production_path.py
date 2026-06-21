@@ -15,6 +15,7 @@ class ProductionPathTests(unittest.TestCase):
             (root / "tests").mkdir()
             (root / "runtime" / "private").mkdir(parents=True)
             (root / "runtime" / "cloud_pilot").mkdir(parents=True)
+            (root / "runtime" / "google_workspace_pilot").mkdir(parents=True)
             (root / "runtime" / "github_sanitized_source" / "runtime").mkdir(parents=True)
             (root / "AGENTS.md").write_text("rules", encoding="utf-8")
             (root / "README.md").write_text("start here", encoding="utf-8")
@@ -52,6 +53,10 @@ class ProductionPathTests(unittest.TestCase):
                 "cloud package",
                 encoding="utf-8",
             )
+            (root / "runtime" / "google_workspace_pilot" / "Code.gs").write_text(
+                'const MODE = "shadow";\nconst PRODUCTION_SEND = "blocked";\n',
+                encoding="utf-8",
+            )
             (root / "runtime" / "github_sanitized_source" / "runtime" / "stale.md").write_text(
                 "must not recurse into prior sanitized exports",
                 encoding="utf-8",
@@ -70,6 +75,7 @@ class ProductionPathTests(unittest.TestCase):
                 self.assertIn("tests/test_service.py", names)
                 self.assertIn("runtime/pea_api_intellisense_technical_brief.md", names)
                 self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
+                self.assertIn("runtime/google_workspace_pilot/Code.gs", names)
                 self.assertNotIn("runtime/private/ais_inbound_pilot_key.txt", names)
                 self.assertNotIn("runtime/ais_etr.sqlite", names)
                 self.assertNotIn("runtime/github_sanitized_source/runtime/stale.md", names)

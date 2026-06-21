@@ -1,0 +1,11 @@
+{
+  "request_id": "AIS-20260621-GWS-0001",
+  "meter_no": "<REDACTED_METER_REF>",
+  "timestamp": "2026-06-21T14:30:00+07:00",
+  "province": "Sakon Nakhon",
+  "district": "Phang Khon",
+  "subdistrict": "Demo",
+  "alarm_type": "AC_MAIN_FAIL",
+  "main_cause": "Faulty AC main failed",
+  "subcause": "PEA no back up"
+}

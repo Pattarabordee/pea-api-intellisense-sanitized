@@ -13,9 +13,11 @@ from typing import Any
 TEXT_EXTENSIONS = {
     ".cfg",
     ".dockerfile",
+    ".gs",
     ".ini",
     ".json",
     ".md",
+    ".mjs",
     ".ps1",
     ".py",
     ".toml",
@@ -370,7 +372,7 @@ def _should_include_for_chatgpt(source: Path, root: Path) -> tuple[bool, str]:
     if rel.parts[0] in {"ais_etr", "tests"}:
         return suffix == ".py", "source/test python" if suffix == ".py" else "non-python source fixture excluded"
     if rel.parts[0] == "runtime":
-        if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit"}:
+        if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit", "google_workspace_pilot"}:
             return _is_text_candidate(source), "runtime allowlisted directory"
         return upper_name in RUNTIME_ALLOWLIST, "runtime top-level allowlist" if upper_name in RUNTIME_ALLOWLIST else "runtime file not allowlisted"
     if rel_text in {"AGENTS.md", "README.md", "README_AIS_ETR_MVP.md", "pea_pitching_executive_summary.md", ".dockerignore"}:
