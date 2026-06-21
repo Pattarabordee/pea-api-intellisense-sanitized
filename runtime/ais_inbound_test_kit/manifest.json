@@ -1,0 +1,27 @@
+{
+  "api_version": "v1",
+  "contains_private_api_key": false,
+  "copied_contract_files": {
+    "ais_inbound_api_contract_v1.md": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\ais_inbound_api_contract_v1.md",
+    "ais_inbound_openapi.json": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\ais_inbound_openapi.json",
+    "ais_inbound_openapi.yaml": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\ais_inbound_openapi.yaml",
+    "ais_inbound_postman_collection.json": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\ais_inbound_postman_collection.json"
+  },
+  "files": {
+    "curl_examples": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\curl_examples.md",
+    "endpoint": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\current_endpoint.txt",
+    "full_request": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\sample_full_request.json",
+    "manifest": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\manifest.json",
+    "minimal_request": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\sample_minimal_request.json",
+    "powershell_examples": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\powershell_examples.ps1",
+    "readme": "D:\\PEA Intellisense data\\runtime\\ais_inbound_test_kit\\README.md"
+  },
+  "generated_at": "2026-06-20T07:03:18+00:00",
+  "health_url": "https://<REDACTED_TUNNEL>/health",
+  "mode": "shadow",
+  "post_url": "https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications",
+  "production_send": "blocked",
+  "public_base": "https://<REDACTED_TUNNEL>",
+  "schema_version": "2026-06-20",
+  "status_url_template": "https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications/{request_id}"
+}

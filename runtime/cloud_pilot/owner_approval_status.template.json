@@ -1,0 +1,16 @@
+{
+  "mode": "shadow",
+  "production_send": "blocked",
+  "approvals": {
+    "pea_api_gateway_owner": false,
+    "pea_security_owner": false,
+    "pea_operations_owner": false,
+    "ais_api_owner": false,
+    "data_model_owner": false
+  },
+  "notes": [
+    "Copy this file to owner_approval_status.json on the deployment host.",
+    "Set each approval to true only after the owner provides evidence.",
+    "This file is not a production approval by itself."
+  ]
+}

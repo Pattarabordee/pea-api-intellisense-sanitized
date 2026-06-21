@@ -1,0 +1,11 @@
+{
+  "request_id": "AIS-20260620-0001",
+  "meter_no": "<REDACTED_METER_REF>",
+  "timestamp": "2026-06-20T00:35:00+07:00",
+  "province": "Sakon Nakhon",
+  "district": "<district>",
+  "subdistrict": "<subdistrict>",
+  "alarm_type": "AC_MAIN_FAIL",
+  "main_cause": "Faulty AC main failed",
+  "subcause": "PEA no back up"
+}

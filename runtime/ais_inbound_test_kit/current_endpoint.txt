@@ -1,0 +1,11 @@
+POST https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications
+GET  https://<REDACTED_TUNNEL>/health
+GET  https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications/{request_id}
+
+Headers:
+Content-Type: application/json
+X-API-Key: <private pilot key provided by PEA>
+bypass-tunnel-reminder: true
+
+Mode: shadow
+Production send: blocked

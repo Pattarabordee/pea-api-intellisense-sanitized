@@ -1,0 +1,22 @@
+services:
+  pea-api-intellisense:
+    build:
+      context: ../..
+      dockerfile: runtime/cloud_pilot/Dockerfile
+    env_file:
+      - .env.cloud
+    environment:
+      AIS_NOTIFICATION_MODE: shadow
+      AIS_ETR_DB: /data/ais_etr.sqlite
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; r=urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3); body=json.loads(r.read().decode()); raise SystemExit(0 if body.get('production_send') == 'blocked' else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

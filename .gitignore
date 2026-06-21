@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+*.sqlite
+*.sqlite-*
+*.db
+*.jsonl
+*.log
+*.zip
+runtime/private/
+runtime/logs/
+runtime/snapshots/
+
