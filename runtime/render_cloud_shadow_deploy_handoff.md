@@ -88,4 +88,22 @@ Send AIS only:
 - Mode: `shadow/pilot only`
 - Production send: `blocked`
 
+Copy-paste handoff file:
+
+```text
+runtime/ais_cloud_handoff_to_ais.md
+```
+
 Do not send internal database URL, raw logs, meter lists, customer identity, or operator notes.
+
+## After AIS Sends Cloud Traffic
+
+Run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_real_hit_check.ps1 `
+  -BaseUrl "https://pea-api-intellisense-api.onrender.com" `
+  -ApiKey "<cloud pilot key>"
+```
+
+Expected after a real AIS hit: `REAL_AIS_HIT_DETECTED`.

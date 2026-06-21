@@ -48,6 +48,18 @@ powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_smoke_check.
 
 Expected: `PASS`, first POST HTTP `202`, duplicate request safe, status lookup works, `production_send=blocked`.
 
+## AIS Real Hit Check
+
+After AIS sends real cloud traffic, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_real_hit_check.ps1 `
+  -BaseUrl "https://pea-api-intellisense-api.onrender.com" `
+  -ApiKey "<cloud pilot key>"
+```
+
+Expected after AIS hits the endpoint: `REAL_AIS_HIT_DETECTED`. The report records only redacted fields: `request_id`, `received_at`, `status`, `callback_status`, and `production_send`.
+
 ## Local QA
 
 Before pushing or deploying, run:

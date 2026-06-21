@@ -162,6 +162,7 @@ class ProductionPathTests(unittest.TestCase):
                 "production_cloud_local_qa.ps1",
                 "production_cloud_postgres_backup.ps1",
                 "production_cloud_postgres_restore_check.ps1",
+                "production_cloud_real_hit_check.ps1",
                 "production_cloud_privacy_red_team_scan.ps1",
                 "production_cloud_observability_runbook.md",
                 "production_cloud_privacy_red_team_checklist.md",

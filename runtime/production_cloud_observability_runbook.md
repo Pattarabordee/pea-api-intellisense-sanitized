@@ -58,8 +58,26 @@ Forbidden in logs:
 2. Call `/health`.
 3. Call `/metrics` with operator key.
 4. Confirm latest request appears in operator console.
-5. Confirm backup job ran or run `runtime/production_cloud_postgres_backup.ps1`.
-6. Confirm `production_send = blocked` in API, console, and reports.
+5. Run `runtime/production_cloud_real_hit_check.ps1` if AIS is testing the cloud endpoint.
+6. Confirm backup job ran or run `runtime/production_cloud_postgres_backup.ps1`.
+7. Confirm `production_send = blocked` in API, console, and reports.
+
+## AIS First Cloud Hit Report
+
+Use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_real_hit_check.ps1 `
+  -BaseUrl "https://pea-api-intellisense-api.onrender.com" `
+  -ApiKey "<cloud pilot key>"
+```
+
+The script writes:
+
+- `runtime/production_cloud_real_hit_status.json`
+- `runtime/production_cloud_real_hit_status.md`
+
+It excludes API keys, full meter numbers, PEANO lists, customer identity, DB URLs, and verbatim WebEx text.
 
 ## Promotion Boundary
 
