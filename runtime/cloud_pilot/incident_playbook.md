@@ -12,6 +12,13 @@
 - Take a copy of the DB before repair.
 - Run restore test from the latest snapshot.
 
+## Transient 520 Or Edge Error
+
+- Re-run `/health` once after 30-60 seconds.
+- If retry passes, record it as transient and continue watching.
+- If retry fails, check Render service logs, recent deploy, and database connectivity.
+- Keep `production_send=blocked`.
+
 ## Callback Delivery Failure
 
 - Keep `production_send=blocked`.

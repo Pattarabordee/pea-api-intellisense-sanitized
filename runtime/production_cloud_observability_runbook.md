@@ -62,6 +62,8 @@ Forbidden in logs:
 6. Confirm backup job ran or run `runtime/production_cloud_postgres_backup.ps1`.
 7. Confirm `production_send = blocked` in API, console, and reports.
 
+During the waiting period before AIS sends real cloud traffic, use `runtime/cloud_pilot/waiting_for_ais_cloud_pilot.md` as the daily checklist.
+
 ## AIS First Cloud Hit Report
 
 Use:

@@ -7,7 +7,7 @@ Production send: `blocked`
 ## Current Verified State
 
 - Source repo: `https://github.com/Pattarabordee/pea-api-intellisense-sanitized`
-- Latest verified commit: `c34c0c7`
+- Latest verified commit: see `runtime/render_cloud_shadow_deploy_status.json`
 - GitHub Actions: `success`
 - Local privacy scan: `PASS`
 - Local QA: `WARN` only because local Go CLI is absent; GitHub Actions Go lane passed.
@@ -107,3 +107,9 @@ powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_real_hit_che
 ```
 
 Expected after a real AIS hit: `REAL_AIS_HIT_DETECTED`.
+
+Until AIS sends real cloud traffic, follow:
+
+```text
+runtime/cloud_pilot/waiting_for_ais_cloud_pilot.md
+```

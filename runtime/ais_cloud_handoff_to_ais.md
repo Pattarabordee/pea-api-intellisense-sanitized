@@ -51,6 +51,16 @@ Use ISO 8601 timestamp with timezone. Preferred timezone is `+07:00`.
 
 `202 Accepted` means PEA received and stored the request. It does not mean customer-facing ETR is approved.
 
+## Please Report Back After Test
+
+After AIS sends a test request, please share only these three values with PEA:
+
+- `request_id`
+- sent time
+- HTTP status seen by AIS, such as `202`, `400`, or `401`
+
+Do not send the API key back in chat.
+
 ## Error Meaning
 
 - `401`: endpoint reached, but `X-API-Key` is missing or wrong.

@@ -1,24 +1,38 @@
 # Backup And Restore Commands
 
-Note: these commands are for the older SQLite cloud pilot path. The current Render Postgres path uses `pg_dump`/Render backup controls. See `runtime/production_cloud_next_go_postgres_runbook.md`.
+Status: `cloud_shadow_postgres`  
+Mode: `shadow`  
+Production send: `blocked`
 
-## Snapshot
+The current Render cloud pilot uses PostgreSQL. Use `pg_dump` or Render backup controls. Keep SQLite commands only for local legacy compatibility.
 
-```powershell
-python -m ais_etr ais-inbound-db-snapshot --label cloud_pilot --output runtime/ais_inbound_db_snapshot_latest.md --json-output runtime/ais_inbound_db_snapshot_latest.json
-```
-
-## Audit Export
+## PostgreSQL Backup
 
 ```powershell
-python -m ais_etr ais-inbound-audit-export --output runtime/ais_inbound_audit_export.csv --markdown-output runtime/ais_inbound_audit_export.md
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_postgres_backup.ps1
 ```
 
-## Restore Test
+Requires `DATABASE_URL` in the operator environment. Do not paste it into chat or docs.
 
-1. Copy a snapshot to a test DB path.
-2. Run SQLite integrity check on the test DB.
-3. Run `python -m ais_etr ais-inbound-status --output runtime/ais_inbound_status_report.md`.
-4. Confirm request/callback rows are queryable.
+## PostgreSQL Restore Test
 
-Do not restore over the live DB until the incident owner approves.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_postgres_restore_check.ps1 `
+  -BackupFile ".\runtime\backups\postgres\<backup>.dump"
+```
+
+Requires `RESTORE_TEST_DATABASE_URL`. It must not equal `DATABASE_URL`.
+
+## Redacted Audit Export
+
+Use the operator API/export path only. Public artifacts must not include API keys, DB URLs, room ids, verbatim WebEx text, full meter/PEANO values, or customer identity.
+
+## Legacy SQLite Local Snapshot
+
+Use only for local/dev compatibility, not the Render cloud pilot:
+
+```powershell
+python -m ais_etr ais-inbound-db-snapshot --label local_legacy --output runtime/ais_inbound_db_snapshot_latest.md --json-output runtime/ais_inbound_db_snapshot_latest.json
+```
+
+Do not restore over a live database until the incident owner approves.
