@@ -209,7 +209,7 @@ def write_ais_truth_template(output_csv: str | Path, include_example: bool = Fal
         rows.append(
             {
                 "site_id": "AIS_SITE_001",
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2026-06-17 10:00:00",
                 "power_restore_time": "2026-06-17 10:45:00",
                 "event_number": "",

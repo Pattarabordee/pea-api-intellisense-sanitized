@@ -33,7 +33,7 @@ class ProductionPathTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "ais_etr" / "service.py").write_text(
-                'PAYLOAD = {"meter_no": "<REDACTED_METER_REF>", "roomId": "<REDACTED_ROOM_ID>"}\n',
+                'PAYLOAD = {"meter_no": "REDACTED-METER-0000", "roomId": "<REDACTED_ROOM_ID>"}\n',
                 encoding="utf-8",
             )
             (root / "tests" / "test_service.py").write_text("def test_ok(): pass\n", encoding="utf-8")
@@ -113,7 +113,7 @@ class ProductionPathTests(unittest.TestCase):
                 service_text = archive.read("ais_etr/service.py").decode("utf-8")
             self.assertNotIn("1234567890", service_text)
             self.assertNotIn("room-secret", service_text)
-            self.assertIn("<REDACTED_METER_REF>", service_text)
+            self.assertIn("REDACTED-METER-0000", service_text)
 
     def test_production_readiness_gate_blocks_auto_etr_until_green_and_owner_approval(self):
         with tempfile.TemporaryDirectory() as tmp:

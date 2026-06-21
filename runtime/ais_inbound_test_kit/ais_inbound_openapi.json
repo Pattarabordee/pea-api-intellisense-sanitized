@@ -79,7 +79,7 @@
                   "summary": "Minimal request",
                   "value": {
                     "request_id": "AIS-TEST-0001",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T00:35:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "<district>",
@@ -90,7 +90,7 @@
                   "summary": "Request with AIS alarm context",
                   "value": {
                     "request_id": "AIS-20260620-0001",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T00:35:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "<district>",

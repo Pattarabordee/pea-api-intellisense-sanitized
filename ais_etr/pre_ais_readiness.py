@@ -28,7 +28,7 @@ KIT_README_NAME = "README_TH.md"
 _SAMPLE_ROWS = [
     {
         "site_id": "AIS_SITE_VALID_001",
-        "peano": "<REDACTED_METER_REF>",
+        "peano": "REDACTED-METER-0000",
         "outage_start_time": "2026-06-17 10:00:00",
         "power_restore_time": "2026-06-17 10:45:00",
         "event_number": "",
@@ -39,7 +39,7 @@ _SAMPLE_ROWS = [
     },
     {
         "site_id": "AIS_SITE_SHORT_001",
-        "peano": "<REDACTED_METER_REF>",
+        "peano": "REDACTED-METER-0000",
         "outage_start_time": "2026-06-17 11:00:00",
         "power_restore_time": "2026-06-17 11:03:00",
         "event_number": "",
@@ -50,7 +50,7 @@ _SAMPLE_ROWS = [
     },
     {
         "site_id": "AIS_SITE_MISSING_RESTORE_001",
-        "peano": "<REDACTED_METER_REF>",
+        "peano": "REDACTED-METER-0000",
         "outage_start_time": "2026-06-17 12:00:00",
         "power_restore_time": "",
         "event_number": "",
@@ -61,7 +61,7 @@ _SAMPLE_ROWS = [
     },
     {
         "site_id": "AIS_SITE_NEGATIVE_001",
-        "peano": "<REDACTED_METER_REF>",
+        "peano": "REDACTED-METER-0000",
         "outage_start_time": "2026-06-17 13:00:00",
         "power_restore_time": "2026-06-17 12:55:00",
         "event_number": "",
@@ -72,7 +72,7 @@ _SAMPLE_ROWS = [
     },
     {
         "site_id": "AIS_SITE_LONG_001",
-        "peano": "<REDACTED_METER_REF>",
+        "peano": "REDACTED-METER-0000",
         "outage_start_time": "2026-06-17 14:00:00",
         "power_restore_time": "2026-06-18 15:30:00",
         "event_number": "",

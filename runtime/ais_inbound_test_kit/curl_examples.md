@@ -19,7 +19,7 @@ curl -i -X POST \
   -H "bypass-tunnel-reminder: true" \
   --data '{
   "request_id": "AIS-TEST-0001",
-  "meter_no": "<REDACTED_METER_REF>",
+  "meter_no": "REDACTED-METER-0000",
   "timestamp": "2026-06-20T00:35:00+07:00",
   "province": "Sakon Nakhon",
   "district": "<district>",

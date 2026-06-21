@@ -54,7 +54,7 @@ Required หลัก:
 ```json
 {
   "request_id": "AIS-20260621-0001",
-  "meter_no": "<REDACTED_METER_REF>",
+  "meter_no": "REDACTED-METER-0000",
   "timestamp": "2026-06-21T13:00:00+07:00",
   "province": "Sakon Nakhon",
   "district": "Phang Khon",

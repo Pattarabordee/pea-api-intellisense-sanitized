@@ -263,11 +263,11 @@ class ShadowOperationsTests(unittest.TestCase):
                 candidates,
                 columns,
                 [
-                    {"site_id": "site-1", "peano": "<REDACTED_METER_REF>", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "2026-06-19T08:30:00", "actual_restoration_minutes": "30", "truth_quality": "OK"},
+                    {"site_id": "site-1", "peano": "REDACTED-METER-0000", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "2026-06-19T08:30:00", "actual_restoration_minutes": "30", "truth_quality": "OK"},
                     {"site_id": "site-2", "peano": "", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "2026-06-19T08:10:00", "actual_restoration_minutes": "10", "truth_quality": "MISSING_PEANO_MAPPING"},
                 ],
             )
-            _write_csv(review, columns, [{"site_id": "site-3", "peano": "<REDACTED_METER_REF>", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "2026-06-19T08:03:00", "actual_restoration_minutes": "3", "truth_quality": "REVIEW_SHORT"}])
+            _write_csv(review, columns, [{"site_id": "site-3", "peano": "REDACTED-METER-0000", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "2026-06-19T08:03:00", "actual_restoration_minutes": "3", "truth_quality": "REVIEW_SHORT"}])
             _write_csv(rejects, columns, [{"site_id": "site-4", "peano": "", "outage_start_time": "2026-06-19T08:00:00", "power_restore_time": "", "actual_restoration_minutes": "", "truth_quality": "MISSING_RESTORE"}])
             _write_csv(audit, ["mapping_status"], [{"mapping_status": "matched_single_peano"}, {"mapping_status": "no_mapped_peano"}])
 

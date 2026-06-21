@@ -54,7 +54,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-19T10:04:00+00:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -89,7 +89,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-2",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-19T10:04:00+00:00",
                 },
                 requests_output=root / "requests.jsonl",
@@ -107,7 +107,7 @@ class AisInboundTests(unittest.TestCase):
             RuntimeDb(db_path).init()
             payload = {
                 "request_id": "AIS-DUP",
-                "meter_no": "<REDACTED_METER_REF>",
+                "meter_no": "REDACTED-METER-0000",
                 "timestamp": "2026-06-19T10:04:00+00:00",
             }
 
@@ -144,7 +144,7 @@ class AisInboundTests(unittest.TestCase):
             RuntimeDb(db_path).init()
             payload = {
                 "request_id": "AIS-PILOT-COMPLETE-1",
-                "meter_no": "<REDACTED_METER_REF>",
+                "meter_no": "REDACTED-METER-0000",
                 "timestamp": "2026-06-19T10:04:00+00:00",
                 "province": "Sakon Nakhon",
                 "district": "Phang Khon",
@@ -281,7 +281,7 @@ class AisInboundTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "request_id": "AIS-HTTP-1",
-                            "meter_no": "<REDACTED_METER_REF>",
+                            "meter_no": "REDACTED-METER-0000",
                             "timestamp": "2026-06-19T10:04:00+00:00",
                         }
                     ).encode("utf-8"),
@@ -320,7 +320,7 @@ class AisInboundTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "requestId": "AIS-HTTP-ALIAS-1",
-                            "meterNo": "<REDACTED_METER_REF>",
+                            "meterNo": "REDACTED-METER-0000",
                             "eventTime": "2026-06-19T17:04:00+07:00",
                             "provinceName": "Sakon Nakhon",
                             "districtName": "Phang Khon",
@@ -356,7 +356,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "requestId": "AIS-BKK-NAIVE",
-                    "meterNo": "<REDACTED_METER_REF>",
+                    "meterNo": "REDACTED-METER-0000",
                     "eventTime": "2026-06-19T17:04:00",
                     "mainCause": "Faulty AC main failed",
                     "subCause": "PEA no back up",
@@ -384,7 +384,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-FUTURE-TIME",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2999-01-01T00:00:00+07:00",
                 },
                 requests_output=root / "requests.jsonl",
@@ -395,7 +395,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-STALE-TIME",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2020-01-01T00:00:00+07:00",
                 },
                 requests_output=root / "requests.jsonl",
@@ -509,7 +509,7 @@ class AisInboundTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "request_id": "AIS-STATUS-1",
-                            "meter_no": "<REDACTED_METER_REF>",
+                            "meter_no": "REDACTED-METER-0000",
                             "timestamp": "2026-06-19T10:04:00+00:00",
                         }
                     ).encode("utf-8"),
@@ -758,7 +758,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-PUBLIC-ALIAS-SMOKE-20260620020000",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:00:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -771,7 +771,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-BEARER-SMOKE-20260620020030",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:00:30+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -784,7 +784,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-REAL-FROM-PARTNER-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:01:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -821,7 +821,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-PUBLIC-ALIAS-SMOKE-20260620020000",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:00:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -834,7 +834,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-REAL-FROM-PARTNER-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:01:00+07:00",
                     "province": "=Sakon Nakhon",
                     "district": "Phang Khon",
@@ -880,7 +880,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-REAL-FROM-PARTNER-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:01:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -924,7 +924,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-PUBLIC-ALIAS-SMOKE-20260620020000",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:00:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -946,7 +946,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-REAL-FROM-PARTNER-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:01:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -984,7 +984,7 @@ class AisInboundTests(unittest.TestCase):
                 db_path=db_path,
                 payload={
                     "request_id": "AIS-REAL-FROM-PARTNER-1",
-                    "meter_no": "<REDACTED_METER_REF>",
+                    "meter_no": "REDACTED-METER-0000",
                     "timestamp": "2026-06-20T02:01:00+07:00",
                     "province": "Sakon Nakhon",
                     "district": "Phang Khon",
@@ -1534,7 +1534,7 @@ def _seed_runtime(db_path: Path) -> None:
     db.upsert_customer_assets(
         [
             CustomerAsset(
-                peano="<REDACTED_METER_REF>",
+                peano="REDACTED-METER-0000",
                 customer="AIS",
                 feeder="PFA03",
                 cb_ids=("PFA03VB-01",),
@@ -1554,7 +1554,7 @@ def _seed_runtime(db_path: Path) -> None:
     )
     db.upsert_event(event)
     match = MatchResult(
-        matches=(CustomerMatch(customer="AIS", peano="<REDACTED_METER_REF>", feeder="PFA03", match_level="cb"),),
+        matches=(CustomerMatch(customer="AIS", peano="REDACTED-METER-0000", feeder="PFA03", match_level="cb"),),
         match_level="cb",
         match_confidence=0.95,
     )

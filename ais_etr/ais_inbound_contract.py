@@ -999,7 +999,7 @@ def _schemas() -> dict[str, Any]:
 def _minimal_request_example() -> dict[str, str]:
     return {
         "request_id": "AIS-TEST-0001",
-        "meter_no": "<REDACTED_METER_REF>",
+        "meter_no": "REDACTED-METER-0000",
         "timestamp": "2026-06-20T00:35:00+07:00",
         "province": "Sakon Nakhon",
         "district": "<district>",
@@ -1327,7 +1327,7 @@ bypass-tunnel-reminder: true
 Minimal body:
 {{
   "request_id": "AIS-TEST-0001",
-  "meter_no": "<REDACTED_METER_REF>",
+  "meter_no": "REDACTED-METER-0000",
   "timestamp": "2026-06-20T00:35:00+07:00",
   "province": "Sakon Nakhon",
   "district": "<district>",

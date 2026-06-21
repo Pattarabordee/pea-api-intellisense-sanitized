@@ -16,7 +16,7 @@ import (
 func TestPostAcceptsValidRequestAndKeepsProductionBlocked(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key", RateLimitPerMinute: 120}, store)
-	body := `{"request_id":"AIS-HTTP-1","meter_no":"<REDACTED_METER_REF>","timestamp":"2026-06-19T17:04:00+07:00"}`
+	body := `{"request_id":"AIS-HTTP-1","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
@@ -60,7 +60,7 @@ func TestUnauthorizedRequestReturns401(t *testing.T) {
 func TestDuplicateRequestIsIdempotent(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-DUP","meter_no":"<REDACTED_METER_REF>","timestamp":"2026-06-19T17:04:00+07:00"}`
+	body := `{"request_id":"AIS-DUP","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
 	for idx := 0; idx < 2; idx++ {
 		req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -80,7 +80,7 @@ func TestDuplicateRequestIsIdempotent(t *testing.T) {
 func TestStatusLookupWorks(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-LOOKUP","meter_no":"<REDACTED_METER_REF>","timestamp":"2026-06-19T17:04:00+07:00"}`
+	body := `{"request_id":"AIS-LOOKUP","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
 	post := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	post.Header.Set("Content-Type", "application/json")
 	post.Header.Set("X-API-Key", "pilot-key")
@@ -102,7 +102,7 @@ func TestStatusLookupWorks(t *testing.T) {
 
 func TestBadTimestampReturns400(t *testing.T) {
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, newFakeStore())
-	body := `{"request_id":"AIS-BAD","meter_no":"<REDACTED_METER_REF>","timestamp":"not-a-date"}`
+	body := `{"request_id":"AIS-BAD","meter_no":"REDACTED-METER-0000","timestamp":"not-a-date"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
@@ -121,7 +121,7 @@ func TestBadTimestampReturns400(t *testing.T) {
 
 func TestLongOptionalFieldReturns400(t *testing.T) {
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, newFakeStore())
-	body := `{"request_id":"AIS-LONG","meter_no":"<REDACTED_METER_REF>","timestamp":"2026-06-19T17:04:00+07:00","province":"` + strings.Repeat("A", 121) + `"}`
+	body := `{"request_id":"AIS-LONG","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00","province":"` + strings.Repeat("A", 121) + `"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
@@ -141,7 +141,7 @@ func TestLongOptionalFieldReturns400(t *testing.T) {
 func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-METRICS","meter_no":"<REDACTED_METER_REF>","timestamp":"2026-06-19T17:04:00+07:00"}`
+	body := `{"request_id":"AIS-METRICS","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
 	for idx := 0; idx < 2; idx++ {
 		req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 		req.Header.Set("Content-Type", "application/json")

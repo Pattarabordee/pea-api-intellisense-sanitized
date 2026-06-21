@@ -67,7 +67,7 @@ def _write_runtime_db(path: Path) -> None:
         conn.execute("CREATE TABLE notifications (id INTEGER PRIMARY KEY, event_id TEXT, payload_json TEXT)")
         payload = {
             "affected_customers": [
-                {"customer": "AIS", "peano": "<REDACTED_METER_REF>"},
+                {"customer": "AIS", "peano": "REDACTED-METER-0000"},
             ]
         }
         conn.execute(
@@ -203,14 +203,14 @@ def _write_truth(path: Path) -> None:
         ],
         [
             {
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2025-12-30 00:00:00",
                 "power_restore_time": "2025-12-30 04:00:00",
                 "actual_restoration_minutes": "240",
                 "truth_quality": "OK",
             },
             {
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2026-01-04 00:00:00",
                 "power_restore_time": "2026-01-04 16:39:00",
                 "actual_restoration_minutes": "999",

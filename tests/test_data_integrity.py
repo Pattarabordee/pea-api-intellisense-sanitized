@@ -251,7 +251,7 @@ def _write_inputs(
         [
             {
                 "site_id": "site-1",
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2026-01-01 00:00:00",
                 "power_restore_time": "2026-01-01 00:45:00",
                 "actual_restoration_minutes": "45",
@@ -263,7 +263,7 @@ def _write_inputs(
             },
             {
                 "site_id": "site-2",
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2026-01-01 01:00:00",
                 "power_restore_time": "2026-01-01 01:04:00",
                 "actual_restoration_minutes": "4",

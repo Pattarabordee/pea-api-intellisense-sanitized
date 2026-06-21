@@ -85,7 +85,7 @@ class ModelScopeTests(unittest.TestCase):
             db.upsert_customer_assets(
                 [
                     CustomerAsset(
-                        peano="<REDACTED_METER_REF>",
+                        peano="REDACTED-METER-0000",
                         customer="AIS",
                         feeder="PFA05",
                         cb_ids=("PFA05VB-01",),

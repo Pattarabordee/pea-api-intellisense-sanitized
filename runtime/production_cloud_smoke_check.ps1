@@ -24,7 +24,7 @@ if ($health.production_send -ne "blocked") {
 
 $body = @{
   request_id = $requestId
-  meter_no = "<REDACTED_METER_REF>"
+  meter_no = "REDACTED-METER-0000"
   timestamp = (Get-Date).ToString("yyyy-MM-ddTHH:mm:sszzz")
   province = "Sakon Nakhon"
   district = "Phang Khon"

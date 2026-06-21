@@ -566,7 +566,7 @@ def _identifier_replacement(match: re.Match[str]) -> str:
     prefix = match.group(1)
     if "room" in prefix.lower():
         return f'{prefix}"<REDACTED_ROOM_ID>"'
-    return f'{prefix}"<REDACTED_METER_REF>"'
+    return f'{prefix}"REDACTED-METER-0000"'
 
 
 def _scan_sanitized_text(text: str) -> list[str]:

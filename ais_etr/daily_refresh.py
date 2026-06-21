@@ -388,7 +388,7 @@ def run_synthetic_daily_file_smoke_test(
         [
             {
                 "site_id": "SYNTH_SITE_001",
-                "peano": "<REDACTED_METER_REF>",
+                "peano": "REDACTED-METER-0000",
                 "outage_start_time": "2026-06-19T08:00:00",
                 "power_restore_time": "2026-06-19T08:30:00",
                 "device_id": "SYNTH_DEVICE_001",

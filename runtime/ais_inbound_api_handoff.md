@@ -27,7 +27,7 @@ bypass-tunnel-reminder: true
 ```json
 {
   "request_id": "AIS-TEST-0001",
-  "meter_no": "<REDACTED_METER_REF>",
+  "meter_no": "REDACTED-METER-0000",
   "timestamp": "2026-06-20T00:35:00+07:00",
   "province": "Sakon Nakhon",
   "district": "<district>",
@@ -40,7 +40,7 @@ If AIS has alarm context, include it like this:
 ```json
 {
   "request_id": "AIS-20260620-0001",
-  "meter_no": "<REDACTED_METER_REF>",
+  "meter_no": "REDACTED-METER-0000",
   "timestamp": "2026-06-20T00:35:00+07:00",
   "province": "Sakon Nakhon",
   "district": "<district>",
