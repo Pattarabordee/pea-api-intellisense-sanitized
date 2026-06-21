@@ -46,4 +46,4 @@ services:
 
 databases:
   - name: pea-api-intellisense-postgres
-    plan: starter
+    plan: basic-256mb

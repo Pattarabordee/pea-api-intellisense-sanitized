@@ -20,6 +20,8 @@ Use the root `render.yaml` from the sanitized GitHub repo. It defines:
 - `pea-api-intellisense-web`
 - `pea-api-intellisense-postgres`
 
+The Postgres database uses Render's current `basic-256mb` instance type. Legacy Postgres plans such as `starter` are not valid for new databases.
+
 Required Render secret:
 
 - `AIS_INBOUND_API_KEY`
