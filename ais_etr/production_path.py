@@ -373,7 +373,7 @@ def _should_include_for_chatgpt(source: Path, root: Path) -> tuple[bool, str]:
         if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit"}:
             return _is_text_candidate(source), "runtime allowlisted directory"
         return upper_name in RUNTIME_ALLOWLIST, "runtime top-level allowlist" if upper_name in RUNTIME_ALLOWLIST else "runtime file not allowlisted"
-    if rel_text in {"AGENTS.md", "README_AIS_ETR_MVP.md", "pea_pitching_executive_summary.md", ".dockerignore"}:
+    if rel_text in {"AGENTS.md", "README.md", "README_AIS_ETR_MVP.md", "pea_pitching_executive_summary.md", ".dockerignore"}:
         return True, "root allowlist"
     return False, "not in ChatGPT source bundle scope"
 

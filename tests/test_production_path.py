@@ -17,6 +17,7 @@ class ProductionPathTests(unittest.TestCase):
             (root / "runtime" / "cloud_pilot").mkdir(parents=True)
             (root / "runtime" / "github_sanitized_source" / "runtime").mkdir(parents=True)
             (root / "AGENTS.md").write_text("rules", encoding="utf-8")
+            (root / "README.md").write_text("start here", encoding="utf-8")
             (root / "pea_pitching_executive_summary.md").write_text(
                 "Executive summary\nmode = shadow\nproduction_send = blocked\n",
                 encoding="utf-8",
@@ -63,6 +64,7 @@ class ProductionPathTests(unittest.TestCase):
             self.assertTrue((root / "runtime" / "sanitized_codebase_bundle.zip").exists())
             with zipfile.ZipFile(root / "runtime" / "sanitized_codebase_bundle.zip") as archive:
                 names = set(archive.namelist())
+                self.assertIn("README.md", names)
                 self.assertIn("pea_pitching_executive_summary.md", names)
                 self.assertIn("ais_etr/service.py", names)
                 self.assertIn("tests/test_service.py", names)
