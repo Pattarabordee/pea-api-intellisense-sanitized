@@ -3,7 +3,7 @@
   "mode": "shadow",
   "production_send": "blocked",
   "source_repo": "https://github.com/Pattarabordee/pea-api-intellisense-sanitized",
-  "latest_verified_commit": "ff79e52",
+  "latest_verified_commit": "latest_successful_github_actions_run_on_main",
   "github_actions": "success",
   "local_privacy_scan": "PASS",
   "local_qa": "WARN_LOCAL_GO_ABSENT_GITHUB_GO_PASSED",
