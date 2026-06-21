@@ -1,19 +1,18 @@
 {
-  "status": "CLOUD_SHADOW_API_SMOKE_PASS_WEB_REDEPLOY_PENDING",
+  "status": "CLOUD_SHADOW_READY_FOR_AIS_TEST",
   "mode": "shadow",
   "production_send": "blocked",
   "source_repo": "https://github.com/Pattarabordee/pea-api-intellisense-sanitized",
-  "latest_verified_commit": "59127f1156d95dc182047bfedc606db852285b43",
+  "latest_verified_commit": "c34c0c7",
   "github_actions": "success",
   "local_privacy_scan": "PASS",
   "local_qa": "WARN_LOCAL_GO_ABSENT_GITHUB_GO_PASSED",
   "api_base_url": "https://pea-api-intellisense-api.onrender.com",
   "web_console_url": "https://pea-api-intellisense-web.onrender.com",
   "cloud_smoke_check": "PASS",
-  "missing_runtime_inputs": [
-    "Render manual sync after public URL Blueprint patch",
-    "Web console live data verification after redeploy"
-  ],
+  "latest_smoke_request_id": "AIS-CLOUD-SMOKE-20260622053148",
+  "web_console_live_data": "PASS",
+  "missing_runtime_inputs": [],
   "secret_key_file_local": "D:\\PEA Intellisense data\\runtime\\private\\render_cloud_shadow_pilot_key.txt",
-  "safe_next_action": "Sync updated render.yaml to GitHub, run Render manual sync, then verify the web console no longer falls back to demo data."
+  "safe_next_action": "Share the cloud API endpoint and the new cloud pilot key with AIS through the approved secure channel. Keep mode=shadow and production_send=blocked."
 }

@@ -1,13 +1,13 @@
 # Render Cloud Shadow Deploy Handoff
 
-Status: `READY_FOR_RENDER_LOGIN_OR_API_KEY`  
+Status: `CLOUD_SHADOW_READY_FOR_AIS_TEST`  
 Mode: `shadow`  
 Production send: `blocked`
 
 ## Current Verified State
 
 - Source repo: `https://github.com/Pattarabordee/pea-api-intellisense-sanitized`
-- Latest verified commit: `59127f1156d95dc182047bfedc606db852285b43`
+- Latest verified commit: `c34c0c7`
 - GitHub Actions: `success`
 - Local privacy scan: `PASS`
 - Local QA: `WARN` only because local Go CLI is absent; GitHub Actions Go lane passed.
@@ -73,13 +73,15 @@ Current cloud smoke result:
 - API base URL: `https://pea-api-intellisense-api.onrender.com`
 - Status: `PASS`
 - Health: `ok`
+- Latest smoke request: `AIS-CLOUD-SMOKE-20260622053148`
+- Web console live data: `PASS`
 - Production send: `blocked`
 
 ## AIS Handoff After PASS
 
 Send AIS only:
 
-- Cloud URL: `https://<render-api-host>/api/v1/ais/outage-verifications`
+- Cloud URL: `https://pea-api-intellisense-api.onrender.com/api/v1/ais/outage-verifications`
 - Method: `POST`
 - Header: `Content-Type: application/json`
 - Header: `X-API-Key: <shared through secure channel>`
