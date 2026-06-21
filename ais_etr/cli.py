@@ -245,7 +245,7 @@ def _oauth_manager(settings: Settings) -> WebexOAuthTokenManager:
         raise RuntimeError("WEBEX_CLIENT_ID and WEBEX_CLIENT_SECRET are required")
     return WebexOAuthTokenManager(
         client_id=settings.webex_client_id,
-        client_secret="<REDACTED_SECRET>"
+        client_secret=<REDACTED_SECRET>
         token_path=settings.resolve(settings.webex_token_path),
         api_base=settings.webex_api_base,
     )
@@ -254,7 +254,7 @@ def _oauth_manager(settings: Settings) -> WebexOAuthTokenManager:
 def _safe_token_result(status: str, manager: WebexOAuthTokenManager, token: dict | None = None) -> dict:
     metadata = manager.token_metadata()
     if token:
-        "<REDACTED_SECRET>"
+        <REDACTED_SECRET>
             {
                 "expires_at": token.get("expires_at"),
                 "refresh_expires_at": token.get("refresh_expires_at"),
@@ -355,14 +355,14 @@ def cmd_webex_auth(args: argparse.Namespace) -> None:
     if not args.no_browser:
         webbrowser.open(auth_url)
     code = _wait_for_oauth_callback(settings.webex_redirect_uri, state, args.timeout_seconds)
-    token = "<REDACTED_SECRET>" settings.webex_redirect_uri, code_verifier)
+    token = <REDACTED_SECRET> settings.webex_redirect_uri, code_verifier)
     print(json.dumps(_safe_token_result("authorized", manager, token), ensure_ascii=False, indent=2, sort_keys=True))
 
 
 def cmd_webex_refresh_token(args: argparse.Namespace) -> None:
     settings = _settings(args)
     manager = _oauth_manager(settings)
-    token = "<REDACTED_SECRET>"
+    token = <REDACTED_SECRET>
     print(json.dumps(_safe_token_result("refreshed", manager, token), ensure_ascii=False, indent=2, sort_keys=True))
 
 
@@ -377,7 +377,7 @@ def _webex_client(settings: Settings, require_room: bool = False) -> WebexClient
             token_provider=manager.access_token,
         )
     elif settings.webex_bot_token:
-        "<REDACTED_SECRET>" WebexClient(
+        <REDACTED_SECRET> WebexClient(
             bot_token=settings.webex_bot_token,
             room_id=room_id,
             api_base=settings.webex_api_base,
@@ -465,7 +465,7 @@ def cmd_ais_inbound_api(args: argparse.Namespace) -> None:
     requests_output = settings.resolve(args.requests_output)
     callbacks_output = settings.resolve(args.callbacks_output)
     callback_url = args.callback_url or settings.ais_callback_url
-    api_key = "<REDACTED_SECRET>" or settings.ais_inbound_api_key
+    api_key = <REDACTED_SECRET> or settings.ais_inbound_api_key
     print(
         json.dumps(
             {
@@ -488,7 +488,7 @@ def cmd_ais_inbound_api(args: argparse.Namespace) -> None:
         host=args.host,
         port=args.port,
         path=args.path,
-        api_key="<REDACTED_SECRET>"
+        api_key=<REDACTED_SECRET>
         callback_url=callback_url,
         requests_output=requests_output,
         callbacks_output=callbacks_output,

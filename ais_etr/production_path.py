@@ -553,6 +553,11 @@ def _secret_replacement(match: re.Match[str]) -> str:
         return "https://<REDACTED_TUNNEL>"
     if match.group(0).startswith("Y2lz"):
         return "<REDACTED_ROOM_ID>"
+    if match.lastindex and match.lastindex >= 3:
+        prefix = match.group(1)
+        open_quote = match.group(2) or ""
+        close_quote = match.group(3) or open_quote
+        return f"{prefix}{open_quote}<REDACTED_SECRET>{close_quote}"
     if match.lastindex and match.lastindex >= 1:
         return f"{match.group(1)}\"<REDACTED_SECRET>\""
     return "<REDACTED_SECRET>"

@@ -103,13 +103,13 @@ class Settings:
             model_path=Path(os.environ.get("AIS_ETR_MODEL", "runtime/model_quantiles.json")),
             webex_api_base=os.environ.get("WEBEX_API_BASE", "https://webexapis.com/v1"),
             webex_auth_mode=os.environ.get("WEBEX_AUTH_MODE", "bot").strip().lower(),
-            webex_bot_token="<REDACTED_SECRET>"WEBEX_BOT_TOKEN"),
-            webex_room_id="<REDACTED_SECRET>"WEBEX_ROOM_ID"),
+            webex_bot_token=<REDACTED_SECRET>"WEBEX_BOT_TOKEN"),
+            webex_room_id=<REDACTED_SECRET>"WEBEX_ROOM_ID"),
             webex_room_district=os.environ.get("WEBEX_ROOM_DISTRICT"),
             webex_require_mention=os.environ.get("WEBEX_REQUIRE_MENTION", "true").lower()
             not in {"0", "false", "no"},
             webex_client_id=os.environ.get("WEBEX_CLIENT_ID"),
-            webex_client_secret="<REDACTED_SECRET>"WEBEX_CLIENT_SECRET"),
+            webex_client_secret=<REDACTED_SECRET>"WEBEX_CLIENT_SECRET"),
             webex_integration_id=os.environ.get("WEBEX_INTEGRATION_ID"),
             webex_authorization_url=os.environ.get("WEBEX_AUTHORIZATION_URL", "https://webexapis.com/v1/authorize"),
             webex_redirect_uri=os.environ.get(
@@ -123,7 +123,7 @@ class Settings:
             webex_token_path=Path(os.environ.get("WEBEX_TOKEN_PATH", "runtime/webex_oauth_token.json")),
             notification_mode=os.environ.get("AIS_NOTIFICATION_MODE", "shadow"),
             mock_webhook_url=os.environ.get("AIS_MOCK_WEBHOOK_URL"),
-            ais_inbound_api_key="<REDACTED_SECRET>"AIS_INBOUND_API_KEY"),
+            ais_inbound_api_key=<REDACTED_SECRET>"AIS_INBOUND_API_KEY"),
             ais_callback_url=os.environ.get("AIS_CALLBACK_URL"),
             pilot_districts=_split_csv(os.environ.get("AIS_PILOT_DISTRICTS"), PILOT_DISTRICTS),
         )
