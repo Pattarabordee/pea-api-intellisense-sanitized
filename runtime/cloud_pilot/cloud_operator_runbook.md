@@ -1,5 +1,7 @@
 # Cloud Operator Runbook
 
+Note: this is the older Python-container runbook. For the current Next.js + Go + PostgreSQL Render path, use `runtime/production_cloud_next_go_postgres_runbook.md`.
+
 ## Deploy
 
 1. Build the container from the workspace root.

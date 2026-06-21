@@ -10,6 +10,11 @@
 *.jsonl
 *.log
 *.zip
+node_modules/
+.next/
+dist/
+out/
+coverage/
 runtime/private/
 runtime/logs/
 runtime/snapshots/

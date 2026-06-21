@@ -17,8 +17,12 @@ class ProductionPathTests(unittest.TestCase):
             (root / "runtime" / "cloud_pilot").mkdir(parents=True)
             (root / "runtime" / "google_workspace_pilot").mkdir(parents=True)
             (root / "runtime" / "github_sanitized_source" / "runtime").mkdir(parents=True)
+            (root / "apps" / "api-go").mkdir(parents=True)
+            (root / "apps" / "web-next" / "app").mkdir(parents=True)
+            (root / "apps" / "web-next" / "node_modules" / "next").mkdir(parents=True)
             (root / "AGENTS.md").write_text("rules", encoding="utf-8")
             (root / "README.md").write_text("start here", encoding="utf-8")
+            (root / "render.yaml").write_text("services: []\n", encoding="utf-8")
             (root / "pea_pitching_executive_summary.md").write_text(
                 "Executive summary\nmode = shadow\nproduction_send = blocked\n",
                 encoding="utf-8",
@@ -57,6 +61,18 @@ class ProductionPathTests(unittest.TestCase):
                 'const MODE = "shadow";\nconst PRODUCTION_SEND = "blocked";\n',
                 encoding="utf-8",
             )
+            (root / "apps" / "api-go" / "main.go").write_text(
+                'package main\nconst productionSend = "blocked"\n',
+                encoding="utf-8",
+            )
+            (root / "apps" / "web-next" / "app" / "page.tsx").write_text(
+                'export default function Page(){return <main>production_send blocked</main>}\n',
+                encoding="utf-8",
+            )
+            (root / "apps" / "web-next" / "node_modules" / "next" / "index.js").write_text(
+                "must not export dependency output",
+                encoding="utf-8",
+            )
             (root / "runtime" / "github_sanitized_source" / "runtime" / "stale.md").write_text(
                 "must not recurse into prior sanitized exports",
                 encoding="utf-8",
@@ -73,9 +89,13 @@ class ProductionPathTests(unittest.TestCase):
                 self.assertIn("pea_pitching_executive_summary.md", names)
                 self.assertIn("ais_etr/service.py", names)
                 self.assertIn("tests/test_service.py", names)
+                self.assertIn("render.yaml", names)
                 self.assertIn("runtime/pea_api_intellisense_technical_brief.md", names)
                 self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
                 self.assertIn("runtime/google_workspace_pilot/Code.gs", names)
+                self.assertIn("apps/api-go/main.go", names)
+                self.assertIn("apps/web-next/app/page.tsx", names)
+                self.assertNotIn("apps/web-next/node_modules/next/index.js", names)
                 self.assertNotIn("runtime/private/ais_inbound_pilot_key.txt", names)
                 self.assertNotIn("runtime/ais_etr.sqlite", names)
                 self.assertNotIn("runtime/github_sanitized_source/runtime/stale.md", names)
@@ -88,7 +108,11 @@ class ProductionPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             cloud = root / "runtime" / "cloud_pilot"
+            api = root / "apps" / "api-go"
+            web = root / "apps" / "web-next"
             cloud.mkdir(parents=True)
+            api.mkdir(parents=True)
+            web.mkdir(parents=True)
             for name in [
                 "Dockerfile",
                 "docker-compose.yml",
@@ -103,6 +127,22 @@ class ProductionPathTests(unittest.TestCase):
                 "AIS_INBOUND_API_KEY="<REDACTED_SECRET>",
                 encoding="utf-8",
             )
+            for path in [
+                api / "go.mod",
+                api / "Dockerfile",
+                api / "cmd" / "pea-api-intellisense" / "main.go",
+                api / "internal" / "api" / "server.go",
+                api / "internal" / "storage" / "postgres.go",
+                api / "internal" / "storage" / "migrations" / "001_init.sql",
+                web / "package.json",
+                web / "next.config.mjs",
+                web / "app" / "page.tsx",
+                web / "app" / "mission-control.tsx",
+                web / "app" / "api" / "requests" / "route.ts",
+            ]:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("ok", encoding="utf-8")
+            (root / "render.yaml").write_text("services: []\ndatabases: []\n", encoding="utf-8")
             (root / "runtime" / "sanitized_codebase_manifest.json").write_text(
                 json.dumps({"status": "PASS", "zip_output": "bundle.zip"}),
                 encoding="utf-8",
@@ -127,6 +167,9 @@ class ProductionPathTests(unittest.TestCase):
             self.assertEqual(report["production_infra_ready"], "BLOCKED_PENDING_OWNER_OR_CONTROL")
             self.assertEqual(report["auto_etr_ready"], "BLOCKED_GREEN_GATE")
             status_by_name = {check["name"]: check["status"] for check in report["checks"]}
+            self.assertEqual(status_by_name["go_api_package"], "PASS")
+            self.assertEqual(status_by_name["nextjs_console_package"], "PASS")
+            self.assertEqual(status_by_name["render_blueprint"], "PASS")
             self.assertEqual(status_by_name["owner_approval"], "BLOCKED")
             self.assertEqual(status_by_name["green_auto_etr_gate"], "BLOCKED")
 

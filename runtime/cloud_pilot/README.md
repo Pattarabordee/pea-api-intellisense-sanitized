@@ -1,13 +1,21 @@
 # PEA API Intellisense Cloud Pilot Package
 
-This folder is a provider-neutral container package for the AIS inbound API.
+This folder is the older provider-neutral Python container package for the AIS inbound API.
+
+The preferred production path is now:
+
+- Go API: `apps/api-go`
+- Next.js console: `apps/web-next`
+- Render blueprint: `render.yaml`
+- Managed database: Render Postgres
 
 ## Status
 
 - Mode: `shadow`
 - Production send: `blocked`
 - Customer-facing Auto ETR: blocked until green gate and owner approval pass
-- Current package: ready for cloud/VM deployment review, not proof of production approval
+- Current Python package: still useful for local compatibility and fallback testing
+- Production cloud package: see `runtime/production_cloud_next_go_postgres_runbook.md`
 
 ## Minimal Local Container Test
 

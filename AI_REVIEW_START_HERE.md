@@ -17,13 +17,19 @@ This repository is a sanitized source export for the PEA API Intellisense / AIS 
 3. `ais_etr/ais_inbound.py`
 4. `ais_etr/production_path.py`
 5. `ais_etr/cli.py`
-6. `tests/test_ais_inbound.py`
-7. `tests/test_production_path.py`
-8. `runtime/PILOT_COMPLETE_README.md`
-9. `runtime/go_no_go_summary.md`
-10. `runtime/production_readiness_gate.md`
-11. `runtime/pea_api_intellisense_technical_brief.md`
-12. `runtime/pea_api_intellisense_pitch_answers.md`
+6. `apps/api-go/README.md`
+7. `apps/api-go/internal/api/server.go`
+8. `apps/api-go/internal/storage/postgres.go`
+9. `apps/api-go/internal/storage/migrations/001_init.sql`
+10. `apps/web-next/app/mission-control.tsx`
+11. `render.yaml`
+12. `tests/test_ais_inbound.py`
+13. `tests/test_production_path.py`
+14. `runtime/PILOT_COMPLETE_README.md`
+15. `runtime/go_no_go_summary.md`
+16. `runtime/production_path_readiness_gate.md`
+17. `runtime/pea_api_intellisense_technical_brief.md`
+18. `runtime/pea_api_intellisense_pitch_answers.md`
 
 ## Guardrails
 

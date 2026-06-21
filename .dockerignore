@@ -2,6 +2,12 @@
 __pycache__
 .pytest_cache
 .mypy_cache
+node_modules
+.next
+apps/**/node_modules
+apps/**/.next
+apps/**/out
+apps/**/dist
 .env
 *.pyc
 *.pyo

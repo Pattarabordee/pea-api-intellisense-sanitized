@@ -1,5 +1,7 @@
 # Backup And Restore Commands
 
+Note: these commands are for the older SQLite cloud pilot path. The current Render Postgres path uses `pg_dump`/Render backup controls. See `runtime/production_cloud_next_go_postgres_runbook.md`.
+
 ## Snapshot
 
 ```powershell

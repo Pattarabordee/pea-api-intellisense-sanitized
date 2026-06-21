@@ -12,15 +12,22 @@ from typing import Any
 
 TEXT_EXTENSIONS = {
     ".cfg",
+    ".css",
     ".dockerfile",
+    ".go",
     ".gs",
+    ".html",
     ".ini",
     ".json",
     ".md",
+    ".mod",
     ".mjs",
     ".ps1",
     ".py",
+    ".sql",
     ".toml",
+    ".ts",
+    ".tsx",
     ".txt",
     ".yaml",
     ".yml",
@@ -91,6 +98,9 @@ RUNTIME_ALLOWLIST = {
     "PILOT_COMPLETE_README.MD",
     "PILOT_COMPLETION_GATE.MD",
     "PRODUCTION_READINESS_GATE.MD",
+    "PRODUCTION_CLOUD_NEXT_GO_POSTGRES_RUNBOOK.MD",
+    "PRODUCTION_CLOUD_RENDER_BLUEPRINT.MD",
+    "PRODUCTION_CLOUD_SMOKE_CHECK.PS1",
 }
 
 SECRET_VALUE_PATTERNS = [
@@ -240,6 +250,8 @@ def build_production_readiness_gate(
 ) -> dict[str, Any]:
     root = Path(workspace)
     cloud_root = _resolve(root, cloud_dir)
+    api_root = root / "apps" / "api-go"
+    web_root = root / "apps" / "web-next"
     manifest = _read_json(_resolve(root, sanitized_manifest))
     pilot_gate = _read_json(_resolve(root, pilot_gate_file))
     owner_approval = _read_json(_resolve(root, owner_approval_file))
@@ -256,8 +268,45 @@ def build_production_readiness_gate(
         _prod_check(
             "cloud_container_package",
             _all_exist(cloud_root, ["Dockerfile", "docker-compose.yml", ".env.cloud.example", "README.md"]),
-            "Container package files are present.",
-            "Container package files are incomplete.",
+            "Legacy Python container package files are present.",
+            "Legacy Python container package files are incomplete.",
+        ),
+        _prod_check(
+            "go_api_package",
+            _all_exist(
+                api_root,
+                [
+                    "go.mod",
+                    "Dockerfile",
+                    "cmd/pea-api-intellisense/main.go",
+                    "internal/api/server.go",
+                    "internal/storage/postgres.go",
+                    "internal/storage/migrations/001_init.sql",
+                ],
+            ),
+            "Go API package, PostgreSQL store, and migration are present.",
+            "Go API production package is incomplete.",
+        ),
+        _prod_check(
+            "nextjs_console_package",
+            _all_exist(
+                web_root,
+                [
+                    "package.json",
+                    "next.config.mjs",
+                    "app/page.tsx",
+                    "app/mission-control.tsx",
+                    "app/api/requests/route.ts",
+                ],
+            ),
+            "Next.js operator/demo console package is present.",
+            "Next.js console package is incomplete.",
+        ),
+        _prod_check(
+            "render_blueprint",
+            (root / "render.yaml").exists(),
+            "Render Blueprint exists for API, web, and PostgreSQL deployment.",
+            "Render Blueprint is missing.",
         ),
         _prod_check(
             "cloud_ops_runbook",
@@ -305,7 +354,15 @@ def build_production_readiness_gate(
     cloud_package_ready = all(
         check["status"] == "PASS"
         for check in checks
-        if check["name"] in {"cloud_container_package", "cloud_ops_runbook", "secret_loading_policy"}
+        if check["name"]
+        in {
+            "cloud_container_package",
+            "go_api_package",
+            "nextjs_console_package",
+            "render_blueprint",
+            "cloud_ops_runbook",
+            "secret_loading_policy",
+        }
     )
     infra_ready = all(check["status"] == "PASS" for check in checks if check["name"] != "green_auto_etr_gate")
     auto_etr_ready = all(check["status"] == "PASS" for check in checks)
@@ -320,6 +377,9 @@ def build_production_readiness_gate(
         "operator_next_step": _production_next_step(cloud_package_ready, infra_ready, auto_etr_ready),
         "artifacts": {
             "cloud_dir": str(cloud_root),
+            "go_api_dir": str(api_root),
+            "nextjs_console_dir": str(web_root),
+            "render_blueprint": str(root / "render.yaml"),
             "sanitized_manifest": str(_resolve(root, sanitized_manifest)),
             "pilot_gate_file": str(_resolve(root, pilot_gate_file)),
             "green_gate_file": str(_resolve(root, green_gate_file)),
@@ -375,7 +435,22 @@ def _should_include_for_chatgpt(source: Path, root: Path) -> tuple[bool, str]:
         if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit", "google_workspace_pilot"}:
             return _is_text_candidate(source), "runtime allowlisted directory"
         return upper_name in RUNTIME_ALLOWLIST, "runtime top-level allowlist" if upper_name in RUNTIME_ALLOWLIST else "runtime file not allowlisted"
-    if rel_text in {"AGENTS.md", "README.md", "README_AIS_ETR_MVP.md", "pea_pitching_executive_summary.md", ".dockerignore"}:
+    if rel.parts[0] == "apps":
+        if len(rel.parts) >= 2 and rel.parts[1] in {"api-go", "web-next"}:
+            excluded_dirs = {"node_modules", ".next", "dist", "out", "coverage"}
+            if any(part in excluded_dirs for part in rel.parts):
+                return False, "generated app dependency/build output excluded"
+            return _is_text_candidate(source), "production app source"
+        return False, "app not in production source bundle scope"
+    if rel_text in {
+        "AGENTS.md",
+        "README.md",
+        "README_AIS_ETR_MVP.md",
+        "pea_pitching_executive_summary.md",
+        ".dockerignore",
+        ".gitignore",
+        "render.yaml",
+    }:
         return True, "root allowlist"
     return False, "not in ChatGPT source bundle scope"
 
