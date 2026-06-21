@@ -12,18 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - name: Run Python guardrail tests
         run: |
+          python3 --version
           export PYTHONPATH="$PWD"
-          python tests/test_production_path.py
+          python3 tests/test_production_path.py
       - name: Build sanitized source bundle
         run: |
           export PYTHONPATH="$PWD"
-          python -m ais_etr export-sanitized-codebase
-          python -c 'import json; from pathlib import Path; m=json.loads(Path("runtime/sanitized_codebase_manifest.json").read_text(encoding="utf-8")); assert m.get("status") == "PASS", m.get("scan_failures"); print("sanitized export PASS")'
+          python3 -m ais_etr export-sanitized-codebase
+          python3 -c 'import json; from pathlib import Path; m=json.loads(Path("runtime/sanitized_codebase_manifest.json").read_text(encoding="utf-8")); assert m.get("status") == "PASS", m.get("scan_failures"); print("sanitized export PASS")'
 
   go-api:
     name: Go API tests
@@ -33,10 +31,6 @@ jobs:
         working-directory: apps/api-go
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
-          cache-dependency-path: apps/api-go/go.mod
       - name: Test Go API
         run: |
           go version
