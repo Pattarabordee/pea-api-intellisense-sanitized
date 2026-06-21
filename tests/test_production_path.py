@@ -15,6 +15,7 @@ class ProductionPathTests(unittest.TestCase):
             (root / "tests").mkdir()
             (root / "runtime" / "private").mkdir(parents=True)
             (root / "runtime" / "cloud_pilot").mkdir(parents=True)
+            (root / "runtime" / "github_sanitized_source" / "runtime").mkdir(parents=True)
             (root / "AGENTS.md").write_text("rules", encoding="utf-8")
             (root / "ais_etr" / "service.py").write_text(
                 'PAYLOAD = {"meter_no": "<REDACTED_METER_REF>", "roomId": "<REDACTED_ROOM_ID>"}\n',
@@ -46,6 +47,10 @@ class ProductionPathTests(unittest.TestCase):
                 "cloud package",
                 encoding="utf-8",
             )
+            (root / "runtime" / "github_sanitized_source" / "runtime" / "stale.md").write_text(
+                "must not recurse into prior sanitized exports",
+                encoding="utf-8",
+            )
 
             manifest = export_sanitized_codebase(root)
 
@@ -60,6 +65,7 @@ class ProductionPathTests(unittest.TestCase):
                 self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
                 self.assertNotIn("runtime/private/ais_inbound_pilot_key.txt", names)
                 self.assertNotIn("runtime/ais_etr.sqlite", names)
+                self.assertNotIn("runtime/github_sanitized_source/runtime/stale.md", names)
                 service_text = archive.read("ais_etr/service.py").decode("utf-8")
             self.assertNotIn("1234567890", service_text)
             self.assertNotIn("room-secret", service_text)

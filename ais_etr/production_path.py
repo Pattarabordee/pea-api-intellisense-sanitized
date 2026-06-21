@@ -41,6 +41,8 @@ EXCLUDED_RUNTIME_DIRS = {
     "browser_chatgpt_brave_profile",
     "browser_chatgpt_chrome_profile",
     "dev_export",
+    "github_sanitized_source",
+    "github_sanitized_source_stage",
     "office_pc_handoff",
     "pc_command_bridge",
     "unattended_pc_bridge",
