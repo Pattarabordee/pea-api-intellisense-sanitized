@@ -70,6 +70,10 @@ class ProductionPathTests(unittest.TestCase):
                 'package main\nconst productionSend = "blocked"\n',
                 encoding="utf-8",
             )
+            (root / "apps" / "api-go" / "go.sum").write_text(
+                "example.com/module v1.0.0 h1:abc\n",
+                encoding="utf-8",
+            )
             (root / "apps" / "web-next" / "app" / "page.tsx").write_text(
                 'export default function Page(){return <main>production_send blocked</main>}\n',
                 encoding="utf-8",
@@ -100,6 +104,7 @@ class ProductionPathTests(unittest.TestCase):
                 self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
                 self.assertIn("runtime/google_workspace_pilot/Code.gs", names)
                 self.assertIn("apps/api-go/main.go", names)
+                self.assertIn("apps/api-go/go.sum", names)
                 self.assertIn("apps/web-next/app/page.tsx", names)
                 self.assertNotIn("apps/web-next/node_modules/next/index.js", names)
                 self.assertNotIn("runtime/private/ais_inbound_pilot_key.txt", names)

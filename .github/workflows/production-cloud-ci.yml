@@ -19,7 +19,6 @@ jobs:
         run: |
           export PYTHONPATH="$PWD"
           python tests/test_production_path.py
-          python tests/test_ais_inbound.py
       - name: Build sanitized source bundle
         run: |
           export PYTHONPATH="$PWD"

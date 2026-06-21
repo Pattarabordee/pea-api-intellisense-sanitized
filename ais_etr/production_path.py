@@ -25,6 +25,7 @@ TEXT_EXTENSIONS = {
     ".ps1",
     ".py",
     ".sql",
+    ".sum",
     ".toml",
     ".ts",
     ".tsx",
@@ -49,6 +50,7 @@ EXCLUDED_DIR_PARTS = {
 EXCLUDED_RUNTIME_DIRS = {
     "browser_chatgpt_brave_profile",
     "browser_chatgpt_chrome_profile",
+    "chatgpt_production_review",
     "dev_export",
     "github_sanitized_source",
     "github_sanitized_source_stage",
