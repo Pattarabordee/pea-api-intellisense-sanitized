@@ -15,7 +15,7 @@ Production-path shadow API for AIS inbound outage verification.
 ```text
 PORT=8090
 DATABASE_URL=<Render Postgres internal URL>
-AIS_INBOUND_API_KEY=<REDACTED_SECRET> in Render secret/env>
+AIS_INBOUND_API_KEY=<stored in Render secret/env>
 RATE_LIMIT_PER_MINUTE=120
 ALLOWED_ORIGIN=<optional Next.js console origin>
 ```

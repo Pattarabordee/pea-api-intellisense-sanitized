@@ -174,7 +174,7 @@ def create_ais_inbound_server(
     server = ThreadingHTTPServer((host, port), AisInboundHandler)
     server.db_path = Path(db_path)  # type: ignore[attr-defined]
     server.inbound_path = path  # type: ignore[attr-defined]
-    server.api_key = <REDACTED_SECRET>  # type: ignore[attr-defined]
+    server.api_key = api_key  # type: ignore[attr-defined]
     server.callback_url = callback_url  # type: ignore[attr-defined]
     server.requests_output = Path(requests_output)  # type: ignore[attr-defined]
     server.callbacks_output = Path(callbacks_output)  # type: ignore[attr-defined]
@@ -205,7 +205,7 @@ def serve_ais_inbound_api(
         host=host,
         port=port,
         path=path,
-        api_key=<REDACTED_SECRET>
+        api_key=api_key,
         callback_url=callback_url,
         requests_output=requests_output,
         callbacks_output=callbacks_output,
@@ -2691,7 +2691,7 @@ def _rate_limit_client_id(headers: Any, client_address: Any) -> str:
 
 def _authorized(headers: Any, api_key: str | None) -> bool:
     if not api_key:
-        <REDACTED_SECRET> True
+        return True
     expected = str(api_key)
     x_key = str(headers.get("X-API-Key") or "")
     auth = headers.get("Authorization", "")

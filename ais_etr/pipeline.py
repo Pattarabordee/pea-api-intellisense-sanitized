@@ -421,7 +421,7 @@ class AisEtrPipeline:
                 raise RuntimeError("WEBEX_ROOM_ID is required for OAuth polling")
             token_manager = WebexOAuthTokenManager(
                 client_id=self.settings.webex_client_id,
-                client_secret=<REDACTED_SECRET>
+                client_secret=self.settings.webex_client_secret,
                 token_path=self.settings.resolve(self.settings.webex_token_path),
                 api_base=self.settings.webex_api_base,
             )

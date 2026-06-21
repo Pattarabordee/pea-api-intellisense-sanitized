@@ -122,7 +122,7 @@ RUNTIME_ALLOWLIST = {
 SECRET_VALUE_PATTERNS = [
     re.compile(
         r'(?i)(\b(?:AIS_INBOUND_API_KEY|WEBEX_BOT_TOKEN|WEBEX_CLIENT_SECRET|WEBEX_ROOM_ID|OPENAI_API_KEY|'
-        r'API_KEY|ACCESS_TOKEN|REFRESH_TOKEN|CLIENT_SECRET|TOKEN|SECRET)\s*[:=]\s*)(["\']?)[^\s"\']{6,}(["\']?)'
+        r'API_KEY|ACCESS_TOKEN|REFRESH_TOKEN|CLIENT_SECRET|TOKEN|SECRET)[ \t]*[:=][ \t]*)(["\'])[^\s"\']{6,}\2'
     ),
     re.compile(
         r'(?i)(["\'](?:access_token|refresh_token|client_secret|webex_room_id|room_id|api_key|x-api-key|token|secret)["\']\s*:\s*)'
@@ -553,11 +553,10 @@ def _secret_replacement(match: re.Match[str]) -> str:
         return "https://<REDACTED_TUNNEL>"
     if match.group(0).startswith("Y2lz"):
         return "<REDACTED_ROOM_ID>"
-    if match.lastindex and match.lastindex >= 3:
+    if match.lastindex and match.lastindex >= 2:
         prefix = match.group(1)
         open_quote = match.group(2) or ""
-        close_quote = match.group(3) or open_quote
-        return f"{prefix}{open_quote}<REDACTED_SECRET>{close_quote}"
+        return f"{prefix}{open_quote}<REDACTED_SECRET>{open_quote}"
     if match.lastindex and match.lastindex >= 1:
         return f"{match.group(1)}\"<REDACTED_SECRET>\""
     return "<REDACTED_SECRET>"

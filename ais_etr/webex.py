@@ -75,7 +75,7 @@ class WebexOAuthTokenManager:
         refresh_margin_seconds: int = DEFAULT_TOKEN_REFRESH_MARGIN_SECONDS,
     ):
         self.client_id = client_id
-        self.client_secret = <REDACTED_SECRET>
+        self.client_secret = client_secret
         self.token_path = Path(token_path)
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
@@ -93,7 +93,7 @@ class WebexOAuthTokenManager:
     def save_token_response(self, response: dict[str, Any], now: int | None = None) -> dict[str, Any]:
         now = int(time.time()) if now is None else now
         existing = self.load()
-        refresh_token = <REDACTED_SECRET>"refresh_token") or existing.get("refresh_token")
+        refresh_token = response.get("refresh_token") or existing.get("refresh_token")
         token = {
             "access_token": response.get("access_token"),
             "refresh_token": refresh_token,
@@ -122,7 +122,7 @@ class WebexOAuthTokenManager:
         return token
 
     def token_metadata(self) -> dict[str, Any]:
-        token = <REDACTED_SECRET>
+        token = self.load()
         return {
             "token_path": str(self.token_path),
             "exists": bool(token),
@@ -133,7 +133,7 @@ class WebexOAuthTokenManager:
         }
 
     def access_token(self) -> str:
-        token = <REDACTED_SECRET>
+        token = self.load()
         if token.get("access_token") and self._valid_access_token(token):
             return str(token["access_token"])
         refreshed = self.refresh_access_token()
@@ -155,8 +155,8 @@ class WebexOAuthTokenManager:
         return self.save_token_response(response)
 
     def refresh_access_token(self) -> dict[str, Any]:
-        token = <REDACTED_SECRET>
-        refresh_token = <REDACTED_SECRET>"refresh_token")
+        token = self.load()
+        refresh_token = token.get("refresh_token")
         if not refresh_token:
             raise WebexOAuthError("No Webex refresh token is stored; run webex-auth again")
         response = _post_form(
@@ -171,7 +171,7 @@ class WebexOAuthTokenManager:
         )
         return self.save_token_response(response)
 
-    def _valid_access_token(self, token: <REDACTED_SECRET> Any]) -> bool:
+    def _valid_access_token(self, token: dict[str, Any]) -> bool:
         expires_at = token.get("expires_at")
         if expires_at is None:
             return False

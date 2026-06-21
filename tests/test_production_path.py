@@ -136,7 +136,7 @@ class ProductionPathTests(unittest.TestCase):
             ]:
                 (cloud / name).write_text("ok", encoding="utf-8")
             (cloud / ".env.cloud.example").write_text(
-                "AIS_INBOUND_API_KEY=<REDACTED_SECRET>",
+                "AIS_INBOUND_API_KEY=<SET_IN_SECRET_MANAGER>\n",
                 encoding="utf-8",
             )
             for path in [

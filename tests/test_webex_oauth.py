@@ -76,7 +76,7 @@ class WebexOAuthTests(unittest.TestCase):
                 )
 
             with patch("urllib.request.urlopen", side_effect=fake_urlopen):
-                token = <REDACTED_SECRET>"auth-code", "http://127.0.0.1/callback", "verifier")
+                token = manager.exchange_code("auth-code", "http://127.0.0.1/callback", "verifier")
 
             stored = json.loads(token_path.read_text(encoding="utf-8"))
             body = urllib.parse.parse_qs(requests[0].data.decode("utf-8"))
@@ -132,7 +132,7 @@ class WebexOAuthTests(unittest.TestCase):
                 )
 
             with patch("urllib.request.urlopen", side_effect=fake_refresh):
-                token = <REDACTED_SECRET>
+                token = manager.access_token()
 
             self.assertEqual(token, "fresh-access")
 
