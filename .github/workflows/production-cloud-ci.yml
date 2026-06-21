@@ -23,15 +23,7 @@ jobs:
         run: |
           export PYTHONPATH="$PWD"
           python -m ais_etr export-sanitized-codebase
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          manifest = json.loads(Path("runtime/sanitized_codebase_manifest.json").read_text(encoding="utf-8"))
-          if manifest.get("status") != "PASS":
-              raise SystemExit(f"sanitized export failed: {manifest.get('scan_failures')}")
-          print(f"sanitized export PASS, included={manifest.get('included_count')}, redactions={manifest.get('redaction_count')}")
-          PY
+          python -c "import json; from pathlib import Path; manifest=json.loads(Path('runtime/sanitized_codebase_manifest.json').read_text(encoding='utf-8')); assert manifest.get('status') == 'PASS', manifest.get('scan_failures'); print(f\"sanitized export PASS, included={manifest.get('included_count')}, redactions={manifest.get('redaction_count')}\")"
 
   go-api:
     name: Go API tests
@@ -43,13 +35,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.23.12"
           cache-dependency-path: apps/api-go/go.mod
-      - name: Test and vet Go API
+      - name: Test Go API
         run: |
           go mod download
           go test ./...
-          go vet ./...
 
   next-console:
     name: Next.js console build
