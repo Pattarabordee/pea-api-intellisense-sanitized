@@ -1,6 +1,6 @@
 # Waiting For AIS Progress
 
-Generated: `2026-06-22T06:00:34+07:00`  
+Generated: `2026-06-22T06:17:28+07:00`  
 Mode: `shadow`  
 Production send: `blocked`
 
@@ -11,16 +11,20 @@ Production send: `blocked`
 | API health | `ok` |
 | Database | `ok` |
 | Web console live data | `PASS` |
-| Total cloud requests | `4` |
+| Total cloud requests | `5` |
 | Non-smoke requests | `0` |
 | Real AIS cloud hit | `NO_REAL_AIS_HIT_YET` |
-| Latest redacted request | `AIS-CLOUD-SMOKE-20260622060012` |
+| Latest redacted request | `AIS-CLOUD-SMOKE-20260622061708` |
 
 ## Completed While Waiting
 
 - AIS cloud handoff now asks AIS to report back only `request_id`, sent time, and HTTP status.
 - Waiting runbook created at `runtime/cloud_pilot/waiting_for_ais_cloud_pilot.md`.
 - Render alert checklist created at `runtime/cloud_pilot/render_alert_checklist.md`.
+- AIS test window message created at `runtime/cloud_pilot/ais_test_window_request_th.md`.
+- PostgreSQL operator tooling setup created at `runtime/cloud_pilot/postgres_operator_tooling_setup.md`.
+- Key rotation drill created at `runtime/cloud_pilot/key_rotation_drill.md`.
+- Production evidence tracker created at `runtime/cloud_pilot/production_evidence_tracker.md`.
 - Monitoring policy now references PostgreSQL and real-hit checks.
 - Operator runbook and backup commands now point to the current Render + PostgreSQL path.
 

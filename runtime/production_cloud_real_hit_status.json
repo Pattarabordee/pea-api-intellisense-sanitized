@@ -9,14 +9,14 @@
     "operator_query":  "PASS",
     "web_console_live_data":  "PASS",
     "web_console_has_fallback":  false,
-    "total_requests":  4,
+    "total_requests":  5,
     "non_smoke_requests":  0,
     "latest_request":  {
-                           "request_id":  "AIS-CLOUD-SMOKE-20260622060012",
-                           "received_at":  "2026-06-21T23:00:13Z",
+                           "request_id":  "AIS-CLOUD-SMOKE-20260622061708",
+                           "received_at":  "2026-06-21T23:17:06Z",
                            "status":  "COMPLETED",
                            "callback_status":  "CAPTURED_NO_CALLBACK_URL",
                            "production_send":  "blocked"
                        },
-    "generated_at":  "2026-06-21T23:00:34Z"
+    "generated_at":  "2026-06-21T23:17:28Z"
 }

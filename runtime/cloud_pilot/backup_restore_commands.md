@@ -6,6 +6,8 @@ Production send: `blocked`
 
 The current Render cloud pilot uses PostgreSQL. Use `pg_dump` or Render backup controls. Keep SQLite commands only for local legacy compatibility.
 
+Operator setup details live in `runtime/cloud_pilot/postgres_operator_tooling_setup.md`.
+
 ## PostgreSQL Backup
 
 ```powershell

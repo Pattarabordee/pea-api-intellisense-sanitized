@@ -24,6 +24,12 @@ Ask AIS to report back only:
 - sent time
 - HTTP status seen by AIS
 
+For a ready-to-send Thai message, use:
+
+```text
+runtime/cloud_pilot/ais_test_window_request_th.md
+```
+
 ## Daily Cloud Watch
 
 Run once or twice per day, and again before/after any AIS test window:
@@ -64,10 +70,12 @@ If AIS sees `401`, the endpoint is reachable but the key is wrong or missing. If
 ## Hardening Queue While Waiting
 
 - Configure Render alerts listed in `runtime/cloud_pilot/monitoring_policy.md`.
-- Run backup and restore drill using non-production restore target.
-- Run key rotation drill after AIS confirms they can reach the current endpoint.
+- Prepare PostgreSQL client tools using `runtime/cloud_pilot/postgres_operator_tooling_setup.md`.
+- Run backup and restore drill using non-production restore target only.
+- Prepare `runtime/cloud_pilot/key_rotation_drill.md`, but run it only after AIS confirms they can reach the current endpoint.
 - Review incident playbook for `401`, `400`, `429`, `5xx`, DB unavailable, and bad timestamp.
 - Keep collecting real pilot cases for the green subset.
+- Track production evidence in `runtime/cloud_pilot/production_evidence_tracker.md`.
 
 ## Production Boundary
 
