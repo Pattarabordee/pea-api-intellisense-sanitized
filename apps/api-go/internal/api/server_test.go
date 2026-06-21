@@ -32,7 +32,7 @@ func TestPostAcceptsValidRequestAndKeepsProductionBlocked(t *testing.T) {
 	if payload["status"] != "RECEIVED" || payload["production_send"] != "blocked" {
 		t.Fatalf("unsafe payload: %#v", payload)
 	}
-	if strings.Contains(res.Body.String(), "1234567890") {
+	if strings.Contains(res.Body.String(), "METER-1234") {
 		t.Fatalf("response leaked raw meter: %s", res.Body.String())
 	}
 	if res.Header().Get("X-Correlation-ID") != "ais-corr-1" {
