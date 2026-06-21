@@ -658,7 +658,9 @@ def _env_template_is_placeholder(path: Path) -> bool:
         return False
     if re.search(r"(?i)(token|secret|api_key|password)\s*=\s*[A-Za-z0-9_\-]{12,}", text):
         return False
-    return "AIS_INBOUND_API_KEY=" in text and "<SET_IN_SECRET_MANAGER>" in text
+    return "AIS_INBOUND_API_KEY=" in text and (
+        "<SET_IN_SECRET_MANAGER>" in text or "<REDACTED_SECRET>" in text
+    )
 
 
 def _owner_approvals_passed(report: dict[str, Any]) -> bool:
