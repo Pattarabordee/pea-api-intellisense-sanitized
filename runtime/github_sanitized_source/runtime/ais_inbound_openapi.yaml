@@ -1,0 +1,430 @@
+openapi: 3.1.0
+info:
+  title: PEA AIS Outage Verification API
+  version: '2026-06-20'
+  description: Pilot shadow API for AIS to ask whether an AIS meter outage is supported
+    by PEA distribution-system evidence. Production customer ETR sending is blocked.
+servers:
+- url: https://<REDACTED_TUNNEL>
+  description: Pilot public tunnel
+security:
+- ApiKeyAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Endpoint is running in shadow mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/ais/outage-verifications:
+    get:
+      summary: Readiness metadata for the verification endpoint
+      security: []
+      responses:
+        '200':
+          description: Endpoint metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+    post:
+      summary: Create an AIS outage verification request
+      description: Accepts one AIS outage alarm/event. The API stores the request,
+        checks current WebEx/topology evidence, and returns 202 immediately. Result
+        details can be read from the status lookup endpoint by request_id.
+      parameters:
+      - name: bypass-tunnel-reminder
+        in: header
+        required: false
+        schema:
+          type: string
+          example: 'true'
+        description: Pilot-only localtunnel bypass header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AisOutageVerificationRequest'
+            examples:
+              minimal:
+                summary: Minimal request
+                value:
+                  request_id: AIS-TEST-0001
+                  meter_no: <PEA meter number / PEANO>
+                  timestamp: '2026-06-20T00:35:00+07:00'
+                  province: Sakon Nakhon
+                  district: <district>
+                  subdistrict: <subdistrict>
+              withAlarmContext:
+                summary: Request with AIS alarm context
+                value:
+                  request_id: AIS-20260620-0001
+                  meter_no: <PEA meter number / PEANO>
+                  timestamp: '2026-06-20T00:35:00+07:00'
+                  province: Sakon Nakhon
+                  district: <district>
+                  subdistrict: <subdistrict>
+                  alarm_type: AC_MAIN_FAIL
+                  main_cause: Faulty AC main failed
+                  subcause: PEA no back up
+      responses:
+        '202':
+          description: Request accepted for shadow verification
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+              description: Echoes request_id for tracing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+              examples:
+                accepted:
+                  value:
+                    api_version: v1
+                    schema_version: '2026-06-20'
+                    mode: shadow
+                    status: RECEIVED
+                    http_status: 202
+                    request_id: AIS-TEST-0001
+                    duplicate: false
+                    callback_status: CAPTURED_NO_CALLBACK_URL
+                    result_path: /api/v1/ais/outage-verifications/AIS-TEST-0001
+                    production_send: blocked
+                    received_at: '2026-06-20T01:00:00+00:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    options:
+      summary: CORS preflight
+      security: []
+      responses:
+        '204':
+          description: Allowed methods and headers
+  /api/v1/ais/outage-verifications/{request_id}:
+    get:
+      summary: Get verification result by request_id
+      description: Returns the latest stored shadow verification result for a prior
+        request.
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: bypass-tunnel-reminder
+        in: header
+        required: false
+        schema:
+          type: string
+          example: 'true'
+        description: Pilot-only localtunnel bypass header.
+      responses:
+        '200':
+          description: Stored verification result
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+              description: Echoes request_id for tracing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Shared pilot key provided privately by PEA.
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid pilot API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Request or endpoint not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    PayloadTooLarge:
+      description: Request body exceeds pilot limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnsupportedMediaType:
+      description: Content-Type must be application/json
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: Too many requests for the pilot endpoint
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - mode
+      - production_send
+      properties:
+        status:
+          type: string
+          const: OK
+        mode:
+          type: string
+          const: shadow
+        api_version:
+          type: string
+        service:
+          type: string
+        production_send:
+          type: string
+          const: blocked
+        inbound_path:
+          type: string
+    ReadyResponse:
+      type: object
+      required:
+      - status
+      - mode
+      - method
+      - production_send
+      properties:
+        status:
+          type: string
+          const: READY
+        mode:
+          type: string
+          const: shadow
+        api_version:
+          type: string
+        method:
+          type: string
+          const: POST
+        required_headers:
+          type: array
+          items:
+            type: string
+        status_lookup:
+          type: string
+        production_send:
+          type: string
+          const: blocked
+    AisOutageVerificationRequest:
+      type: object
+      required:
+      - request_id
+      - meter_no
+      - timestamp
+      properties:
+        request_id:
+          type: string
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:@-]*$
+          description: Unique event/alarm id. Reuse for retries. Use letters, numbers,
+            dash, underscore, dot, colon, or at sign only.
+        meter_no:
+          type: string
+          maxLength: 64
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:@-]*$
+          description: PEA meter number / PEANO. Do not include slash, space, or newline.
+        timestamp:
+          type: string
+          format: date-time
+          description: AIS detected outage time. Include +07:00 when possible.
+        province:
+          type: string
+        district:
+          type: string
+        subdistrict:
+          type: string
+        alarm_type:
+          type: string
+          example: AC_MAIN_FAIL
+        main_cause:
+          type: string
+          example: Faulty AC main failed
+        subcause:
+          type: string
+          example: PEA no back up
+      additionalProperties: true
+    AcceptedResponse:
+      type: object
+      required:
+      - mode
+      - status
+      - http_status
+      - request_id
+      - production_send
+      properties:
+        api_version:
+          type: string
+        schema_version:
+          type: string
+        mode:
+          type: string
+          const: shadow
+        status:
+          type: string
+          const: RECEIVED
+        http_status:
+          type: integer
+          const: 202
+        request_id:
+          type: string
+        duplicate:
+          type: boolean
+        callback_status:
+          type: string
+        result_path:
+          type: string
+        production_send:
+          type: string
+          const: blocked
+        received_at:
+          type: string
+          format: date-time
+    VerificationStatusResponse:
+      type: object
+      required:
+      - mode
+      - request_id
+      - status
+      - production_send
+      properties:
+        api_version:
+          type: string
+        schema_version:
+          type: string
+        mode:
+          type: string
+          const: shadow
+        request_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - RECEIVED
+          - COMPLETED
+        request_status:
+          type: string
+        callback_status:
+          type: string
+        production_send:
+          type: string
+          const: blocked
+        received_at:
+          type: string
+          format: date-time
+        detected_at:
+          type: string
+        detected_at_original:
+          type: string
+        timestamp_quality:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - OK
+              - REVIEW
+              - unknown
+            flags:
+              type: array
+              items:
+                type: string
+            assumption:
+              type: string
+        meter:
+          type: object
+        area:
+          type: object
+        result:
+          type:
+          - object
+          - 'null'
+        last_callback:
+          type:
+          - object
+          - 'null'
+    ErrorResponse:
+      type: object
+      required:
+      - mode
+      - status
+      - error
+      - production_send
+      properties:
+        api_version:
+          type: string
+        schema_version:
+          type: string
+        mode:
+          type: string
+          const: shadow
+        status:
+          type: string
+          const: ERROR
+        request_id:
+          type: string
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        production_send:
+          type: string
+          const: blocked
+        generated_at:
+          type: string
+          format: date-time
+x-pea-pilot-guardrails:
+  mode: shadow
+  production_send: blocked
+  customer_etr_auto_send: blocked_until_green_gate_passes
+  truth_source: AIS outage/restore timestamps only for customer-facing evaluation
+  webex_usage: trigger and device evidence, not restoration truth

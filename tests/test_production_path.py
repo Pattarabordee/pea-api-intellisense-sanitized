@@ -25,6 +25,14 @@ class ProductionPathTests(unittest.TestCase):
                 "POST /api/v1/ais/outage-verifications\n",
                 encoding="utf-8",
             )
+            (root / "runtime" / "pea_api_intellisense_technical_brief.md").write_text(
+                "mode = shadow\nproduction_send = blocked\n",
+                encoding="utf-8",
+            )
+            (root / "runtime" / "pea_api_intellisense_pitch_answers.md").write_text(
+                "planning scenario / strategic estimate\n",
+                encoding="utf-8",
+            )
             (root / "runtime" / "private" / "ais_inbound_pilot_key.txt").write_text(
                 "DO_NOT_EXPORT",
                 encoding="utf-8",
@@ -48,6 +56,8 @@ class ProductionPathTests(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn("ais_etr/service.py", names)
                 self.assertIn("tests/test_service.py", names)
+                self.assertIn("runtime/pea_api_intellisense_technical_brief.md", names)
+                self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
                 self.assertNotIn("runtime/private/ais_inbound_pilot_key.txt", names)
                 self.assertNotIn("runtime/ais_etr.sqlite", names)
                 service_text = archive.read("ais_etr/service.py").decode("utf-8")

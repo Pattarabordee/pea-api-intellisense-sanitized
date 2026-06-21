@@ -1,4 +1,4 @@
-# AI Review Start Here
+﻿# AI Review Start Here
 
 This repository is a sanitized source export for the PEA API Intellisense / AIS ETR pilot.
 
@@ -22,6 +22,8 @@ This repository is a sanitized source export for the PEA API Intellisense / AIS 
 8. `runtime/PILOT_COMPLETE_README.md`
 9. `runtime/go_no_go_summary.md`
 10. `runtime/production_readiness_gate.md`
+11. `runtime/pea_api_intellisense_technical_brief.md`
+12. `runtime/pea_api_intellisense_pitch_answers.md`
 
 ## Guardrails
 
@@ -37,4 +39,3 @@ Do not suggest enabling production Auto ETR until these pass:
 
 This export was generated with `python -m ais_etr export-sanitized-codebase`.
 Runtime secrets, OAuth tokens, DB files, JSONL logs, raw WebEx text, room ids, full meter/PEANO lists, and customer identity are intentionally excluded or redacted.
-
