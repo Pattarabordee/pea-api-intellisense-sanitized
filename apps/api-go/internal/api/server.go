@@ -74,6 +74,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.URL.Path == "/health" && r.Method == http.MethodGet:
 		s.handleHealth(w, r)
+	case r.URL.Path == "/metrics" && r.Method == http.MethodGet:
+		s.handleMetrics(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodGet:
 		s.handleContract(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodPost:
@@ -147,6 +149,36 @@ func (s *Server) handleContract(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	if !s.authorized(r) {
+		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
+		return
+	}
+	snapshot, err := s.store.Metrics(r.Context())
+	if err != nil {
+		s.cfg.Logger.Error("metrics snapshot failed", "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load metrics snapshot", ""))
+		return
+	}
+	payload := map[string]any{
+		"api_version":           APIVersion,
+		"schema_version":        SchemaVersion,
+		"service":               "pea-api-intellisense-go",
+		"mode":                  Mode,
+		"production_send":       ProductionSend,
+		"total_requests":        snapshot.TotalRequests,
+		"duplicate_callbacks":   snapshot.DuplicateCallbacks,
+		"pending_worker_traces": snapshot.PendingWorkerTraces,
+		"not_ready_etr":         snapshot.NotReadyETR,
+		"callback_counts":       snapshot.CallbackCounts,
+		"generated_at":          nowISO(),
+	}
+	if snapshot.LatestReceivedAt != nil {
+		payload["latest_received_at"] = snapshot.LatestReceivedAt.Format(time.RFC3339)
+	}
+	writeJSON(w, http.StatusOK, payload)
+}
+
 func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 	if !s.authorized(r) {
 		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
@@ -177,6 +209,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_REQUEST", err.Error(), firstText(payload, "request_id", "requestId")))
 		return
 	}
+	s.cfg.Logger.Info("ais inbound request received", "request_id", req.RequestID, "meter_last4", last4(req.MeterNo), "mode", Mode, "production_send", ProductionSend)
 
 	receivedAt := time.Now().UTC()
 	callbackStatus := "CAPTURED_NO_CALLBACK_URL"
@@ -194,6 +227,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if duplicate {
+		s.cfg.Logger.Info("ais inbound duplicate skipped", "request_id", req.RequestID, "mode", Mode, "production_send", ProductionSend)
 		callbackStatus = "SKIPPED_DUPLICATE"
 		accepted = acceptedResponse(req.RequestID, true, callbackStatus, time.Now().UTC())
 		duplicatePayload := duplicateCallbackPayload(req)
@@ -209,6 +243,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("X-Request-ID", req.RequestID)
+	w.Header().Set("X-Correlation-ID", correlationID(r, req.RequestID))
 	writeJSON(w, http.StatusAccepted, accepted)
 }
 
@@ -233,6 +268,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("X-Request-ID", id)
+	w.Header().Set("X-Correlation-ID", correlationID(r, id))
 	writeJSON(w, http.StatusOK, statusPayload(row))
 }
 
@@ -645,6 +681,14 @@ func clientIP(r *http.Request) string {
 		return host
 	}
 	return r.RemoteAddr
+}
+
+func correlationID(r *http.Request, fallback string) string {
+	value := strings.TrimSpace(r.Header.Get("X-Correlation-ID"))
+	if value == "" || len(value) > 128 || !safeID.MatchString(value) {
+		return fallback
+	}
+	return value
 }
 
 type rateLimiter struct {

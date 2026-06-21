@@ -16,6 +16,7 @@ type Store interface {
 	InsertCallback(ctx context.Context, callback Callback) error
 	GetStatus(ctx context.Context, requestID string) (*RequestStatus, error)
 	ListStatuses(ctx context.Context, limit int) ([]RequestStatus, error)
+	Metrics(ctx context.Context) (*MetricsSnapshot, error)
 }
 
 type InboundRequest struct {
@@ -90,4 +91,13 @@ type RequestStatus struct {
 	EvidenceJSON       json.RawMessage
 	ETRStatus          string
 	ProductionSend     string
+}
+
+type MetricsSnapshot struct {
+	TotalRequests       int64
+	DuplicateCallbacks  int64
+	PendingWorkerTraces int64
+	NotReadyETR         int64
+	CallbackCounts      map[string]int64
+	LatestReceivedAt    *time.Time
 }

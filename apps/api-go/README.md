@@ -36,7 +36,12 @@ go run ./cmd/pea-api-intellisense
 
 ```http
 GET  /health
+GET  /metrics
 GET  /api/v1/ais/outage-verifications
 POST /api/v1/ais/outage-verifications
 GET  /api/v1/ais/outage-verifications/{request_id}
 ```
+
+`/metrics` is operator-only and requires `X-API-Key` or `Authorization: Bearer <key>`.
+It returns aggregate counts only: total requests, duplicate callbacks, pending worker traces,
+`NOT_READY_FOR_AUTO_SEND` count, and `production_send=blocked`.

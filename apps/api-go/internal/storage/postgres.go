@@ -184,6 +184,63 @@ func (s *PostgresStore) ListStatuses(ctx context.Context, limit int) ([]RequestS
 	return s.queryStatuses(ctx, "", limit)
 }
 
+func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
+	snapshot := &MetricsSnapshot{CallbackCounts: map[string]int64{}}
+	var latestReceivedAt time.Time
+	if err := s.pool.QueryRow(
+		ctx,
+		`SELECT count(*), coalesce(max(received_at), '1970-01-01T00:00:00Z'::timestamptz)
+		 FROM ais_inbound_requests`,
+	).Scan(&snapshot.TotalRequests, &latestReceivedAt); err != nil {
+		return nil, err
+	}
+	if snapshot.TotalRequests > 0 {
+		snapshot.LatestReceivedAt = &latestReceivedAt
+	}
+	if err := s.pool.QueryRow(
+		ctx,
+		`SELECT count(*) FROM ais_inbound_callbacks WHERE status = 'SKIPPED_DUPLICATE'`,
+	).Scan(&snapshot.DuplicateCallbacks); err != nil {
+		return nil, err
+	}
+	if err := s.pool.QueryRow(
+		ctx,
+		`WITH latest_evidence AS (
+			SELECT DISTINCT ON (request_id) request_id, trace_status
+			FROM evidence_traces
+			ORDER BY request_id, id DESC
+		)
+		SELECT count(*) FROM latest_evidence WHERE trace_status = 'PENDING_WORKER'`,
+	).Scan(&snapshot.PendingWorkerTraces); err != nil {
+		return nil, err
+	}
+	if err := s.pool.QueryRow(
+		ctx,
+		`WITH latest_etr AS (
+			SELECT DISTINCT ON (request_id) request_id, status
+			FROM etr_candidates
+			ORDER BY request_id, id DESC
+		)
+		SELECT count(*) FROM latest_etr WHERE status = 'NOT_READY_FOR_AUTO_SEND'`,
+	).Scan(&snapshot.NotReadyETR); err != nil {
+		return nil, err
+	}
+	rows, err := s.pool.Query(ctx, `SELECT status, count(*) FROM ais_inbound_callbacks GROUP BY status ORDER BY status`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var status string
+		var count int64
+		if err := rows.Scan(&status, &count); err != nil {
+			return nil, err
+		}
+		snapshot.CallbackCounts[status] = count
+	}
+	return snapshot, rows.Err()
+}
+
 func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit int, args ...any) ([]RequestStatus, error) {
 	query := `
 	WITH latest_callbacks AS (

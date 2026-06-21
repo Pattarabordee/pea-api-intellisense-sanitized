@@ -17,7 +17,15 @@ async function loadOperatorData(): Promise<OperatorData> {
     if (!response.ok) {
       return { ...demoOperatorData, source: `fallback: API returned ${response.status}` };
     }
-    return (await response.json()) as OperatorData;
+    const data = (await response.json()) as OperatorData;
+    const metricsResponse = await fetch(`${apiBaseUrl}/metrics`, {
+      cache: "no-store",
+      headers: { "X-API-Key": apiKey }
+    });
+    if (metricsResponse.ok) {
+      return { ...data, metrics: await metricsResponse.json() };
+    }
+    return data;
   } catch (error) {
     return { ...demoOperatorData, source: `fallback: ${(error as Error).message}` };
   }

@@ -1,10 +1,10 @@
-$ErrorActionPreference = "Stop"
-
 param(
   [Parameter(Mandatory=$true)]
   [string]$BaseUrl,
   [string]$ApiKey = $env:AIS_INBOUND_API_KEY
 )
+
+$ErrorActionPreference = "Stop"
 
 if (-not $ApiKey) {
   throw "AIS_INBOUND_API_KEY is required in environment or -ApiKey. Do not paste it into group chat."
@@ -49,6 +49,13 @@ if ($status.production_send -ne "blocked" -or $status.request_id -ne $requestId)
   throw "Status lookup did not return safe stored request."
 }
 
+$metrics = Invoke-RestMethod -Method GET -Uri "$cleanBase/metrics" -Headers @{
+  "X-API-Key" = $ApiKey
+} -TimeoutSec 20
+if ($metrics.production_send -ne "blocked") {
+  throw "Unsafe metrics response: production_send=$($metrics.production_send)"
+}
+
 [pscustomobject]@{
   status = "PASS"
   base_url = $cleanBase
@@ -57,5 +64,8 @@ if ($status.production_send -ne "blocked" -or $status.request_id -ne $requestId)
   first_post = $first.status
   duplicate = $duplicate.duplicate
   status_lookup = $status.status
+  total_requests = $metrics.total_requests
+  duplicate_callbacks = $metrics.duplicate_callbacks
+  pending_worker_traces = $metrics.pending_worker_traces
   production_send = $status.production_send
 } | ConvertTo-Json -Depth 5

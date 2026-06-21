@@ -98,9 +98,9 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
       </section>
 
       <section className="grid four">
-        <Metric label="Inbound requests" value={String(counts.total)} note="redacted store" />
+        <Metric label="Inbound requests" value={String(initialData.metrics?.total_requests ?? counts.total)} note="redacted store" />
         <Metric label="Real AIS hits" value={String(counts.real)} note="excludes smoke IDs" />
-        <Metric label="Latest callback" value={latest?.callback_status || "N/A"} note="shadow only" />
+        <Metric label="Pending worker" value={String(initialData.metrics?.pending_worker_traces ?? counts.total)} note="shadow handoff" />
         <Metric label="Production sends" value="0" note="blocked by design" />
       </section>
 

@@ -48,13 +48,37 @@ powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_smoke_check.
 
 Expected: `PASS`, first POST HTTP `202`, duplicate request safe, status lookup works, `production_send=blocked`.
 
+## Local QA
+
+Before pushing or deploying, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_local_qa.ps1
+```
+
+On this laptop, Go may be absent. In that case local QA marks Go as `WARN`; GitHub Actions remains the source of truth for `go test ./...`.
+
+## Observability
+
+Operator endpoints:
+
+```http
+GET /health
+GET /metrics
+```
+
+`/metrics` requires auth and returns aggregate counts only. No raw meter, PEANO list, customer identity, token, room id, or verbatim WebEx text is allowed.
+
+See `runtime/production_cloud_observability_runbook.md`.
+
 ## Backup And Restore
 
 Use Render Postgres backup/PITR where available. Also keep an operator export:
 
-```bash
-pg_dump "$DATABASE_URL" --format=custom --file pea_api_intellisense_$(date +%Y%m%d).dump
-pg_restore --list pea_api_intellisense_YYYYMMDD.dump
+```powershell
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_postgres_backup.ps1
+powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_postgres_restore_check.ps1 `
+  -BackupFile ".\runtime\backups\postgres\<backup>.dump"
 ```
 
 Restore test must run on a non-production database before any live restore.

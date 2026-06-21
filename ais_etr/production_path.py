@@ -106,8 +106,15 @@ RUNTIME_ALLOWLIST = {
     "PILOT_COMPLETION_GATE.MD",
     "PRODUCTION_READINESS_GATE.MD",
     "PRODUCTION_CLOUD_NEXT_GO_POSTGRES_RUNBOOK.MD",
+    "PRODUCTION_CLOUD_LOCAL_QA.PS1",
+    "PRODUCTION_CLOUD_OBSERVABILITY_RUNBOOK.MD",
+    "PRODUCTION_CLOUD_POSTGRES_BACKUP.PS1",
+    "PRODUCTION_CLOUD_POSTGRES_RESTORE_CHECK.PS1",
+    "PRODUCTION_CLOUD_PRIVACY_RED_TEAM_CHECKLIST.MD",
+    "PRODUCTION_CLOUD_PRIVACY_RED_TEAM_SCAN.PS1",
     "PRODUCTION_CLOUD_RENDER_BLUEPRINT.MD",
     "PRODUCTION_CLOUD_SMOKE_CHECK.PS1",
+    "PRODUCTION_CLOUD_WORKER_HANDOFF_CONTRACT.MD",
 }
 
 SECRET_VALUE_PATTERNS = [
@@ -316,6 +323,39 @@ def build_production_readiness_gate(
             "Render Blueprint is missing.",
         ),
         _prod_check(
+            "ci_workflow",
+            (root / ".github" / "workflows" / "production-cloud-ci.yml").exists(),
+            "GitHub Actions CI exists for Python guardrails, Go API, Next.js build, and sanitized export.",
+            "GitHub Actions production cloud CI is missing.",
+        ),
+        _prod_check(
+            "cloud_qa_scripts",
+            _all_exist(
+                root / "runtime",
+                [
+                    "production_cloud_local_qa.ps1",
+                    "production_cloud_postgres_backup.ps1",
+                    "production_cloud_postgres_restore_check.ps1",
+                    "production_cloud_privacy_red_team_scan.ps1",
+                ],
+            ),
+            "Local QA, backup, restore, and privacy scan scripts are present.",
+            "Cloud QA/backup/privacy scripts are incomplete.",
+        ),
+        _prod_check(
+            "observability_controls",
+            _all_exist(
+                root / "runtime",
+                [
+                    "production_cloud_observability_runbook.md",
+                    "production_cloud_privacy_red_team_checklist.md",
+                    "production_cloud_worker_handoff_contract.md",
+                ],
+            ),
+            "Observability, privacy, and worker handoff controls are documented.",
+            "Observability/privacy/worker handoff docs are incomplete.",
+        ),
+        _prod_check(
             "cloud_ops_runbook",
             _all_exist(
                 cloud_root,
@@ -367,6 +407,9 @@ def build_production_readiness_gate(
             "go_api_package",
             "nextjs_console_package",
             "render_blueprint",
+            "ci_workflow",
+            "cloud_qa_scripts",
+            "observability_controls",
             "cloud_ops_runbook",
             "secret_loading_policy",
         }
@@ -442,6 +485,8 @@ def _should_include_for_chatgpt(source: Path, root: Path) -> tuple[bool, str]:
         if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit", "google_workspace_pilot"}:
             return _is_text_candidate(source), "runtime allowlisted directory"
         return upper_name in RUNTIME_ALLOWLIST, "runtime top-level allowlist" if upper_name in RUNTIME_ALLOWLIST else "runtime file not allowlisted"
+    if rel.parts[0] == ".github":
+        return _is_text_candidate(source), "ci workflow"
     if rel.parts[0] == "apps":
         if len(rel.parts) >= 2 and rel.parts[1] in {"api-go", "web-next"}:
             excluded_dirs = {"node_modules", ".next", "dist", "out", "coverage"}

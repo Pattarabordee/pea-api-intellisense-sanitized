@@ -17,7 +17,15 @@ export async function GET() {
     if (!response.ok) {
       return NextResponse.json({ ...demoOperatorData, source: `fallback: API returned ${response.status}` });
     }
-    return NextResponse.json(await response.json());
+    const data = await response.json();
+    const metricsResponse = await fetch(`${apiBaseUrl}/metrics`, {
+      cache: "no-store",
+      headers: { "X-API-Key": apiKey }
+    });
+    if (metricsResponse.ok) {
+      return NextResponse.json({ ...data, metrics: await metricsResponse.json() });
+    }
+    return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ ...demoOperatorData, source: `fallback: ${(error as Error).message}` });
   }

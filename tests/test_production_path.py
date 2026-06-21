@@ -20,8 +20,13 @@ class ProductionPathTests(unittest.TestCase):
             (root / "apps" / "api-go").mkdir(parents=True)
             (root / "apps" / "web-next" / "app").mkdir(parents=True)
             (root / "apps" / "web-next" / "node_modules" / "next").mkdir(parents=True)
+            (root / ".github" / "workflows").mkdir(parents=True)
             (root / "AGENTS.md").write_text("rules", encoding="utf-8")
             (root / "README.md").write_text("start here", encoding="utf-8")
+            (root / ".github" / "workflows" / "production-cloud-ci.yml").write_text(
+                "name: Production Cloud CI\n",
+                encoding="utf-8",
+            )
             (root / "render.yaml").write_text("services: []\n", encoding="utf-8")
             (root / "pea_pitching_executive_summary.md").write_text(
                 "Executive summary\nmode = shadow\nproduction_send = blocked\n",
@@ -86,6 +91,7 @@ class ProductionPathTests(unittest.TestCase):
             with zipfile.ZipFile(root / "runtime" / "sanitized_codebase_bundle.zip") as archive:
                 names = set(archive.namelist())
                 self.assertIn("README.md", names)
+                self.assertIn(".github/workflows/production-cloud-ci.yml", names)
                 self.assertIn("pea_pitching_executive_summary.md", names)
                 self.assertIn("ais_etr/service.py", names)
                 self.assertIn("tests/test_service.py", names)
@@ -113,6 +119,7 @@ class ProductionPathTests(unittest.TestCase):
             cloud.mkdir(parents=True)
             api.mkdir(parents=True)
             web.mkdir(parents=True)
+            (root / ".github" / "workflows").mkdir(parents=True)
             for name in [
                 "Dockerfile",
                 "docker-compose.yml",
@@ -142,6 +149,20 @@ class ProductionPathTests(unittest.TestCase):
             ]:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("ok", encoding="utf-8")
+            (root / ".github" / "workflows" / "production-cloud-ci.yml").write_text(
+                "name: Production Cloud CI\n",
+                encoding="utf-8",
+            )
+            for name in [
+                "production_cloud_local_qa.ps1",
+                "production_cloud_postgres_backup.ps1",
+                "production_cloud_postgres_restore_check.ps1",
+                "production_cloud_privacy_red_team_scan.ps1",
+                "production_cloud_observability_runbook.md",
+                "production_cloud_privacy_red_team_checklist.md",
+                "production_cloud_worker_handoff_contract.md",
+            ]:
+                (root / "runtime" / name).write_text("ok", encoding="utf-8")
             (root / "render.yaml").write_text("services: []\ndatabases: []\n", encoding="utf-8")
             (root / "runtime" / "sanitized_codebase_manifest.json").write_text(
                 json.dumps({"status": "PASS", "zip_output": "bundle.zip"}),
@@ -170,6 +191,9 @@ class ProductionPathTests(unittest.TestCase):
             self.assertEqual(status_by_name["go_api_package"], "PASS")
             self.assertEqual(status_by_name["nextjs_console_package"], "PASS")
             self.assertEqual(status_by_name["render_blueprint"], "PASS")
+            self.assertEqual(status_by_name["ci_workflow"], "PASS")
+            self.assertEqual(status_by_name["cloud_qa_scripts"], "PASS")
+            self.assertEqual(status_by_name["observability_controls"], "PASS")
             self.assertEqual(status_by_name["owner_approval"], "BLOCKED")
             self.assertEqual(status_by_name["green_auto_etr_gate"], "BLOCKED")
 

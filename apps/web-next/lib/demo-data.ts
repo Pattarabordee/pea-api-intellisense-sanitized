@@ -20,6 +20,13 @@ export type OperatorData = {
   count: number;
   generated_at: string;
   source?: string;
+  metrics?: {
+    total_requests?: number;
+    duplicate_callbacks?: number;
+    pending_worker_traces?: number;
+    not_ready_etr?: number;
+    latest_received_at?: string;
+  };
   items: OperatorItem[];
 };
 
@@ -31,6 +38,13 @@ export const demoOperatorData: OperatorData = {
   count: 3,
   generated_at: "2026-06-21T00:00:00Z",
   source: "demo redacted fallback",
+  metrics: {
+    total_requests: 3,
+    duplicate_callbacks: 1,
+    pending_worker_traces: 3,
+    not_ready_etr: 3,
+    latest_received_at: "2026-06-21T09:05:12Z"
+  },
   items: [
     {
       request_id: "AIS-DEMO-0003",
