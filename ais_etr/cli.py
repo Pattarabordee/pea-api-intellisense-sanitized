@@ -20,6 +20,7 @@ from .confidence_gate import (
 )
 from .cloud_production import (
     build_green_eligibility_report,
+    build_production_approval_evidence_pack,
     build_production_gate_packet,
     run_cloud_worker_shadow_loop,
 )
@@ -1142,6 +1143,24 @@ def cmd_production_gate_packet(args: argparse.Namespace) -> None:
         json_output=settings.resolve(args.json_output),
         min_green_rows=args.min_green_rows,
         top_blockers=args.top_blockers,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_production_approval_evidence_pack(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_production_approval_evidence_pack(
+        gap_actions_csv=settings.resolve(args.gap_actions_csv),
+        owner_packet_json=settings.resolve(args.owner_packet_json),
+        real_hit_status_json=settings.resolve(args.real_hit_status_json),
+        readiness_gate_json=settings.resolve(args.readiness_gate_json),
+        ais_truth_queue_output=settings.resolve(args.ais_truth_queue_output),
+        topology_queue_output=settings.resolve(args.topology_queue_output),
+        ops_report_output=settings.resolve(args.ops_report_output),
+        ais_test_window_output=settings.resolve(args.ais_test_window_output),
+        markdown_output=settings.resolve(args.markdown_output),
+        json_output=settings.resolve(args.json_output),
+        top_n=args.top_n,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -3242,6 +3261,23 @@ def build_parser() -> argparse.ArgumentParser:
     production_packet.add_argument("--min-green-rows", type=int, default=30)
     production_packet.add_argument("--top-blockers", type=int, default=12)
     production_packet.set_defaults(func=cmd_production_gate_packet)
+
+    approval_pack = sub.add_parser(
+        "production-approval-evidence-pack",
+        help="Build AIS test-window, ops blocker, and top owner queues for production approval evidence",
+    )
+    approval_pack.add_argument("--gap-actions-csv", default="runtime/cloud_pilot/production_gate_gap_actions.csv")
+    approval_pack.add_argument("--owner-packet-json", default="runtime/cloud_pilot/production_gate_owner_packet.json")
+    approval_pack.add_argument("--real-hit-status-json", default="runtime/production_cloud_real_hit_status.json")
+    approval_pack.add_argument("--readiness-gate-json", default="runtime/production_path_readiness_gate.json")
+    approval_pack.add_argument("--ais-truth-queue-output", default="runtime/cloud_pilot/green_owner_top30_ais_truth_queue.csv")
+    approval_pack.add_argument("--topology-queue-output", default="runtime/cloud_pilot/green_owner_top30_topology_queue.csv")
+    approval_pack.add_argument("--ops-report-output", default="runtime/cloud_pilot/ops_controls_blocker_report.md")
+    approval_pack.add_argument("--ais-test-window-output", default="runtime/cloud_pilot/ais_real_cloud_test_window_request.md")
+    approval_pack.add_argument("--markdown-output", default="runtime/cloud_pilot/production_approval_evidence_next_actions.md")
+    approval_pack.add_argument("--json-output", default="runtime/cloud_pilot/production_approval_evidence_next_actions.json")
+    approval_pack.add_argument("--top-n", type=int, default=30)
+    approval_pack.set_defaults(func=cmd_production_approval_evidence_pack)
 
     cloud_worker = sub.add_parser(
         "cloud-worker-shadow-loop",

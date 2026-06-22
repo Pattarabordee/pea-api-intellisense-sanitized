@@ -1,11 +1,13 @@
 import csv
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
 
 from ais_etr.cloud_production import (
     build_green_eligibility_report,
+    build_production_approval_evidence_pack,
     build_production_gate_packet,
     run_cloud_worker_shadow_loop,
 )
@@ -186,6 +188,134 @@ class CloudProductionTests(unittest.TestCase):
             gap_text = (root / "gap.csv").read_text(encoding="utf-8-sig")
             self.assertIn("non_metric_smoke_demo_not_green_gate", gap_text)
             self.assertNotIn("production_send,real", gap_text)
+
+    def test_production_approval_evidence_pack_builds_safe_owner_queues(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gap = root / "gap.csv"
+            packet = root / "packet.json"
+            real_hit = root / "real_hit.json"
+            readiness = root / "readiness.json"
+            _write_csv(
+                gap,
+                [
+                    "event_ref",
+                    "event_time",
+                    "feeder",
+                    "device_id",
+                    "source_lane",
+                    "eligibility_status",
+                    "blocker_reasons",
+                    "owner_lane",
+                    "next_evidence_needed",
+                    "conversion_rank",
+                    "production_send",
+                ],
+                [
+                    {
+                        "event_ref": "msg-ais",
+                        "event_time": "2026-06-01T10:00:00",
+                        "feeder": "PFA09",
+                        "device_id": "PFA09R-03",
+                        "source_lane": "ais_truth_matched",
+                        "eligibility_status": "red_blocked",
+                        "blocker_reasons": "no_active_ais_evidence",
+                        "owner_lane": "ais_truth_owner",
+                        "next_evidence_needed": "AIS confirms active site outage at event time, or marks not affected.",
+                        "conversion_rank": "200",
+                        "production_send": "blocked",
+                    },
+                    {
+                        "event_ref": "msg-topology",
+                        "event_time": "2026-06-01T10:05:00",
+                        "feeder": "PFA10",
+                        "device_id": "PFA10R-01",
+                        "source_lane": "pea_quarantined",
+                        "eligibility_status": "red_blocked",
+                        "blocker_reasons": "no_affected_ais;low_match_confidence",
+                        "owner_lane": "pea_topology_owner",
+                        "next_evidence_needed": "PEA topology owner confirms downstream AIS scope.",
+                        "conversion_rank": "180",
+                        "production_send": "blocked",
+                    },
+                    {
+                        "event_ref": "msg-topology",
+                        "event_time": "2026-06-01T10:05:00",
+                        "feeder": "PFA10",
+                        "device_id": "PFA10R-01",
+                        "source_lane": "pea_quarantined",
+                        "eligibility_status": "red_blocked",
+                        "blocker_reasons": "no_affected_ais;low_match_confidence",
+                        "owner_lane": "pea_topology_owner",
+                        "next_evidence_needed": "PEA topology owner confirms downstream AIS scope.",
+                        "conversion_rank": "180",
+                        "production_send": "blocked",
+                    },
+                ],
+            )
+            packet.write_text(
+                json.dumps(
+                    {
+                        "green_rows": 0,
+                        "min_green_rows": 30,
+                        "additional_green_rows_needed": 30,
+                        "cloud_status": {"api_base_url": "https://example.invalid", "health_status": "ok", "database": "ok"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            real_hit.write_text(json.dumps({"non_smoke_requests": 0, "total_requests": 5}), encoding="utf-8")
+            readiness.write_text(
+                json.dumps(
+                    {
+                        "cloud_endpoint_ready": "READY_FOR_DEPLOYMENT_PACKAGE",
+                        "production_infra_ready": "BLOCKED_PENDING_OWNER_OR_CONTROL",
+                        "auto_etr_ready": "BLOCKED_GREEN_GATE",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            old_database_url = os.environ.get("DATABASE_URL")
+            os.environ["DATABASE_URL"] = "postgres://secret-user:secret-pass@example/db"
+            try:
+                result = build_production_approval_evidence_pack(
+                    gap_actions_csv=gap,
+                    owner_packet_json=packet,
+                    real_hit_status_json=real_hit,
+                    readiness_gate_json=readiness,
+                    ais_truth_queue_output=root / "ais.csv",
+                    topology_queue_output=root / "topology.csv",
+                    ops_report_output=root / "ops.md",
+                    ais_test_window_output=root / "ais_request.md",
+                    markdown_output=root / "summary.md",
+                    json_output=root / "summary.json",
+                    top_n=30,
+                )
+            finally:
+                if old_database_url is None:
+                    os.environ.pop("DATABASE_URL", None)
+                else:
+                    os.environ["DATABASE_URL"] = old_database_url
+
+            self.assertEqual(result["decision"], "AUTO_ETR_NO_GO")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertEqual(result["owner_queues"]["ais_truth_owner_rows"], 1)
+            self.assertEqual(result["owner_queues"]["pea_topology_owner_rows"], 1)
+            self.assertIn("msg-ais", (root / "ais.csv").read_text(encoding="utf-8-sig"))
+            topology_text = (root / "topology.csv").read_text(encoding="utf-8-sig")
+            self.assertIn("msg-topology", topology_text)
+            self.assertEqual(topology_text.count("msg-topology"), 1)
+            combined = "\n".join(
+                [
+                    (root / "ops.md").read_text(encoding="utf-8"),
+                    (root / "ais_request.md").read_text(encoding="utf-8"),
+                    (root / "summary.md").read_text(encoding="utf-8"),
+                    (root / "summary.json").read_text(encoding="utf-8"),
+                ]
+            )
+            self.assertNotIn("secret-pass", combined)
+            self.assertNotIn("postgres://secret-user", combined)
+            self.assertIn("X-API-Key: <cloud pilot key via secure channel only>", combined)
 
 
 def _write_readiness(path: Path) -> None:
