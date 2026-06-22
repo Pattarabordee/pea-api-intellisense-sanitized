@@ -1,0 +1,14 @@
+{
+  "decisions": [],
+  "generated_at": "2026-06-22T02:14:58Z",
+  "guardrails": [
+    "no_customer_facing_send",
+    "meter_hash_or_last4_only",
+    "raw_webex_text_not_used",
+    "ais_outage_restore_remains_truth"
+  ],
+  "mode": "shadow",
+  "production_send": "blocked",
+  "rows_seen": 0,
+  "status": "DRY_RUN"
+}

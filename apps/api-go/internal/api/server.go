@@ -18,6 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"pea-api-intellisense/apps/api-go/internal/sendcontrol"
 	"pea-api-intellisense/apps/api-go/internal/storage"
 )
 
@@ -36,6 +37,9 @@ type ServerConfig struct {
 	APIKey             string
 	RateLimitPerMinute int
 	AllowedOrigin      string
+	ProductionSendMode string
+	CallbackTransport  string
+	EmergencyOff        bool
 	Logger             *slog.Logger
 }
 
@@ -103,6 +107,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"status":          dbStatus,
 		"mode":            Mode,
 		"production_send": ProductionSend,
+		"send_control":    s.safeSendControlPayload(),
 		"database":        dbStatus,
 		"generated_at":    nowISO(),
 	})
@@ -170,6 +175,9 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"pending_worker_traces": snapshot.PendingWorkerTraces,
 		"not_ready_etr":         snapshot.NotReadyETR,
 		"callback_counts":       snapshot.CallbackCounts,
+		"outbox_dry_run_held":   snapshot.OutboxDryRunHeld,
+		"dead_letters":          snapshot.DeadLetters,
+		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
 	}
 	if snapshot.LatestReceivedAt != nil {
@@ -214,12 +222,12 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 	callbackStatus := "CAPTURED_NO_CALLBACK_URL"
 	accepted := acceptedResponse(req.RequestID, false, callbackStatus, receivedAt)
 	callbackPayload := shadowCallbackPayload(req, "NO_PEA_EVIDENCE_FOUND", "LOW", "cloud_shadow_no_worker_result")
-	records, err := buildStorageRecords(req, accepted, callbackPayload, callbackStatus, receivedAt)
+	records, err := s.buildStorageRecords(req, accepted, callbackPayload, callbackStatus, receivedAt)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not build safe storage records", req.RequestID))
 		return
 	}
-	duplicate, err := s.store.InsertInbound(r.Context(), records.request, records.callback, records.evidence, records.etr)
+	duplicate, err := s.store.InsertInbound(r.Context(), records.request, records.callback, records.evidence, records.etr, records.send, records.outbox)
 	if err != nil {
 		s.cfg.Logger.Error("insert inbound failed", "request_id", req.RequestID, "error", err)
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not persist request", req.RequestID))
@@ -280,6 +288,27 @@ func (s *Server) authorized(r *http.Request) bool {
 	}
 	auth := r.Header.Get("Authorization")
 	return strings.HasPrefix(auth, "Bearer ") && strings.TrimPrefix(auth, "Bearer ") == s.cfg.APIKey
+}
+
+func (s *Server) sendPolicy() sendcontrol.Policy {
+	return sendcontrol.NormalizePolicy(sendcontrol.Policy{
+		Mode:              s.cfg.ProductionSendMode,
+		EmergencyOff:      s.cfg.EmergencyOff,
+		CallbackTransport: s.cfg.CallbackTransport,
+		GateVersion:       "blocked_green_gate",
+		Source:            "go_api",
+	})
+}
+
+func (s *Server) safeSendControlPayload() map[string]any {
+	policy := s.sendPolicy()
+	return map[string]any{
+		"mode":               policy.Mode,
+		"callback_transport": policy.CallbackTransport,
+		"emergency_off":      policy.EmergencyOff,
+		"gate_version":       policy.GateVersion,
+		"production_send":    ProductionSend,
+	}
 }
 
 type inboundRequest struct {
@@ -416,9 +445,11 @@ type storageRecords struct {
 	callback storage.Callback
 	evidence storage.EvidenceTrace
 	etr      storage.ETRCandidate
+	send     storage.SendDecision
+	outbox   storage.CallbackOutbox
 }
 
-func buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPayload map[string]any, callbackStatus string, receivedAt time.Time) (storageRecords, error) {
+func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPayload map[string]any, callbackStatus string, receivedAt time.Time) (storageRecords, error) {
 	requestJSON := redactPayload(map[string]any{
 		"request_id":             req.RequestID,
 		"meter_no":               req.MeterNo,
@@ -443,6 +474,27 @@ func buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPa
 		"reason":          "python_worker_pending_or_no_evidence_loaded",
 		"production_send": ProductionSend,
 	}
+	decision := sendcontrol.Evaluate(
+		s.sendPolicy(),
+		sendcontrol.Candidate{
+			EligibilityStatus: "red_blocked",
+			GatePassed:        false,
+			OwnerApproved:     false,
+			CallbackApproved:  false,
+		},
+	)
+	callbackPayload["send_decision"] = map[string]any{
+		"policy_mode":        decision.PolicyMode,
+		"effective_mode":     decision.EffectiveMode,
+		"eligibility_status": decision.EligibilityStatus,
+		"decision":           decision.Decision,
+		"reason":             decision.Reason,
+		"gate_version":       decision.GateVersion,
+		"callback_transport": decision.Transport,
+		"production_send":    ProductionSend,
+	}
+	callbackJSON := mustJSON(callbackPayload)
+	payloadHash := hashRaw(callbackJSON)
 	return storageRecords{
 		request: storage.InboundRequest{
 			RequestID:          req.RequestID,
@@ -462,7 +514,7 @@ func buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPa
 		callback: storage.Callback{
 			RequestID:   req.RequestID,
 			Mode:        Mode,
-			PayloadJSON: mustJSON(callbackPayload),
+			PayloadJSON: callbackJSON,
 			Status:      callbackStatus,
 			SentAt:      receivedAt,
 		},
@@ -482,6 +534,29 @@ func buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPa
 			ProductionGate: "blocked_green_gate",
 			ProductionSend: ProductionSend,
 			GeneratedAt:    receivedAt,
+		},
+		send: storage.SendDecision{
+			RequestID:         req.RequestID,
+			PolicyMode:        decision.PolicyMode,
+			EffectiveMode:     decision.EffectiveMode,
+			EligibilityStatus: decision.EligibilityStatus,
+			Decision:          decision.Decision,
+			Reason:            decision.Reason,
+			GateVersion:       decision.GateVersion,
+			Source:            decision.Source,
+			ProductionSend:    ProductionSend,
+			DecidedAt:         receivedAt,
+		},
+		outbox: storage.CallbackOutbox{
+			RequestID:      req.RequestID,
+			PayloadHash:    payloadHash,
+			PayloadJSON:    callbackJSON,
+			Transport:      decision.Transport,
+			Status:         "DRY_RUN_HELD",
+			MaxAttempts:    5,
+			ProductionSend: ProductionSend,
+			CreatedAt:      receivedAt,
+			UpdatedAt:      receivedAt,
 		},
 	}, nil
 }
@@ -595,6 +670,20 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 			"sent_at": row.CallbackSentAt,
 		},
 		"etr_status": row.ETRStatus,
+		"send_control": map[string]any{
+			"policy_mode":        blankDefault(row.SendPolicyMode, "blocked"),
+			"effective_mode":     blankDefault(row.SendEffectiveMode, "blocked"),
+			"eligibility_status": blankDefault(row.EligibilityStatus, "red_blocked"),
+			"decision":           blankDefault(row.SendDecision, "blocked"),
+			"reason":             blankDefault(row.SendReason, "production_send_blocked_by_default"),
+			"gate_version":       blankDefault(row.SendGateVersion, "blocked_green_gate"),
+			"production_send":    ProductionSend,
+		},
+		"callback_outbox": map[string]any{
+			"status":    row.CallbackOutboxStatus,
+			"transport": blankDefault(row.CallbackTransport, "dry_run"),
+			"attempts":  row.CallbackAttempts,
+		},
 	}
 }
 
@@ -653,6 +742,18 @@ func redactPayload(value any) any {
 func hashMeter(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])[:16]
+}
+
+func hashRaw(value []byte) string {
+	sum := sha256.Sum256(value)
+	return hex.EncodeToString(sum[:])
+}
+
+func blankDefault(value string, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }
 
 func last4(value string) string {

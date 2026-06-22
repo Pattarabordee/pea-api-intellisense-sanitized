@@ -12,7 +12,8 @@ For the current Next.js + Go + PostgreSQL Render path, use `runtime/production_c
 2. Confirm `pea-api-intellisense-api`, `pea-api-intellisense-web`, and `pea-api-intellisense-postgres` are healthy.
 3. Store `AIS_INBOUND_API_KEY` only in Render environment settings.
 4. Keep `AIS_NOTIFICATION_MODE=shadow`.
-5. Run `/health` and confirm `database=ok`, `mode=shadow`, and `production_send=blocked`.
+5. Keep `PRODUCTION_SEND_MODE=blocked`, `CALLBACK_TRANSPORT=dry_run`, and `EMERGENCY_OFF=false`.
+6. Run `/health` and confirm `database=ok`, `mode=shadow`, and `production_send=blocked`.
 
 ## Restart
 
@@ -46,7 +47,13 @@ powershell -ExecutionPolicy Bypass -File .\runtime\production_cloud_postgres_res
 
 ## Emergency Disable
 
-Keep `AIS_NOTIFICATION_MODE=shadow` and leave `production_send=blocked`. If callback behavior is unsafe, unset callback configuration and redeploy.
+Set `EMERGENCY_OFF=true`, keep `AIS_NOTIFICATION_MODE=shadow`, and leave `production_send=blocked`. If callback behavior is unsafe, unset callback configuration and redeploy.
+
+## Worker And Send Controls
+
+- State machine: `runtime/cloud_pilot/production_send_state_machine_runbook.md`
+- Worker: `runtime/cloud_pilot/cloud_worker_shadow_loop_runbook.md`
+- Dry-run callback and DLQ: `runtime/cloud_pilot/dry_run_callback_dlq_runbook.md`
 
 ## Waiting For AIS
 

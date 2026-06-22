@@ -174,6 +174,36 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	if payload["pending_worker_traces"].(float64) != 1 || payload["not_ready_etr"].(float64) != 1 {
 		t.Fatalf("worker handoff metrics missing: %#v", payload)
 	}
+	if payload["outbox_dry_run_held"].(float64) != 1 || payload["dead_letters"].(float64) != 0 {
+		t.Fatalf("outbox metrics missing: %#v", payload)
+	}
+}
+
+func TestProductionSendModeNeverEnablesRealSendWithoutGates(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{
+		APIKey:             "pilot-key",
+		ProductionSendMode: "auto_green_lane",
+		CallbackTransport:  "real",
+	}, store)
+	body := `{"request_id":"AIS-GATE-BLOCK","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	row := store.rows["AIS-GATE-BLOCK"]
+	if row.SendDecision != "blocked" || row.ProductionSend != "blocked" {
+		t.Fatalf("unsafe send decision: %#v", row)
+	}
+	if row.CallbackOutboxStatus != "DRY_RUN_HELD" {
+		t.Fatalf("expected dry-run outbox, got %#v", row)
+	}
 }
 
 func decodeBody(t *testing.T, res *httptest.ResponseRecorder) map[string]any {
@@ -208,7 +238,7 @@ func (f *fakeStore) ListStatuses(ctx context.Context, limit int) ([]storage.Requ
 	return []storage.RequestStatus{}, nil
 }
 
-func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRequest, callback storage.Callback, evidence storage.EvidenceTrace, etr storage.ETRCandidate) (bool, error) {
+func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRequest, callback storage.Callback, evidence storage.EvidenceTrace, etr storage.ETRCandidate, send storage.SendDecision, outbox storage.CallbackOutbox) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if _, ok := f.rows[request.RequestID]; ok {
@@ -234,6 +264,15 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 		EvidenceJSON:       evidence.EvidenceJSON,
 		ETRStatus:          etr.Status,
 		ProductionSend:     "blocked",
+		SendPolicyMode:     send.PolicyMode,
+		SendEffectiveMode:  send.EffectiveMode,
+		EligibilityStatus:  send.EligibilityStatus,
+		SendDecision:       send.Decision,
+		SendReason:         send.Reason,
+		SendGateVersion:    send.GateVersion,
+		CallbackOutboxStatus: outbox.Status,
+		CallbackTransport: outbox.Transport,
+		CallbackAttempts:  outbox.AttemptCount,
 	}
 	return false, nil
 }
@@ -268,6 +307,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 			snapshot.NotReadyETR++
 		}
 		snapshot.PendingWorkerTraces++
+		if row.CallbackOutboxStatus == "DRY_RUN_HELD" {
+			snapshot.OutboxDryRunHeld++
+		}
 	}
 	return snapshot, nil
 }

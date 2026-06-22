@@ -9,6 +9,8 @@
 - duplicate `request_id` count
 - PostgreSQL connection/write errors
 - callback capture/post status
+- `callback_outbox` dry-run, retry, and DLQ counts
+- send-control mode and emergency-off status
 - DB backup success and restore-test status
 - real AIS cloud hit status from `runtime/production_cloud_real_hit_check.ps1`
 
@@ -20,6 +22,8 @@
 - DB backup is older than 24 hours
 - Any report shows `production_send` not equal to `blocked`
 - `pending_worker_traces` grows for more than 30 minutes
+- `callback_dead_letters` count increases
+- `send_control.mode` changes without owner-approved change record
 
 ## Dashboard Note
 

@@ -66,6 +66,7 @@ const guardrails = [
   "mode = shadow",
   "production_send = blocked",
   "Auto ETR not enabled",
+  "callback dry-run only",
   "AIS outage/restore stays truth"
 ];
 
@@ -176,6 +177,7 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
         <Metric label="Real AIS hits" value={String(counts.real)} note="excludes smoke IDs" />
         <Metric label="ETR candidate" value={formatEtrMetricValue(latest)} note={formatEtrMetricNote(latest)} />
         <Metric label="Production sends" value="0" note="blocked by design" />
+        <Metric label="Dry-run outbox" value={String(initialData.metrics?.outbox_dry_run_held ?? counts.outboxHeld)} note="no network send" />
       </section>
 
       <section className="panel trace">
@@ -212,6 +214,14 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
               <span>Shadow response</span>
               <strong>{story[5].body}</strong>
             </div>
+            <div>
+              <span>Eligibility</span>
+              <strong>{formatEligibility(latest)}</strong>
+            </div>
+            <div>
+              <span>Callback outbox</span>
+              <strong>{formatOutbox(latest)}</strong>
+            </div>
           </div>
         </div>
 
@@ -244,6 +254,8 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
                 <th>received_at</th>
                 <th>status</th>
                 <th>callback</th>
+                <th>send decision</th>
+                <th>outbox</th>
                 <th>meter_ref</th>
                 <th>production</th>
               </tr>
@@ -255,6 +267,8 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
                   <td>{item.received_at}</td>
                   <td>{item.status}</td>
                   <td>{item.callback_status}</td>
+                  <td>{formatSendDecision(item)}</td>
+                  <td>{formatOutbox(item)}</td>
                   <td>{item.meter?.last4 ? `***${item.meter.last4}` : "redacted"}</td>
                   <td>{item.production_send}</td>
                 </tr>
@@ -316,7 +330,8 @@ function TraceNode({ title, body, meta }: { title: string; body: string; meta: s
 function summarize(items: OperatorItem[]) {
   return {
     total: items.length,
-    real: items.filter((item) => !item.request_id.includes("SMOKE") && !item.request_id.includes("DEMO")).length
+    real: items.filter((item) => !item.request_id.includes("SMOKE") && !item.request_id.includes("DEMO")).length,
+    outboxHeld: items.filter((item) => item.callback_outbox?.status === "DRY_RUN_HELD").length
   };
 }
 
@@ -369,8 +384,8 @@ function buildTraceStory(latest?: OperatorItem) {
     },
     {
       title: "Shadow response",
-      body: `${callback}; production_send ${latest?.production_send || "blocked"}`,
-      meta: "operator review only"
+      body: `${callback}; ${formatSendDecision(latest)}`,
+      meta: formatOutbox(latest)
     }
   ];
 }
@@ -400,6 +415,25 @@ function formatEtrCandidate(item?: OperatorItem) {
     return `${etr.etr_minutes_p50} min P50${band}`;
   }
   return item?.etr_status || "NOT_READY_FOR_AUTO_SEND";
+}
+
+function formatEligibility(item?: OperatorItem) {
+  return item?.send_control?.eligibility_status || "red_blocked";
+}
+
+function formatSendDecision(item?: OperatorItem) {
+  const decision = item?.send_control?.decision || "blocked";
+  const mode = item?.send_control?.effective_mode || "blocked";
+  return `${decision} (${mode})`;
+}
+
+function formatOutbox(item?: OperatorItem) {
+  const outbox = item?.callback_outbox;
+  if (!outbox?.status) {
+    return "not queued";
+  }
+  const attempts = typeof outbox.attempts === "number" ? `; attempts ${outbox.attempts}` : "";
+  return `${outbox.status}; ${outbox.transport || "dry_run"}${attempts}`;
 }
 
 function formatTimestamp(value?: string) {

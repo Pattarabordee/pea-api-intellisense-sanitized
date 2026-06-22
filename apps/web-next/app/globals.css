@@ -208,7 +208,7 @@ h3 {
 
 .guardrail-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -432,7 +432,7 @@ h3 {
 
 .metric-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-top: 14px;
 }
@@ -558,7 +558,7 @@ h3 {
 
 table {
   width: 100%;
-  min-width: 840px;
+  min-width: 1060px;
   border-collapse: collapse;
 }
 

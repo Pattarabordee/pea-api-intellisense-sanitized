@@ -18,6 +18,7 @@ from .confidence_gate import (
     build_two_stage_shadow_challenger,
     import_forward_capture,
 )
+from .cloud_production import build_green_eligibility_report, run_cloud_worker_shadow_loop
 from .ais_active_state_challenger import build_active_state_remaining_challenger
 from .ais_add_field_truth import import_ais_add_field_truth
 from .ais_first_error_triage import build_ais_first_error_triage
@@ -1101,6 +1102,39 @@ def cmd_shadow_send_eligibility(args: argparse.Namespace) -> None:
         max_auto_interval_width_minutes=args.max_auto_interval_width_minutes,
         max_auto_q90_minutes=args.max_auto_q90_minutes,
         high_error_minutes=args.high_error_minutes,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_green_eligibility_report(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_green_eligibility_report(
+        ais_only_readiness=settings.resolve(args.ais_only_readiness),
+        notification_time=settings.resolve(args.notification_time),
+        lifecycle_challenger=settings.resolve(args.lifecycle_challenger),
+        remaining_time=settings.resolve(args.remaining_time),
+        threshold_calibration=settings.resolve(args.threshold_calibration),
+        output=settings.resolve(args.output),
+        markdown_output=settings.resolve(args.markdown_output),
+        segments_output=settings.resolve(args.segments_output),
+        gate_output=settings.resolve(args.gate_output),
+        gate_csv_output=settings.resolve(args.gate_csv_output),
+        json_output=settings.resolve(args.json_output),
+        min_green_rows=args.min_green_rows,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_cloud_worker_shadow_loop(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = run_cloud_worker_shadow_loop(
+        database_url=args.database_url,
+        input_json=settings.resolve(args.input_json) if args.input_json else None,
+        output_json=settings.resolve(args.output_json),
+        markdown_output=settings.resolve(args.markdown_output),
+        limit=args.limit,
+        dry_run=not args.apply,
+        apply=args.apply,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -3153,6 +3187,36 @@ def build_parser() -> argparse.ArgumentParser:
     shadow_send.add_argument("--max-auto-q90-minutes", type=float, default=180.0)
     shadow_send.add_argument("--high-error-minutes", type=float, default=60.0)
     shadow_send.set_defaults(func=cmd_shadow_send_eligibility)
+
+    green_report = sub.add_parser(
+        "green-eligibility-report",
+        help="Build cloud-pilot green/amber/red eligibility and green-gate reports",
+    )
+    green_report.add_argument("--ais-only-readiness", default="runtime/ais_only_readiness.csv")
+    green_report.add_argument("--notification-time", default="runtime/notification_time_readiness.csv")
+    green_report.add_argument("--lifecycle-challenger", default="runtime/ais_only_lifecycle_challenger.csv")
+    green_report.add_argument("--remaining-time", default="runtime/ais_only_remaining_time_challenger.csv")
+    green_report.add_argument("--threshold-calibration", default="runtime/eligibility_threshold_calibration.csv")
+    green_report.add_argument("--output", default="runtime/cloud_pilot/green_eligibility_report.csv")
+    green_report.add_argument("--markdown-output", default="runtime/cloud_pilot/green_eligibility_report.md")
+    green_report.add_argument("--segments-output", default="runtime/cloud_pilot/green_eligibility_segments.csv")
+    green_report.add_argument("--gate-output", default="runtime/cloud_pilot/green_gate_tracker.md")
+    green_report.add_argument("--gate-csv-output", default="runtime/cloud_pilot/green_gate_tracker.csv")
+    green_report.add_argument("--json-output", default="runtime/cloud_pilot/green_eligibility_report.json")
+    green_report.add_argument("--min-green-rows", type=int, default=30)
+    green_report.set_defaults(func=cmd_green_eligibility_report)
+
+    cloud_worker = sub.add_parser(
+        "cloud-worker-shadow-loop",
+        help="Review pending cloud Postgres requests and optionally append safe shadow worker rows",
+    )
+    cloud_worker.add_argument("--database-url", default=None, help="PostgreSQL URL; omit with --input-json for local dry-run")
+    cloud_worker.add_argument("--input-json", default=None, help="Operator payload JSON fixture for dry-run without Postgres")
+    cloud_worker.add_argument("--output-json", default="runtime/cloud_pilot/cloud_worker_shadow_loop_report.json")
+    cloud_worker.add_argument("--markdown-output", default="runtime/cloud_pilot/cloud_worker_shadow_loop_report.md")
+    cloud_worker.add_argument("--limit", type=int, default=50)
+    cloud_worker.add_argument("--apply", action="store_true", help="Write append-only evidence/ETR/audit rows; default is dry-run")
+    cloud_worker.set_defaults(func=cmd_cloud_worker_shadow_loop)
 
     forward_template = sub.add_parser(
         "forward-capture-template",

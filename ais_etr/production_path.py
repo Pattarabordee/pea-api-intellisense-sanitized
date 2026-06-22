@@ -302,12 +302,28 @@ def build_production_readiness_gate(
                     "Dockerfile",
                     "cmd/pea-api-intellisense/main.go",
                     "internal/api/server.go",
+                    "internal/sendcontrol/sendcontrol.go",
                     "internal/storage/postgres.go",
                     "internal/storage/migrations/001_init.sql",
+                    "internal/storage/migrations/002_send_controls.sql",
                 ],
             ),
             "Go API package, PostgreSQL store, and migration are present.",
             "Go API production package is incomplete.",
+        ),
+        _prod_check(
+            "send_control_and_worker",
+            _all_exist(root, ["ais_etr/cloud_production.py"])
+            and _all_exist(
+                cloud_root,
+                [
+                    "production_send_state_machine_runbook.md",
+                    "dry_run_callback_dlq_runbook.md",
+                    "cloud_worker_shadow_loop_runbook.md",
+                ],
+            ),
+            "Production send state machine, dry-run callback/DLQ, and worker controls are present.",
+            "Send-control, worker, or dry-run callback controls are incomplete.",
         ),
         _prod_check(
             "nextjs_console_package",
@@ -373,6 +389,9 @@ def build_production_readiness_gate(
                     "incident_playbook.md",
                     "monitoring_policy.md",
                     "backup_restore_commands.md",
+                    "production_send_state_machine_runbook.md",
+                    "dry_run_callback_dlq_runbook.md",
+                    "cloud_worker_shadow_loop_runbook.md",
                 ],
             ),
             "Cloud operations, monitoring, incident, and backup docs are present.",
@@ -419,6 +438,7 @@ def build_production_readiness_gate(
             "ci_workflow",
             "cloud_qa_scripts",
             "observability_controls",
+            "send_control_and_worker",
             "cloud_ops_runbook",
             "secret_loading_policy",
         }

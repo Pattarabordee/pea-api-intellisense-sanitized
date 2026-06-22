@@ -38,6 +38,9 @@ func main() {
 		APIKey:             cfg.APIKey,
 		RateLimitPerMinute: cfg.RateLimitPerMinute,
 		AllowedOrigin:      cfg.AllowedOrigin,
+		ProductionSendMode: cfg.ProductionSendMode,
+		CallbackTransport:  cfg.CallbackTransport,
+		EmergencyOff:        cfg.EmergencyOff,
 		Logger:             logger,
 	}, store)
 

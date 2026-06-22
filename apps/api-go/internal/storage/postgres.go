@@ -98,7 +98,7 @@ func (s *PostgresStore) Health(ctx context.Context) error {
 	return s.pool.Ping(ctx)
 }
 
-func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundRequest, callback Callback, evidence EvidenceTrace, etr ETRCandidate) (bool, error) {
+func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundRequest, callback Callback, evidence EvidenceTrace, etr ETRCandidate, send SendDecision, outbox CallbackOutbox) (bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -141,6 +141,13 @@ func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundReques
 		return false, err
 	}
 	if err := insertETR(ctx, tx, etr); err != nil {
+		return false, err
+	}
+	decisionID, err := insertSendDecision(ctx, tx, send)
+	if err != nil {
+		return false, err
+	}
+	if err := insertCallbackOutbox(ctx, tx, decisionID, outbox); err != nil {
 		return false, err
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO audit_events (event_type, request_id, details_json) VALUES ('request_received', $1, $2)`, request.RequestID, request.ResponseJSON); err != nil {
@@ -225,6 +232,12 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 	).Scan(&snapshot.NotReadyETR); err != nil {
 		return nil, err
 	}
+	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM callback_outbox WHERE status = 'DRY_RUN_HELD'`).Scan(&snapshot.OutboxDryRunHeld); err != nil {
+		return nil, err
+	}
+	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM callback_dead_letters`).Scan(&snapshot.DeadLetters); err != nil {
+		return nil, err
+	}
 	rows, err := s.pool.Query(ctx, `SELECT status, count(*) FROM ais_inbound_callbacks GROUP BY status ORDER BY status`)
 	if err != nil {
 		return nil, err
@@ -260,16 +273,34 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			request_id, status, production_send
 		FROM etr_candidates
 		ORDER BY request_id, id DESC
+	),
+	latest_send AS (
+		SELECT DISTINCT ON (request_id)
+			request_id, policy_mode, effective_mode, eligibility_status, decision, reason, gate_version
+		FROM send_decisions
+		ORDER BY request_id, id DESC
+	),
+	latest_outbox AS (
+		SELECT DISTINCT ON (request_id)
+			request_id, status, transport, attempt_count
+		FROM callback_outbox
+		ORDER BY request_id, id DESC
 	)
 	SELECT r.request_id, r.received_at, r.detected_at, r.detected_at_original,
 		r.timestamp_quality, r.meter_hash, r.meter_last4, r.province, r.district, r.subdistrict,
 		r.request_json, r.response_json, r.callback_status,
 		c.payload_json, c.status, c.status_code, c.sent_at,
-		e.evidence_json, coalesce(t.status, ''), coalesce(t.production_send, 'blocked')
+		e.evidence_json, coalesce(t.status, ''), coalesce(t.production_send, 'blocked'),
+		coalesce(s.policy_mode, 'blocked'), coalesce(s.effective_mode, 'blocked'),
+		coalesce(s.eligibility_status, 'red_blocked'), coalesce(s.decision, 'blocked'),
+		coalesce(s.reason, 'production_send_blocked_by_default'), coalesce(s.gate_version, 'blocked_green_gate'),
+		coalesce(o.status, ''), coalesce(o.transport, 'dry_run'), coalesce(o.attempt_count, 0)
 	FROM ais_inbound_requests r
 	LEFT JOIN latest_callbacks c ON c.request_id = r.request_id
 	LEFT JOIN latest_evidence e ON e.request_id = r.request_id
 	LEFT JOIN latest_etr t ON t.request_id = r.request_id
+	LEFT JOIN latest_send s ON s.request_id = r.request_id
+	LEFT JOIN latest_outbox o ON o.request_id = r.request_id
 	` + where + `
 	ORDER BY r.received_at DESC
 	LIMIT $` + fmt.Sprint(len(args)+1)
@@ -303,6 +334,15 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			&item.EvidenceJSON,
 			&item.ETRStatus,
 			&item.ProductionSend,
+			&item.SendPolicyMode,
+			&item.SendEffectiveMode,
+			&item.EligibilityStatus,
+			&item.SendDecision,
+			&item.SendReason,
+			&item.SendGateVersion,
+			&item.CallbackOutboxStatus,
+			&item.CallbackTransport,
+			&item.CallbackAttempts,
 		); err != nil {
 			return nil, err
 		}
@@ -360,6 +400,54 @@ func insertETR(ctx context.Context, tx pgx.Tx, etr ETRCandidate) error {
 		etr.ProductionGate,
 		etr.ProductionSend,
 		etr.GeneratedAt,
+	)
+	return err
+}
+
+func insertSendDecision(ctx context.Context, tx pgx.Tx, decision SendDecision) (int64, error) {
+	var id int64
+	err := tx.QueryRow(
+		ctx,
+		`INSERT INTO send_decisions (
+			request_id, policy_mode, effective_mode, eligibility_status, decision, reason,
+			gate_version, source, operator_actor, production_send, decided_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+		RETURNING id`,
+		decision.RequestID,
+		decision.PolicyMode,
+		decision.EffectiveMode,
+		decision.EligibilityStatus,
+		decision.Decision,
+		decision.Reason,
+		decision.GateVersion,
+		decision.Source,
+		decision.OperatorActor,
+		decision.ProductionSend,
+		decision.DecidedAt,
+	).Scan(&id)
+	return id, err
+}
+
+func insertCallbackOutbox(ctx context.Context, tx pgx.Tx, decisionID int64, outbox CallbackOutbox) error {
+	_, err := tx.Exec(
+		ctx,
+		`INSERT INTO callback_outbox (
+			request_id, decision_id, payload_hash, payload_json, transport, status,
+			attempt_count, max_attempts, last_error, production_send, created_at, updated_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+		ON CONFLICT (request_id, payload_hash) DO NOTHING`,
+		outbox.RequestID,
+		decisionID,
+		outbox.PayloadHash,
+		outbox.PayloadJSON,
+		outbox.Transport,
+		outbox.Status,
+		outbox.AttemptCount,
+		outbox.MaxAttempts,
+		nullIfEmpty(outbox.LastError),
+		outbox.ProductionSend,
+		outbox.CreatedAt,
+		outbox.UpdatedAt,
 	)
 	return err
 }

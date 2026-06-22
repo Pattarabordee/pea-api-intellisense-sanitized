@@ -1,0 +1,171 @@
+import csv
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from ais_etr.cloud_production import build_green_eligibility_report, run_cloud_worker_shadow_loop
+
+
+class CloudProductionTests(unittest.TestCase):
+    def test_cloud_worker_dry_run_keeps_guardrails_and_redaction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "operator.json"
+            source.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "request_id": "AIS-CLOUD-1",
+                                "meter": {"hash": "abc123", "last4": "7890"},
+                                "result": {"evidence": {"reason": "worker pending"}},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "worker.json"
+            markdown = root / "worker.md"
+
+            result = run_cloud_worker_shadow_loop(input_json=source, output_json=output, markdown_output=markdown)
+
+            self.assertEqual(result["status"], "DRY_RUN")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertEqual(result["decisions"][0]["etr_candidate"]["status"], "NOT_READY_FOR_AUTO_SEND")
+            text = output.read_text(encoding="utf-8")
+            self.assertIn("7890", text)
+            self.assertNotIn("METER-", text)
+            self.assertIn("No customer-facing callback is sent", markdown.read_text(encoding="utf-8"))
+
+    def test_green_eligibility_report_builds_cloud_gate_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            readiness = root / "readiness.csv"
+            notification = root / "notification.csv"
+            lifecycle = root / "lifecycle.csv"
+            remaining = root / "remaining.csv"
+            calibration = root / "calibration.csv"
+            _write_readiness(readiness)
+            _write_notification(notification)
+            _write_lifecycle(lifecycle)
+            _write_remaining(remaining)
+            _write_csv(calibration, ["variant", "gate_status"], [])
+
+            result = build_green_eligibility_report(
+                ais_only_readiness=readiness,
+                notification_time=notification,
+                lifecycle_challenger=lifecycle,
+                remaining_time=remaining,
+                threshold_calibration=calibration,
+                output=root / "green.csv",
+                markdown_output=root / "green.md",
+                segments_output=root / "segments.csv",
+                gate_output=root / "gate.md",
+                gate_csv_output=root / "gate.csv",
+                json_output=root / "summary.json",
+                min_green_rows=30,
+            )
+
+            self.assertEqual(result["status"], "PASS")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertEqual(result["green_gate"]["green_rows"], 1)
+            self.assertEqual(result["green_gate"]["additional_green_rows_needed"], 29)
+            self.assertIn("No production AIS send", (root / "green.md").read_text(encoding="utf-8-sig"))
+
+
+def _write_readiness(path: Path) -> None:
+    columns = [
+        "source_lane",
+        "event_ref",
+        "event_time",
+        "district",
+        "feeder",
+        "device_id",
+        "match_level",
+        "match_confidence",
+        "affected_count",
+        "actual_restoration_minutes",
+        "model_metric_included",
+        "current_p50",
+        "current_q10",
+        "current_q90",
+        "current_absolute_error",
+        "current_covered_q10_q90",
+    ]
+    _write_csv(
+        path,
+        columns,
+        [
+            {
+                "source_lane": "ais_truth_matched",
+                "event_ref": "evt-green",
+                "event_time": "2026-06-01T10:00:00",
+                "district": "Phang Khon",
+                "feeder": "PFA09",
+                "device_id": "PFA09R-03",
+                "match_level": "recloser",
+                "match_confidence": "0.9",
+                "affected_count": "2",
+                "actual_restoration_minutes": "50",
+                "model_metric_included": "true",
+                "current_p50": "45",
+                "current_q10": "20",
+                "current_q90": "80",
+                "current_absolute_error": "5",
+                "current_covered_q10_q90": "TRUE",
+            }
+        ],
+    )
+
+
+def _write_notification(path: Path) -> None:
+    _write_csv(
+        path,
+        ["event_id", "webex_message_ref", "active_ais_outage_confirmed", "event_age_band", "webex_device_interruption_class", "notification_time_gate"],
+        [
+            {
+                "event_id": "event-evt-green",
+                "webex_message_ref": "evt-green",
+                "active_ais_outage_confirmed": "TRUE",
+                "event_age_band": "0_5m",
+                "webex_device_interruption_class": "sustained_candidate",
+                "notification_time_gate": "shadow_etr_candidate",
+            }
+        ],
+    )
+
+
+def _write_lifecycle(path: Path) -> None:
+    _write_csv(
+        path,
+        ["event_ref", "event_id", "lifecycle_v3_p50", "lifecycle_v3_q10", "lifecycle_v3_q90", "lifecycle_v3_absolute_error", "lifecycle_v3_covered_q10_q90"],
+        [
+            {
+                "event_ref": "evt-green",
+                "event_id": "event-evt-green",
+                "lifecycle_v3_p50": "45",
+                "lifecycle_v3_q10": "20",
+                "lifecycle_v3_q90": "80",
+                "lifecycle_v3_absolute_error": "5",
+                "lifecycle_v3_covered_q10_q90": "TRUE",
+            }
+        ],
+    )
+
+
+def _write_remaining(path: Path) -> None:
+    _write_csv(path, ["event_ref", "challenger_p50", "challenger_q10", "challenger_q90"], [])
+
+
+def _write_csv(path: Path, columns: list[str], rows: list[dict[str, str]]) -> None:
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({column: row.get(column, "") for column in columns})
+
+
+if __name__ == "__main__":
+    unittest.main()

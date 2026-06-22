@@ -1,0 +1,60 @@
+{
+  "eligibility": {
+    "ais_only_readiness_csv": "D:\\PEA Intellisense data\\runtime\\ais_only_readiness.csv",
+    "ais_truth_matched_rows": 79,
+    "all_ais_q10_q90_coverage": 0.57,
+    "all_ais_q50_mae_minutes": 111.11,
+    "amber_human_review_rows": 1,
+    "eligibility_status_counts": {
+      "amber_human_review": 1,
+      "monitor_only": 421,
+      "red_blocked": 1141
+    },
+    "green_auto_candidate_rows": 0,
+    "green_high_error_rows": 0,
+    "green_q10_q90_coverage": null,
+    "green_q50_mae_minutes": null,
+    "high_error_minutes": 60.0,
+    "lifecycle_challenger_csv": "D:\\PEA Intellisense data\\runtime\\ais_only_lifecycle_challenger.csv",
+    "markdown_output": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_report.md",
+    "max_auto_interval_width_minutes": 120.0,
+    "max_auto_q90_minutes": 180.0,
+    "min_match_confidence": 0.8,
+    "monitor_only_rows": 421,
+    "notification_time_csv": "D:\\PEA Intellisense data\\runtime\\notification_time_readiness.csv",
+    "output_csv": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_report.csv",
+    "production_gate_output": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_gate_tracker.md",
+    "production_gate_status": "blocked_no_green_subset",
+    "red_blocked_rows": 1141,
+    "remaining_time_csv": "D:\\PEA Intellisense data\\runtime\\ais_only_remaining_time_challenger.csv",
+    "rows": 1563,
+    "segments_output": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_segments.csv",
+    "stage1_class_counts": {
+      "long_outage_risk": 66,
+      "uncertain": 1497
+    }
+  },
+  "generated_at": "2026-06-22T02:14:58Z",
+  "green_gate": {
+    "additional_green_rows_needed": 30,
+    "ais_truth_metric_rows": 79,
+    "best_variant": "",
+    "gate_status": "blocked_too_few_green_rows",
+    "green_q10_q90_coverage": "",
+    "green_q50_mae_minutes": "",
+    "green_rows": 0,
+    "markdown_output": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_gate_tracker.md",
+    "min_green_rows": 30,
+    "output_csv": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_gate_tracker.csv"
+  },
+  "mode": "shadow",
+  "outputs": {
+    "csv": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_report.csv",
+    "gate_csv": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_gate_tracker.csv",
+    "gate_markdown": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_gate_tracker.md",
+    "markdown": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_report.md",
+    "segments": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_eligibility_segments.csv"
+  },
+  "production_send": "blocked",
+  "status": "PASS"
+}

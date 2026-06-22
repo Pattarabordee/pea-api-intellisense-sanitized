@@ -6,6 +6,20 @@ export type OperatorItem = {
   callback_status: string;
   production_send: "blocked";
   etr_status?: string;
+  send_control?: {
+    policy_mode?: string;
+    effective_mode?: string;
+    eligibility_status?: string;
+    decision?: string;
+    reason?: string;
+    gate_version?: string;
+    production_send?: "blocked";
+  };
+  callback_outbox?: {
+    status?: string;
+    transport?: string;
+    attempts?: number;
+  };
   meter?: { hash?: string; last4?: string };
   result?: {
     evidence?: {
@@ -49,6 +63,8 @@ export type OperatorData = {
     duplicate_callbacks?: number;
     pending_worker_traces?: number;
     not_ready_etr?: number;
+    outbox_dry_run_held?: number;
+    dead_letters?: number;
     latest_received_at?: string;
   };
   items: OperatorItem[];
@@ -67,6 +83,8 @@ export const demoOperatorData: OperatorData = {
     duplicate_callbacks: 1,
     pending_worker_traces: 2,
     not_ready_etr: 2,
+    outbox_dry_run_held: 3,
+    dead_letters: 0,
     latest_received_at: "2026-06-21T09:05:12Z"
   },
   items: [
@@ -78,6 +96,16 @@ export const demoOperatorData: OperatorData = {
       callback_status: "CAPTURED_NO_CALLBACK_URL",
       production_send: "blocked",
       etr_status: "SHADOW_ONLY",
+      send_control: {
+        policy_mode: "blocked",
+        effective_mode: "blocked",
+        eligibility_status: "green_auto_candidate",
+        decision: "blocked",
+        reason: "green_gate_not_passed",
+        gate_version: "blocked_green_gate",
+        production_send: "blocked"
+      },
+      callback_outbox: { status: "DRY_RUN_HELD", transport: "dry_run", attempts: 0 },
       meter: { hash: "6ca13d52ca70c883", last4: "7890" },
       result: {
         evidence: {
@@ -115,6 +143,16 @@ export const demoOperatorData: OperatorData = {
       callback_status: "SKIPPED_DUPLICATE",
       production_send: "blocked",
       etr_status: "NOT_READY_FOR_AUTO_SEND",
+      send_control: {
+        policy_mode: "blocked",
+        effective_mode: "blocked",
+        eligibility_status: "red_blocked",
+        decision: "blocked",
+        reason: "duplicate_request_id",
+        gate_version: "blocked_green_gate",
+        production_send: "blocked"
+      },
+      callback_outbox: { status: "DRY_RUN_HELD", transport: "dry_run", attempts: 0 },
       meter: { hash: "a1b2c3d4e5f60718", last4: "4312" },
       result: { evidence: { reason: "request_id_already_received" } }
     },
@@ -126,6 +164,16 @@ export const demoOperatorData: OperatorData = {
       callback_status: "CAPTURED_NO_CALLBACK_URL",
       production_send: "blocked",
       etr_status: "NOT_READY_FOR_AUTO_SEND",
+      send_control: {
+        policy_mode: "blocked",
+        effective_mode: "blocked",
+        eligibility_status: "red_blocked",
+        decision: "blocked",
+        reason: "worker_pending",
+        gate_version: "blocked_green_gate",
+        production_send: "blocked"
+      },
+      callback_outbox: { status: "DRY_RUN_HELD", transport: "dry_run", attempts: 0 },
       meter: { hash: "95d4ab02f8ca7711", last4: "0455" },
       result: { evidence: { reason: "cloud_shadow_no_worker_result" } }
     }

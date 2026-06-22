@@ -124,6 +124,7 @@ class ProductionPathTests(unittest.TestCase):
             cloud.mkdir(parents=True)
             api.mkdir(parents=True)
             web.mkdir(parents=True)
+            (root / "ais_etr").mkdir(parents=True)
             (root / ".github" / "workflows").mkdir(parents=True)
             for name in [
                 "Dockerfile",
@@ -133,6 +134,9 @@ class ProductionPathTests(unittest.TestCase):
                 "incident_playbook.md",
                 "monitoring_policy.md",
                 "backup_restore_commands.md",
+                "production_send_state_machine_runbook.md",
+                "dry_run_callback_dlq_runbook.md",
+                "cloud_worker_shadow_loop_runbook.md",
             ]:
                 (cloud / name).write_text("ok", encoding="utf-8")
             (cloud / ".env.cloud.example").write_text(
@@ -144,8 +148,10 @@ class ProductionPathTests(unittest.TestCase):
                 api / "Dockerfile",
                 api / "cmd" / "pea-api-intellisense" / "main.go",
                 api / "internal" / "api" / "server.go",
+                api / "internal" / "sendcontrol" / "sendcontrol.go",
                 api / "internal" / "storage" / "postgres.go",
                 api / "internal" / "storage" / "migrations" / "001_init.sql",
+                api / "internal" / "storage" / "migrations" / "002_send_controls.sql",
                 web / "package.json",
                 web / "next.config.mjs",
                 web / "app" / "page.tsx",
@@ -169,6 +175,7 @@ class ProductionPathTests(unittest.TestCase):
                 "production_cloud_worker_handoff_contract.md",
             ]:
                 (root / "runtime" / name).write_text("ok", encoding="utf-8")
+            (root / "ais_etr" / "cloud_production.py").write_text("ok", encoding="utf-8")
             (root / "render.yaml").write_text("services: []\ndatabases: []\n", encoding="utf-8")
             (root / "runtime" / "sanitized_codebase_manifest.json").write_text(
                 json.dumps({"status": "PASS", "zip_output": "bundle.zip"}),
@@ -195,6 +202,7 @@ class ProductionPathTests(unittest.TestCase):
             self.assertEqual(report["auto_etr_ready"], "BLOCKED_GREEN_GATE")
             status_by_name = {check["name"]: check["status"] for check in report["checks"]}
             self.assertEqual(status_by_name["go_api_package"], "PASS")
+            self.assertEqual(status_by_name["send_control_and_worker"], "PASS")
             self.assertEqual(status_by_name["nextjs_console_package"], "PASS")
             self.assertEqual(status_by_name["render_blueprint"], "PASS")
             self.assertEqual(status_by_name["ci_workflow"], "PASS")
