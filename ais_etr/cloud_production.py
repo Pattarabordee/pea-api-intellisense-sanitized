@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import Counter
+import csv
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -11,6 +13,22 @@ from typing import Any
 from .confidence_gate import build_shadow_send_eligibility
 from .shadow_operations import build_green_gate_tracker
 
+
+GAP_ACTION_COLUMNS = (
+    "event_ref",
+    "event_time",
+    "feeder",
+    "device_id",
+    "source_lane",
+    "eligibility_status",
+    "stage1_class",
+    "blocker_reasons",
+    "owner_lane",
+    "next_evidence_needed",
+    "metric_use",
+    "conversion_rank",
+    "production_send",
+)
 
 PENDING_WORKER_SQL = """
 WITH latest_evidence AS (
@@ -38,6 +56,106 @@ FROM (
     LIMIT {limit}
 ) t;
 """
+
+
+def build_production_gate_packet(
+    *,
+    eligibility_csv: str | Path = "runtime/cloud_pilot/green_eligibility_report.csv",
+    green_gate_json: str | Path = "runtime/cloud_pilot/green_eligibility_report.json",
+    real_hit_status_json: str | Path = "runtime/production_cloud_real_hit_status.json",
+    readiness_gate_json: str | Path = "runtime/production_path_readiness_gate.json",
+    owner_approval_template: str | Path = "runtime/cloud_pilot/owner_approval_status.template.json",
+    output_csv: str | Path = "runtime/cloud_pilot/production_gate_gap_actions.csv",
+    markdown_output: str | Path = "runtime/cloud_pilot/production_gate_owner_packet.md",
+    json_output: str | Path = "runtime/cloud_pilot/production_gate_owner_packet.json",
+    min_green_rows: int = 30,
+    top_blockers: int = 12,
+) -> dict[str, Any]:
+    rows = _read_csv(eligibility_csv)
+    gate_payload = _read_json(green_gate_json)
+    real_hit = _read_json(real_hit_status_json)
+    readiness = _read_json(readiness_gate_json)
+    owner_template = _read_json(owner_approval_template)
+    if not rows:
+        summary = {
+            "generated_at": _utc_now_iso(),
+            "status": "BLOCKED_MISSING_ELIGIBILITY",
+            "mode": "shadow",
+            "production_send": "blocked",
+            "missing_inputs": [str(eligibility_csv)],
+        }
+        _write_json(json_output, summary)
+        Path(markdown_output).parent.mkdir(parents=True, exist_ok=True)
+        Path(markdown_output).write_text(_render_missing_green_report(summary), encoding="utf-8")
+        return summary
+
+    gap_rows = [_gap_action_row(row) for row in rows]
+    smoke_row = _smoke_demo_gap_row(real_hit)
+    if smoke_row:
+        gap_rows.append(smoke_row)
+    gap_rows.sort(key=lambda row: (_to_int(row.get("conversion_rank")), row.get("event_time", "")), reverse=True)
+    _write_csv(output_csv, GAP_ACTION_COLUMNS, gap_rows)
+
+    status_counts = Counter(row.get("eligibility_status") or "<blank>" for row in rows)
+    blocker_counts: Counter[str] = Counter()
+    for row in rows:
+        for blocker in _split_reasons(row.get("blocker_reasons")):
+            blocker_counts[blocker] += 1
+    owner_counts = Counter(row.get("owner_lane") or "<blank>" for row in gap_rows)
+    green_gate = gate_payload.get("green_gate") if isinstance(gate_payload.get("green_gate"), dict) else {}
+    eligibility = gate_payload.get("eligibility") if isinstance(gate_payload.get("eligibility"), dict) else {}
+    green_rows = _to_int(green_gate.get("green_rows"))
+    if green_rows is None:
+        green_rows = status_counts.get("green_auto_candidate", 0)
+    additional_needed = _to_int(green_gate.get("additional_green_rows_needed"))
+    if additional_needed is None:
+        additional_needed = max(min_green_rows - green_rows, 0)
+    summary = {
+        "generated_at": _utc_now_iso(),
+        "status": "PASS",
+        "mode": "shadow",
+        "production_send": "blocked",
+        "decision": "AUTO_ETR_NO_GO",
+        "green_rows": green_rows,
+        "min_green_rows": min_green_rows,
+        "additional_green_rows_needed": additional_needed,
+        "green_q50_mae_minutes": green_gate.get("green_q50_mae_minutes") or eligibility.get("green_q50_mae_minutes"),
+        "green_q10_q90_coverage": green_gate.get("green_q10_q90_coverage") or eligibility.get("green_q10_q90_coverage"),
+        "production_gate_status": green_gate.get("gate_status") or eligibility.get("production_gate_status") or "blocked",
+        "eligibility_status_counts": dict(status_counts.most_common()),
+        "blocker_reason_counts": dict(blocker_counts.most_common(top_blockers)),
+        "owner_lane_counts": dict(owner_counts.most_common()),
+        "cloud_status": {
+            "api_base_url": real_hit.get("api_base_url", ""),
+            "web_console_url": real_hit.get("web_console_url", ""),
+            "health_status": real_hit.get("health_status", ""),
+            "database": real_hit.get("database", ""),
+            "total_requests": real_hit.get("total_requests", 0),
+            "non_smoke_requests": real_hit.get("non_smoke_requests", 0),
+            "latest_request": _safe_latest_request(real_hit.get("latest_request")),
+        },
+        "readiness": {
+            "cloud_endpoint_ready": readiness.get("cloud_endpoint_ready", ""),
+            "production_infra_ready": readiness.get("production_infra_ready", ""),
+            "auto_etr_ready": readiness.get("auto_etr_ready", ""),
+        },
+        "owner_approvals": owner_template.get("approvals", {}),
+        "outputs": {
+            "gap_actions_csv": str(output_csv),
+            "markdown": str(markdown_output),
+            "json": str(json_output),
+        },
+        "guardrails": [
+            "production_send_remains_blocked",
+            "smoke_demo_cases_do_not_count_as_green_truth",
+            "ais_outage_restore_remains_customer_facing_truth",
+            "no_full_meter_peano_customer_identity_or_raw_webex_text",
+        ],
+    }
+    _write_json(json_output, summary)
+    Path(markdown_output).parent.mkdir(parents=True, exist_ok=True)
+    Path(markdown_output).write_text(_render_production_gate_packet(summary), encoding="utf-8")
+    return summary
 
 
 def build_green_eligibility_report(
@@ -173,6 +291,125 @@ def _load_pending_rows(*, database_url: str | None, input_json: str | Path | Non
     return [dict(item) for item in value]
 
 
+def _gap_action_row(row: dict[str, str]) -> dict[str, str]:
+    reasons = _split_reasons(row.get("blocker_reasons"))
+    return {
+        "event_ref": row.get("event_ref", ""),
+        "event_time": row.get("event_time", ""),
+        "feeder": row.get("feeder", ""),
+        "device_id": row.get("device_id", ""),
+        "source_lane": row.get("source_lane", ""),
+        "eligibility_status": row.get("eligibility_status", ""),
+        "stage1_class": row.get("stage1_class", ""),
+        "blocker_reasons": ";".join(reasons),
+        "owner_lane": _owner_lane_for_reasons(reasons, row),
+        "next_evidence_needed": _next_evidence_needed(reasons, row),
+        "metric_use": _metric_use(row),
+        "conversion_rank": str(_conversion_rank(row, reasons)),
+        "production_send": "blocked",
+    }
+
+
+def _smoke_demo_gap_row(real_hit: dict[str, Any]) -> dict[str, str] | None:
+    total = _to_int(real_hit.get("total_requests")) or 0
+    if total <= 0:
+        return None
+    latest = _safe_latest_request(real_hit.get("latest_request"))
+    return {
+        "event_ref": latest.get("request_id") or "cloud_smoke_requests",
+        "event_time": latest.get("received_at") or real_hit.get("generated_at", ""),
+        "feeder": "",
+        "device_id": "",
+        "source_lane": "cloud_smoke_demo",
+        "eligibility_status": "monitor_only",
+        "stage1_class": "non_metric",
+        "blocker_reasons": "smoke_demo_not_real_ais_truth",
+        "owner_lane": "cloud_ops_owner",
+        "next_evidence_needed": "Use as API/DB/console proof only; do not count toward green model gate.",
+        "metric_use": "non_metric_smoke_demo_not_green_gate",
+        "conversion_rank": "0",
+        "production_send": "blocked",
+    }
+
+
+def _owner_lane_for_reasons(reasons: list[str], row: dict[str, str]) -> str:
+    reason_set = set(reasons)
+    if reason_set & {"missing_ais_truth", "not_ais_truth_matched", "no_active_ais_evidence"}:
+        return "ais_truth_owner"
+    if reason_set & {"no_affected_ais", "missing_protection_match", "feeder_fallback_shadow_only", "low_match_confidence"}:
+        return "pea_topology_owner"
+    if reason_set & {"wide_prediction_interval", "missing_prediction_interval", "missing_prediction", "long_outage_risk"}:
+        return "model_owner"
+    if reason_set & {"momentary_webex_requires_review"}:
+        return "pea_operations_owner"
+    if reason_set & {"pea_quarantined", "not_model_metric_included"}:
+        return "data_governance_owner"
+    if row.get("eligibility_status") == "green_auto_candidate":
+        return "production_gate_owner"
+    return "operator_review"
+
+
+def _next_evidence_needed(reasons: list[str], row: dict[str, str]) -> str:
+    if row.get("eligibility_status") == "green_auto_candidate":
+        return "Hold for green-gate aggregate metrics and owner approval; production send remains blocked."
+    mapping = {
+        "missing_ais_truth": "AIS outage/restore timestamp and site or meter truth for this event.",
+        "not_ais_truth_matched": "Map this event to approved AIS truth, or reject with owner reason.",
+        "no_active_ais_evidence": "AIS confirms active site outage at event time, or marks not affected.",
+        "no_affected_ais": "Confirm affected AIS site or meter behind the matched protection device.",
+        "missing_protection_match": "Topology owner supplies approved protection-device match.",
+        "feeder_fallback_shadow_only": "Replace feeder fallback with approved downstream protection match.",
+        "low_match_confidence": "Repair topology/matching confidence to at least 0.80.",
+        "wide_prediction_interval": "Model owner narrows q10-q90 interval to <=120 minutes using approved features.",
+        "missing_prediction_interval": "Model owner provides q10/q50/q90 candidate.",
+        "missing_prediction": "Model owner provides q10/q50/q90 candidate.",
+        "long_outage_risk": "Operations/model owner adds approved lifecycle or cause context for long-outage risk.",
+        "momentary_webex_requires_review": "Operations owner resolves momentary WebEx vs AIS sustained-outage conflict.",
+        "not_model_metric_included": "Data owner validates metric inclusion or excludes with reason.",
+        "pea_quarantined": "Keep PEA context as feature/quarantine only until owner approval and AIS truth exist.",
+    }
+    for reason in reasons:
+        if reason in mapping:
+            return mapping[reason]
+    return "Operator review required; keep status-only or monitor-only."
+
+
+def _metric_use(row: dict[str, str]) -> str:
+    source_lane = row.get("source_lane", "")
+    if source_lane == "ais_truth_matched":
+        return "historical_ais_truth_backtest"
+    if source_lane == "webex_trigger_no_ais_truth":
+        return "monitor_until_ais_truth_arrives"
+    if source_lane == "pea_quarantined":
+        return "context_quarantine_not_truth"
+    return "non_metric_review"
+
+
+def _conversion_rank(row: dict[str, str], reasons: list[str]) -> int:
+    status = row.get("eligibility_status", "")
+    rank = {"green_auto_candidate": 300, "amber_human_review": 220, "red_blocked": 100, "monitor_only": 80}.get(status, 0)
+    if row.get("source_lane") == "ais_truth_matched":
+        rank += 40
+    if _to_float(row.get("selected_absolute_error")) is not None and (_to_float(row.get("selected_absolute_error")) or 999) <= 16:
+        rank += 20
+    if str(row.get("selected_covered_q10_q90", "")).upper() == "TRUE":
+        rank += 15
+    rank -= min(len(reasons), 8) * 8
+    return rank
+
+
+def _safe_latest_request(value: Any) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        "request_id": str(value.get("request_id") or ""),
+        "received_at": str(value.get("received_at") or ""),
+        "status": str(value.get("status") or ""),
+        "callback_status": str(value.get("callback_status") or ""),
+        "production_send": str(value.get("production_send") or "blocked"),
+    }
+
+
 def _worker_decision(row: dict[str, Any]) -> dict[str, Any]:
     request_id = str(row.get("request_id") or "").strip()
     evidence_status = "SECURE_TOPOLOGY_LOOKUP_REQUIRED"
@@ -284,6 +521,142 @@ def _write_json(path: str | Path, payload: dict[str, Any]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _read_json(path: str | Path) -> dict[str, Any]:
+    source = Path(path)
+    if not source.exists():
+        return {}
+    try:
+        value = json.loads(source.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _read_csv(path: str | Path) -> list[dict[str, str]]:
+    source = Path(path)
+    if not source.exists():
+        return []
+    with source.open(encoding="utf-8-sig", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
+
+
+def _write_csv(path: str | Path, columns: tuple[str, ...], rows: list[dict[str, Any]]) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(columns))
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({column: row.get(column, "") for column in columns})
+
+
+def _split_reasons(value: Any) -> list[str]:
+    output: list[str] = []
+    seen = set()
+    for part in str(value or "").split(";"):
+        reason = part.strip()
+        if reason and reason not in seen:
+            seen.add(reason)
+            output.append(reason)
+    return output
+
+
+def _to_int(value: Any) -> int | None:
+    numeric = _to_float(value)
+    return int(numeric) if numeric is not None else None
+
+
+def _to_float(value: Any) -> float | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _render_production_gate_packet(summary: dict[str, Any]) -> str:
+    cloud = summary.get("cloud_status") or {}
+    readiness = summary.get("readiness") or {}
+    owner_counts = summary.get("owner_lane_counts") or {}
+    blockers = summary.get("blocker_reason_counts") or {}
+    latest = cloud.get("latest_request") or {}
+    lines = [
+        "# Production Gate Owner Packet",
+        "",
+        f"- Generated: `{summary['generated_at']}`",
+        "- Mode: `shadow`",
+        "- Production send: `blocked`",
+        f"- Decision: `{summary['decision']}`",
+        "",
+        "## Gate Snapshot",
+        "",
+        f"- Green rows: `{summary['green_rows']}` / `{summary['min_green_rows']}`",
+        f"- Additional green rows needed: `{summary['additional_green_rows_needed']}`",
+        f"- Green q50 MAE: `{summary.get('green_q50_mae_minutes') or ''}`",
+        f"- Green q10-q90 coverage: `{summary.get('green_q10_q90_coverage') or ''}`",
+        f"- Production gate status: `{summary['production_gate_status']}`",
+        f"- Cloud endpoint: `{readiness.get('cloud_endpoint_ready', '')}`",
+        f"- Production infra: `{readiness.get('production_infra_ready', '')}`",
+        f"- Auto ETR: `{readiness.get('auto_etr_ready', '')}`",
+        "",
+        "## Cloud Evidence",
+        "",
+        f"- API: `{cloud.get('api_base_url', '')}`",
+        f"- Health: `{cloud.get('health_status', '')}`",
+        f"- Database: `{cloud.get('database', '')}`",
+        f"- Total cloud requests: `{cloud.get('total_requests', 0)}`",
+        f"- Real AIS cloud requests: `{cloud.get('non_smoke_requests', 0)}`",
+        f"- Latest request: `{latest.get('request_id', '')}` / `{latest.get('status', '')}` / `production_send={latest.get('production_send', 'blocked')}`",
+        "",
+        "Smoke/demo requests prove API, DB, and console flow only. They do not count toward green model gate.",
+        "",
+        "## Top Blockers",
+        "",
+        "| Blocker | Rows |",
+        "| --- | ---: |",
+    ]
+    for blocker, count in blockers.items():
+        lines.append(f"| `{blocker}` | {count} |")
+    lines.extend(
+        [
+            "",
+            "## Owner Work Queue",
+            "",
+            "| Owner lane | Rows |",
+            "| --- | ---: |",
+        ]
+    )
+    for lane, count in owner_counts.items():
+        lines.append(f"| `{lane}` | {count} |")
+    lines.extend(
+        [
+            "",
+            "## Approval Ask",
+            "",
+            "- AIS truth owner: provide outage/restore truth for prioritized WebEx/protection events.",
+            "- PEA topology owner: approve downstream protection mapping; feeder-only stays non-green.",
+            "- Model owner: improve uncertainty and validate q50 MAE/coverage on green subset.",
+            "- Operations owner: review momentary/long-outage conflicts and approve context use.",
+            "- Gateway/security owner: approve auth, monitoring, backup/restore, incident process, and emergency off.",
+            "",
+            "## Guardrails",
+            "",
+            "- Do not enable customer-facing Auto ETR from this packet.",
+            "- `production_send` remains `blocked` until infra gate, green model gate, callback approval, and owner approval pass.",
+            "- AIS outage/restore remains customer-facing truth.",
+            "- Reports must not include API key, DB URL, token, room ID, verbatim WebEx text, full meter/PEANO, or customer identity.",
+            "",
+            "## Outputs",
+            "",
+        ]
+    )
+    for name, path in (summary.get("outputs") or {}).items():
+        lines.append(f"- {name}: `{path}`")
+    return "\n".join(lines) + "\n"
 
 
 def _render_worker_report(summary: dict[str, Any]) -> str:

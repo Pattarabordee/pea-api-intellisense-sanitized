@@ -1,0 +1,75 @@
+{
+  "additional_green_rows_needed": 30,
+  "blocker_reason_counts": {
+    "long_outage_risk": 245,
+    "low_match_confidence": 1110,
+    "missing_ais_truth": 421,
+    "missing_prediction": 842,
+    "missing_prediction_interval": 842,
+    "missing_protection_match": 47,
+    "momentary_webex_requires_review": 36,
+    "no_active_ais_evidence": 78,
+    "no_affected_ais": 1110,
+    "pea_quarantined": 1063,
+    "wide_prediction_interval": 371
+  },
+  "cloud_status": {
+    "api_base_url": "https://pea-api-intellisense-api.onrender.com",
+    "database": "ok",
+    "health_status": "ok",
+    "latest_request": {
+      "callback_status": "CAPTURED_NO_CALLBACK_URL",
+      "production_send": "blocked",
+      "received_at": "2026-06-21T23:17:06Z",
+      "request_id": "AIS-CLOUD-SMOKE-20260622061708",
+      "status": "COMPLETED"
+    },
+    "non_smoke_requests": 0,
+    "total_requests": 5,
+    "web_console_url": "https://pea-api-intellisense-web.onrender.com"
+  },
+  "decision": "AUTO_ETR_NO_GO",
+  "eligibility_status_counts": {
+    "amber_human_review": 1,
+    "monitor_only": 421,
+    "red_blocked": 1141
+  },
+  "generated_at": "2026-06-22T02:30:08Z",
+  "green_q10_q90_coverage": null,
+  "green_q50_mae_minutes": null,
+  "green_rows": 0,
+  "guardrails": [
+    "production_send_remains_blocked",
+    "smoke_demo_cases_do_not_count_as_green_truth",
+    "ais_outage_restore_remains_customer_facing_truth",
+    "no_full_meter_peano_customer_identity_or_raw_webex_text"
+  ],
+  "min_green_rows": 30,
+  "mode": "shadow",
+  "outputs": {
+    "gap_actions_csv": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\production_gate_gap_actions.csv",
+    "json": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\production_gate_owner_packet.json",
+    "markdown": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\production_gate_owner_packet.md"
+  },
+  "owner_approvals": {
+    "ais_api_owner": false,
+    "data_model_owner": false,
+    "pea_api_gateway_owner": false,
+    "pea_operations_owner": false,
+    "pea_security_owner": false
+  },
+  "owner_lane_counts": {
+    "ais_truth_owner": 499,
+    "cloud_ops_owner": 1,
+    "model_owner": 1,
+    "pea_topology_owner": 1063
+  },
+  "production_gate_status": "blocked_too_few_green_rows",
+  "production_send": "blocked",
+  "readiness": {
+    "auto_etr_ready": "BLOCKED_GREEN_GATE",
+    "cloud_endpoint_ready": "READY_FOR_DEPLOYMENT_PACKAGE",
+    "production_infra_ready": "BLOCKED_PENDING_OWNER_OR_CONTROL"
+  },
+  "status": "PASS"
+}

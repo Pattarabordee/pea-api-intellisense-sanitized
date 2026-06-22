@@ -137,6 +137,9 @@ class ProductionPathTests(unittest.TestCase):
                 "production_send_state_machine_runbook.md",
                 "dry_run_callback_dlq_runbook.md",
                 "cloud_worker_shadow_loop_runbook.md",
+                "production_gate_owner_packet.md",
+                "production_gate_owner_packet.json",
+                "production_gate_gap_actions.csv",
             ]:
                 (cloud / name).write_text("ok", encoding="utf-8")
             (cloud / ".env.cloud.example").write_text(
@@ -208,6 +211,7 @@ class ProductionPathTests(unittest.TestCase):
             self.assertEqual(status_by_name["ci_workflow"], "PASS")
             self.assertEqual(status_by_name["cloud_qa_scripts"], "PASS")
             self.assertEqual(status_by_name["observability_controls"], "PASS")
+            self.assertEqual(status_by_name["production_gate_packet"], "PASS")
             self.assertEqual(status_by_name["owner_approval"], "BLOCKED")
             self.assertEqual(status_by_name["green_auto_etr_gate"], "BLOCKED")
 

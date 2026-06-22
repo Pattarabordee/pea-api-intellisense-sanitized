@@ -398,6 +398,19 @@ def build_production_readiness_gate(
             "Cloud operations docs are incomplete.",
         ),
         _prod_check(
+            "production_gate_packet",
+            _all_exist(
+                cloud_root,
+                [
+                    "production_gate_owner_packet.md",
+                    "production_gate_owner_packet.json",
+                    "production_gate_gap_actions.csv",
+                ],
+            ),
+            "Owner-ready production gate packet and green-gap actions are present.",
+            "Production gate owner packet or green-gap action CSV is missing.",
+        ),
+        _prod_check(
             "secret_loading_policy",
             _env_template_is_placeholder(cloud_root / ".env.cloud.example"),
             "Secrets are configured as environment/secret-manager values, not committed values.",
@@ -440,6 +453,7 @@ def build_production_readiness_gate(
             "observability_controls",
             "send_control_and_worker",
             "cloud_ops_runbook",
+            "production_gate_packet",
             "secret_loading_policy",
         }
     )

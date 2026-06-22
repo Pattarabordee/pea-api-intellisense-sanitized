@@ -18,7 +18,11 @@ from .confidence_gate import (
     build_two_stage_shadow_challenger,
     import_forward_capture,
 )
-from .cloud_production import build_green_eligibility_report, run_cloud_worker_shadow_loop
+from .cloud_production import (
+    build_green_eligibility_report,
+    build_production_gate_packet,
+    run_cloud_worker_shadow_loop,
+)
 from .ais_active_state_challenger import build_active_state_remaining_challenger
 from .ais_add_field_truth import import_ais_add_field_truth
 from .ais_first_error_triage import build_ais_first_error_triage
@@ -1121,6 +1125,23 @@ def cmd_green_eligibility_report(args: argparse.Namespace) -> None:
         gate_csv_output=settings.resolve(args.gate_csv_output),
         json_output=settings.resolve(args.json_output),
         min_green_rows=args.min_green_rows,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_production_gate_packet(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_production_gate_packet(
+        eligibility_csv=settings.resolve(args.eligibility_csv),
+        green_gate_json=settings.resolve(args.green_gate_json),
+        real_hit_status_json=settings.resolve(args.real_hit_status_json),
+        readiness_gate_json=settings.resolve(args.readiness_gate_json),
+        owner_approval_template=settings.resolve(args.owner_approval_template),
+        output_csv=settings.resolve(args.output_csv),
+        markdown_output=settings.resolve(args.markdown_output),
+        json_output=settings.resolve(args.json_output),
+        min_green_rows=args.min_green_rows,
+        top_blockers=args.top_blockers,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -3205,6 +3226,22 @@ def build_parser() -> argparse.ArgumentParser:
     green_report.add_argument("--json-output", default="runtime/cloud_pilot/green_eligibility_report.json")
     green_report.add_argument("--min-green-rows", type=int, default=30)
     green_report.set_defaults(func=cmd_green_eligibility_report)
+
+    production_packet = sub.add_parser(
+        "production-gate-packet",
+        help="Build owner-ready production gate packet with green gaps and evidence asks",
+    )
+    production_packet.add_argument("--eligibility-csv", default="runtime/cloud_pilot/green_eligibility_report.csv")
+    production_packet.add_argument("--green-gate-json", default="runtime/cloud_pilot/green_eligibility_report.json")
+    production_packet.add_argument("--real-hit-status-json", default="runtime/production_cloud_real_hit_status.json")
+    production_packet.add_argument("--readiness-gate-json", default="runtime/production_path_readiness_gate.json")
+    production_packet.add_argument("--owner-approval-template", default="runtime/cloud_pilot/owner_approval_status.template.json")
+    production_packet.add_argument("--output-csv", default="runtime/cloud_pilot/production_gate_gap_actions.csv")
+    production_packet.add_argument("--markdown-output", default="runtime/cloud_pilot/production_gate_owner_packet.md")
+    production_packet.add_argument("--json-output", default="runtime/cloud_pilot/production_gate_owner_packet.json")
+    production_packet.add_argument("--min-green-rows", type=int, default=30)
+    production_packet.add_argument("--top-blockers", type=int, default=12)
+    production_packet.set_defaults(func=cmd_production_gate_packet)
 
     cloud_worker = sub.add_parser(
         "cloud-worker-shadow-loop",

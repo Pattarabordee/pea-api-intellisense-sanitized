@@ -4,7 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ais_etr.cloud_production import build_green_eligibility_report, run_cloud_worker_shadow_loop
+from ais_etr.cloud_production import (
+    build_green_eligibility_report,
+    build_production_gate_packet,
+    run_cloud_worker_shadow_loop,
+)
 
 
 class CloudProductionTests(unittest.TestCase):
@@ -73,6 +77,115 @@ class CloudProductionTests(unittest.TestCase):
             self.assertEqual(result["green_gate"]["green_rows"], 1)
             self.assertEqual(result["green_gate"]["additional_green_rows_needed"], 29)
             self.assertIn("No production AIS send", (root / "green.md").read_text(encoding="utf-8-sig"))
+
+    def test_production_gate_packet_prioritizes_owner_evidence_without_greenwashing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            eligibility = root / "eligibility.csv"
+            gate = root / "green.json"
+            real_hit = root / "real_hit.json"
+            readiness = root / "readiness.json"
+            owner = root / "owner.json"
+            _write_csv(
+                eligibility,
+                [
+                    "event_ref",
+                    "event_time",
+                    "feeder",
+                    "device_id",
+                    "source_lane",
+                    "eligibility_status",
+                    "stage1_class",
+                    "blocker_reasons",
+                    "selected_absolute_error",
+                    "selected_covered_q10_q90",
+                ],
+                [
+                    {
+                        "event_ref": "msg-a",
+                        "event_time": "2026-06-01T10:00:00",
+                        "feeder": "PFA09",
+                        "device_id": "PFA09R-03",
+                        "source_lane": "ais_truth_matched",
+                        "eligibility_status": "amber_human_review",
+                        "stage1_class": "uncertain",
+                        "blocker_reasons": "wide_prediction_interval",
+                        "selected_absolute_error": "10",
+                        "selected_covered_q10_q90": "TRUE",
+                    },
+                    {
+                        "event_ref": "msg-b",
+                        "event_time": "2026-06-01T10:05:00",
+                        "feeder": "PFA10",
+                        "device_id": "PFA10R-01",
+                        "source_lane": "webex_trigger_no_ais_truth",
+                        "eligibility_status": "monitor_only",
+                        "stage1_class": "uncertain",
+                        "blocker_reasons": "missing_ais_truth",
+                    },
+                ],
+            )
+            gate.write_text(
+                json.dumps(
+                    {
+                        "green_gate": {
+                            "green_rows": 0,
+                            "additional_green_rows_needed": 30,
+                            "gate_status": "blocked_too_few_green_rows",
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            real_hit.write_text(
+                json.dumps(
+                    {
+                        "total_requests": 5,
+                        "non_smoke_requests": 0,
+                        "health_status": "ok",
+                        "database": "ok",
+                        "latest_request": {
+                            "request_id": "AIS-CLOUD-SMOKE-1",
+                            "status": "COMPLETED",
+                            "production_send": "blocked",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            readiness.write_text(
+                json.dumps(
+                    {
+                        "cloud_endpoint_ready": "READY_FOR_DEPLOYMENT_PACKAGE",
+                        "production_infra_ready": "BLOCKED_PENDING_OWNER_OR_CONTROL",
+                        "auto_etr_ready": "BLOCKED_GREEN_GATE",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            owner.write_text(json.dumps({"approvals": {"model_owner": False}}), encoding="utf-8")
+
+            result = build_production_gate_packet(
+                eligibility_csv=eligibility,
+                green_gate_json=gate,
+                real_hit_status_json=real_hit,
+                readiness_gate_json=readiness,
+                owner_approval_template=owner,
+                output_csv=root / "gap.csv",
+                markdown_output=root / "packet.md",
+                json_output=root / "packet.json",
+            )
+
+            self.assertEqual(result["decision"], "AUTO_ETR_NO_GO")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertEqual(result["green_rows"], 0)
+            self.assertEqual(result["owner_lane_counts"]["model_owner"], 1)
+            self.assertEqual(result["owner_lane_counts"]["ais_truth_owner"], 1)
+            packet = (root / "packet.md").read_text(encoding="utf-8")
+            self.assertIn("do not count toward green model gate", packet)
+            gap_text = (root / "gap.csv").read_text(encoding="utf-8-sig")
+            self.assertIn("non_metric_smoke_demo_not_green_gate", gap_text)
+            self.assertNotIn("production_send,real", gap_text)
 
 
 def _write_readiness(path: Path) -> None:
