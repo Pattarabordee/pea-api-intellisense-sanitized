@@ -436,6 +436,13 @@ func insertCallbackOutbox(ctx context.Context, tx pgx.Tx, decisionID int64, outb
 			attempt_count, max_attempts, last_error, production_send, created_at, updated_at
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 		ON CONFLICT (request_id, payload_hash) DO NOTHING`,
+		callbackOutboxInsertArgs(decisionID, outbox)...,
+	)
+	return err
+}
+
+func callbackOutboxInsertArgs(decisionID int64, outbox CallbackOutbox) []any {
+	return []any{
 		outbox.RequestID,
 		decisionID,
 		outbox.PayloadHash,
@@ -444,12 +451,11 @@ func insertCallbackOutbox(ctx context.Context, tx pgx.Tx, decisionID int64, outb
 		outbox.Status,
 		outbox.AttemptCount,
 		outbox.MaxAttempts,
-		nullIfEmpty(outbox.LastError),
+		outbox.LastError,
 		outbox.ProductionSend,
 		outbox.CreatedAt,
 		outbox.UpdatedAt,
-	)
-	return err
+	}
 }
 
 func nullIfEmpty(value string) any {
