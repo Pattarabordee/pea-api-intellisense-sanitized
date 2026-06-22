@@ -51,6 +51,7 @@ SMOKE_REQUEST_PREFIXES = (
     "AIS-PUBLIC-RESTART-SCRIPT-",
     "AIS-FINAL-LOCAL-SMOKE-",
     "AIS-BEARER-SMOKE-",
+    "AIS-DEMO-SHADOW-",
 )
 SENSITIVE_KEYS = {
     "access_token",
@@ -271,6 +272,181 @@ def build_ais_inbound_status_report(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path = output_path.with_name(output_path.name + ".tmp")
         tmp_path.write_text(_inbound_status_markdown(report), encoding="utf-8")
+        tmp_path.replace(output_path)
+        report["output"] = str(output_path)
+    return report
+
+
+def build_ais_inbound_model_demo_readiness(
+    db_path: str | Path,
+    *,
+    output: str | Path | None = "runtime/ais_inbound_model_demo_readiness.md",
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Summarize whether SQLite contains a safe end-to-end AIS -> ETR demo path."""
+    items = _load_inbound_status_items(db_path)
+    real_items = [item for item in items if not item["is_smoke"]]
+    demo_candidates = [_demo_candidate_row(item) for item in items if _is_shadow_etr_demo_candidate(item)]
+    recent = [_demo_row(item) for item in reversed(items[-max(0, limit) :])] if limit else []
+    counts = _demo_chain_counts(items)
+    gaps = _model_demo_gaps(items, demo_candidates)
+    latest_candidate = demo_candidates[-1] if demo_candidates else None
+    report = {
+        "api_version": API_VERSION,
+        "schema_version": SCHEMA_VERSION,
+        "mode": "shadow",
+        "production_send": "blocked",
+        "db_path": str(Path(db_path)),
+        "generated_at": utc_now_iso(),
+        "status": "READY_FOR_SHADOW_DEMO" if latest_candidate else "NEEDS_RUNTIME_EVIDENCE",
+        "total_requests": len(items),
+        "real_requests": len(real_items),
+        "shadow_etr_demo_candidates": len(demo_candidates),
+        "chain_counts": counts,
+        "latest_candidate": latest_candidate,
+        "recent_requests": recent,
+        "gaps": gaps,
+        "integration_notes": [
+            "Use this as operator/demo evidence only; do not send customer-facing ETR.",
+            "A credible demo needs one AIS inbound request whose meter is in the confidence-eligible registry, matches recent WebEx/topology evidence, and has a runtime prediction.",
+            "Keep mode=shadow and production_send=blocked until the model gate and owner approval pass.",
+        ],
+    }
+    if output:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = output_path.with_name(output_path.name + ".tmp")
+        tmp_path.write_text(_model_demo_readiness_markdown(report), encoding="utf-8")
+        tmp_path.replace(output_path)
+        report["output"] = str(output_path)
+    return report
+
+
+def run_ais_inbound_shadow_demo_rehearsal(
+    db_path: str | Path,
+    *,
+    output: str | Path | None = "runtime/ais_inbound_model_demo_rehearsal.md",
+    request_id: str | None = None,
+    requests_output: str | Path | None = DEFAULT_REQUEST_LOG,
+    callbacks_output: str | Path | None = DEFAULT_CALLBACK_LOG,
+    match_window_minutes: int = DEFAULT_MATCH_WINDOW_MINUTES,
+) -> dict[str, Any]:
+    """Append one redacted, shadow-only demo request when runtime evidence can support it."""
+    db = RuntimeDb(db_path)
+    db.init()
+    candidate = _select_shadow_demo_rehearsal_candidate(db)
+    generated_at = utc_now_iso()
+    if candidate is None:
+        report = {
+            "api_version": API_VERSION,
+            "schema_version": SCHEMA_VERSION,
+            "mode": "shadow",
+            "production_send": "blocked",
+            "db_path": str(Path(db_path)),
+            "generated_at": generated_at,
+            "status": "BLOCKED_NO_RUNTIME_CANDIDATE",
+            "created_request": False,
+            "reason": "no_confidence_eligible_asset_with_confident_event_and_runtime_prediction",
+            "integration_notes": [
+                "No demo request was created.",
+                "Need a confidence-eligible AIS registry asset that matches a WebEx/topology event with a runtime prediction.",
+            ],
+        }
+        if output:
+            output_path = Path(output)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = output_path.with_name(output_path.name + ".tmp")
+            tmp_path.write_text(_shadow_demo_rehearsal_markdown(report), encoding="utf-8")
+            tmp_path.replace(output_path)
+            report["output"] = str(output_path)
+        return report
+
+    asset = candidate["asset"]
+    event = candidate["event"]
+    rid = request_id or _next_shadow_demo_request_id(db)
+    payload = {
+        "request_id": rid,
+        "meter_no": asset.peano,
+        "timestamp": event.get("event_time"),
+        "province": "shadow_demo",
+        "district": "shadow_demo",
+        "subdistrict": "shadow_demo",
+        "main_cause": "Faulty AC main failed",
+        "subcause": "PEA no back up",
+    }
+    result = process_ais_inbound_request(
+        db_path=db.path,
+        payload=payload,
+        callback_url=None,
+        requests_output=requests_output,
+        callbacks_output=callbacks_output,
+        match_window_minutes=match_window_minutes,
+        post_callback=False,
+    )
+    callback = result.callback_payload
+    evidence = callback.get("evidence") if isinstance(callback.get("evidence"), dict) else {}
+    etr = callback.get("etr") if isinstance(callback.get("etr"), dict) else {}
+    decision = callback.get("decision") if isinstance(callback.get("decision"), dict) else {}
+    ready = (
+        callback.get("mode") == "shadow"
+        and decision.get("production_send") == "blocked"
+        and callback.get("status") == "CONFIRMED_PEA_OUTAGE"
+        and evidence.get("match_level") in CONFIDENT_LEVELS
+        and etr.get("status") == "SHADOW_ONLY"
+        and etr.get("etr_minutes_p50") is not None
+    )
+    report = {
+        "api_version": API_VERSION,
+        "schema_version": SCHEMA_VERSION,
+        "mode": "shadow",
+        "production_send": "blocked",
+        "db_path": str(Path(db_path)),
+        "generated_at": generated_at,
+        "status": "READY_FOR_SHADOW_DEMO" if ready else "REHEARSAL_NEEDS_REVIEW",
+        "created_request": True,
+        "request_id": result.request_id,
+        "callback_status": result.callback_record.status,
+        "verification_status": callback.get("status", ""),
+        "confidence": callback.get("confidence", ""),
+        "meter": _redact_meter(asset.peano),
+        "cause_lane": (callback.get("pea_distribution") or {}).get("cause_lane", ""),
+        "evidence": {
+            "source": evidence.get("source", ""),
+            "match_found": bool(evidence.get("match_found")),
+            "match_level": evidence.get("match_level", ""),
+            "match_confidence": evidence.get("match_confidence", ""),
+            "device_type": evidence.get("device_type", ""),
+            "device_id": evidence.get("device_id", ""),
+            "feeder": evidence.get("feeder", ""),
+            "event_time": evidence.get("event_time", ""),
+            "time_delta_minutes": evidence.get("time_delta_minutes"),
+        },
+        "etr": {
+            "status": etr.get("status", ""),
+            "etr_minutes_p50": etr.get("etr_minutes_p50", ""),
+            "q10": etr.get("q10", ""),
+            "q90": etr.get("q90", ""),
+            "risk_level": etr.get("risk_level", ""),
+            "model_version": etr.get("model_version", ""),
+            "production_gate": etr.get("production_gate", ""),
+        },
+        "decision": {
+            "answer": decision.get("answer", ""),
+            "next_action": decision.get("next_action", ""),
+            "auto_customer_etr_allowed": bool(decision.get("auto_customer_etr_allowed")),
+            "production_send": decision.get("production_send", "blocked"),
+        },
+        "integration_notes": [
+            "This is a smoke/demo rehearsal created from existing runtime registry, WebEx/topology, and prediction evidence.",
+            "It uses the normal AIS inbound processor and appends durable SQLite evidence.",
+            "Do not send this as customer-facing ETR; production_send remains blocked.",
+        ],
+    }
+    if output:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = output_path.with_name(output_path.name + ".tmp")
+        tmp_path.write_text(_shadow_demo_rehearsal_markdown(report), encoding="utf-8")
         tmp_path.replace(output_path)
         report["output"] = str(output_path)
     return report
@@ -1258,6 +1434,43 @@ def _load_asset_by_peano(db: RuntimeDb, peano: str) -> CustomerAsset | None:
     return assets.get(peano)
 
 
+def _select_shadow_demo_rehearsal_candidate(db: RuntimeDb) -> dict[str, Any] | None:
+    assets = [asset for asset in db.load_customer_assets() if asset.confidence_eligible]
+    if not assets:
+        return None
+    ranked: list[tuple[float, int, str, CustomerAsset, dict[str, Any], str]] = []
+    for row in _load_runtime_event_candidates(db):
+        if row.get("etr_minutes_p50") is None:
+            continue
+        try:
+            event_time = _parse_time(row.get("event_time"))
+        except AisInboundValidationError:
+            continue
+        if event_time is None:
+            continue
+        for asset in assets:
+            level = _asset_event_match_level(asset, row)
+            if level not in CONFIDENT_LEVELS:
+                continue
+            ranked.append((-event_time.timestamp(), _level_rank(level), asset.peano, asset, row, level))
+    if not ranked:
+        return None
+    ranked.sort()
+    _, _, _, asset, row, level = ranked[0]
+    return {"asset": asset, "event": row, "match_level": level}
+
+
+def _next_shadow_demo_request_id(db: RuntimeDb) -> str:
+    stamp = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y%m%dT%H%M%SZ")
+    base = f"AIS-DEMO-SHADOW-{stamp}"
+    candidate = base
+    suffix = 1
+    while _request_exists(db, candidate):
+        suffix += 1
+        candidate = f"{base}-{suffix}"
+    return candidate
+
+
 def _find_runtime_evidence(
     db: RuntimeDb,
     asset: CustomerAsset | None,
@@ -1818,6 +2031,7 @@ def _inbound_status_item(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "request_id": request_id,
         "is_smoke": _is_smoke_request_id(request_id),
+        "callback_mode": callback_payload.get("mode", "shadow"),
         "received_at": row.get("received_at"),
         "detected_at": row.get("detected_at"),
         "detected_at_original": request_payload.get("detected_at_original", row.get("detected_at")),
@@ -1839,6 +2053,7 @@ def _inbound_status_item(row: dict[str, Any]) -> dict[str, Any]:
         "confidence": callback_payload.get("confidence", ""),
         "decision_answer": decision.get("answer", ""),
         "decision_reason": decision.get("reason", pea_distribution.get("reason", "")),
+        "cause_lane": pea_distribution.get("cause_lane", ""),
         "pea_distribution_outage": decision.get("pea_distribution_outage"),
         "next_action": decision.get("next_action", ""),
         "match_found": bool(evidence.get("match_found")),
@@ -1854,6 +2069,80 @@ def _inbound_status_item(row: dict[str, Any]) -> dict[str, Any]:
         "q90": etr.get("q90", ""),
         "risk_level": etr.get("risk_level", ""),
         "production_send": "blocked",
+    }
+
+
+def _is_shadow_etr_demo_candidate(item: dict[str, Any]) -> bool:
+    return (
+        item.get("callback_mode") == "shadow"
+        and item.get("production_send") == "blocked"
+        and item.get("verification_status") == "CONFIRMED_PEA_OUTAGE"
+        and item.get("match_level") in CONFIDENT_LEVELS
+        and item.get("etr_status") == "SHADOW_ONLY"
+        and item.get("etr_minutes_p50") not in (None, "")
+    )
+
+
+def _demo_chain_counts(items: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "ais_requests": len(items),
+        "cause_classified": sum(1 for item in items if item.get("cause_lane")),
+        "protection_evidence_found": sum(1 for item in items if item.get("match_found")),
+        "confident_protection_match": sum(1 for item in items if item.get("match_level") in CONFIDENT_LEVELS),
+        "shadow_etr_available": sum(1 for item in items if item.get("etr_status") == "SHADOW_ONLY"),
+        "shadow_response_blocked": sum(1 for item in items if item.get("production_send") == "blocked"),
+    }
+
+
+def _model_demo_gaps(items: list[dict[str, Any]], candidates: list[dict[str, Any]]) -> list[str]:
+    gaps: list[str] = []
+    if not items:
+        gaps.append("no_ais_inbound_request_captured")
+        return gaps
+    if not any(item.get("cause_lane") for item in items):
+        gaps.append("no_ais_cause_lane_available")
+    if not any(item.get("match_found") for item in items):
+        gaps.append("no_inbound_request_matched_webex_topology_evidence")
+    if not any(item.get("match_level") in CONFIDENT_LEVELS for item in items):
+        gaps.append("no_confident_protection_match_for_inbound_request")
+    if not any(item.get("etr_status") == "SHADOW_ONLY" for item in items):
+        gaps.append("no_shadow_etr_candidate_returned_to_ais_inbound_callback")
+    if any(item.get("production_send") != "blocked" or item.get("callback_mode") != "shadow" for item in items):
+        gaps.append("shadow_or_production_send_guardrail_violation")
+    if not candidates:
+        gaps.append("no_single_request_completes_request_trace_evidence_cause_etr_shadow_chain")
+    return gaps
+
+
+def _demo_candidate_row(item: dict[str, Any]) -> dict[str, Any]:
+    row = _demo_row(item)
+    row["demo_chain"] = "request_to_trace_to_protection_to_cause_to_etr_to_shadow_response"
+    return row
+
+
+def _demo_row(item: dict[str, Any]) -> dict[str, Any]:
+    meter = item.get("meter") or {}
+    return {
+        "request_id": item.get("request_id") or "",
+        "request_type": "smoke" if item.get("is_smoke") else "real",
+        "received_at": item.get("received_at") or "",
+        "detected_at": item.get("detected_at") or "",
+        "meter_last4": meter.get("last4") or "",
+        "verification_status": item.get("verification_status") or "",
+        "cause_lane": item.get("cause_lane") or "",
+        "match_level": item.get("match_level") or "",
+        "match_confidence": _blank_if_none(item.get("match_confidence")),
+        "device_type": item.get("device_type") or "",
+        "device_id": item.get("device_id") or "",
+        "feeder": item.get("feeder") or "",
+        "time_delta_minutes": _blank_if_none(item.get("time_delta_minutes")),
+        "etr_status": item.get("etr_status") or "",
+        "etr_minutes_p50": _blank_if_none(item.get("etr_minutes_p50")),
+        "q10": _blank_if_none(item.get("q10")),
+        "q90": _blank_if_none(item.get("q90")),
+        "risk_level": item.get("risk_level") or "",
+        "callback_status": item.get("callback_status") or "",
+        "production_send": item.get("production_send") or "blocked",
     }
 
 
@@ -2599,6 +2888,193 @@ def _inbound_status_markdown(report: dict[str, Any]) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def _model_demo_readiness_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        "# AIS Inbound Model Demo Readiness",
+        "",
+        f"Generated: `{report['generated_at']}`",
+        "",
+        "## Summary",
+        "",
+        f"- Status: `{report['status']}`",
+        f"- Mode: `{report['mode']}`",
+        f"- Production send: `{report['production_send']}`",
+        f"- Total inbound requests: `{report['total_requests']}`",
+        f"- Real inbound requests: `{report['real_requests']}`",
+        f"- Complete shadow ETR demo candidates: `{report['shadow_etr_demo_candidates']}`",
+        "",
+        "## Chain Counts",
+        "",
+        "| Demo stage | Count |",
+        "| --- | ---: |",
+    ]
+    for stage, count in report.get("chain_counts", {}).items():
+        lines.append(f"| `{stage}` | {count} |")
+
+    lines.extend(["", "## Latest Complete Candidate", ""])
+    latest = report.get("latest_candidate")
+    if latest:
+        lines.extend(_model_demo_row_lines(latest))
+    else:
+        lines.append("No single AIS inbound request currently completes the request -> trace/protection -> cause -> ETR -> blocked shadow response chain.")
+
+    lines.extend(
+        [
+            "",
+            "## Recent Redacted Requests",
+            "",
+            "| Received at | Request ID | Type | Meter last4 | Status | Cause | Match | ETR | p50 | Send |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | --- |",
+        ]
+    )
+    for item in report.get("recent_requests", []):
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    str(item.get("received_at") or ""),
+                    f"`{item.get('request_id') or ''}`",
+                    str(item.get("request_type") or ""),
+                    str(item.get("meter_last4") or ""),
+                    f"`{item.get('verification_status') or ''}`",
+                    f"`{item.get('cause_lane') or ''}`",
+                    f"`{item.get('match_level') or ''}`",
+                    f"`{item.get('etr_status') or ''}`",
+                    str(item.get("etr_minutes_p50") or ""),
+                    f"`{item.get('production_send') or 'blocked'}`",
+                ]
+            )
+            + " |"
+        )
+
+    lines.extend(["", "## Gaps", ""])
+    gaps = report.get("gaps") or []
+    if gaps:
+        for gap in gaps:
+            lines.append(f"- `{gap}`")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Integration Notes", ""])
+    for note in report.get("integration_notes") or []:
+        lines.append(f"- {note}")
+
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- This report is built from SQLite callback/request evidence only.",
+            "- It omits full meter numbers, PEANO lists, WebEx room ids, verbatim WebEx text, tokens, secrets, and customer identity.",
+            "- AIS outage/restore remains the customer-facing truth source.",
+            "- Auto ETR production sending remains blocked.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _shadow_demo_rehearsal_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        "# AIS Inbound Shadow Demo Rehearsal",
+        "",
+        f"Generated: `{report['generated_at']}`",
+        "",
+        "## Summary",
+        "",
+        f"- Status: `{report['status']}`",
+        f"- Mode: `{report['mode']}`",
+        f"- Production send: `{report['production_send']}`",
+        f"- Created request: `{report.get('created_request')}`",
+    ]
+    if not report.get("created_request"):
+        lines.extend(
+            [
+                f"- Reason: `{report.get('reason', '')}`",
+                "",
+                "## Integration Notes",
+                "",
+            ]
+        )
+        for note in report.get("integration_notes") or []:
+            lines.append(f"- {note}")
+    else:
+        meter = report.get("meter") or {}
+        evidence = report.get("evidence") or {}
+        etr = report.get("etr") or {}
+        decision = report.get("decision") or {}
+        lines.extend(
+            [
+                f"- Request ID: `{report.get('request_id', '')}`",
+                f"- Callback status: `{report.get('callback_status', '')}`",
+                f"- Verification: `{report.get('verification_status', '')}`",
+                f"- Confidence: `{report.get('confidence', '')}`",
+                f"- Meter last4: `{meter.get('last4') or ''}`",
+                f"- Cause lane: `{report.get('cause_lane', '')}`",
+                "",
+                "## Evidence Chain",
+                "",
+                f"- Source: `{evidence.get('source') or ''}`",
+                f"- Match found: `{evidence.get('match_found')}`",
+                f"- Protection match: `{evidence.get('match_level') or ''}` at confidence `{evidence.get('match_confidence') or ''}`",
+                f"- Device evidence: `{evidence.get('device_type') or ''}` `{evidence.get('device_id') or ''}` on feeder `{evidence.get('feeder') or ''}`",
+                f"- Event time: `{evidence.get('event_time') or ''}`",
+                f"- Time delta minutes: `{_blank_if_none(evidence.get('time_delta_minutes'))}`",
+                "",
+                "## ETR Candidate",
+                "",
+                f"- Status: `{etr.get('status') or ''}`",
+                f"- p50 minutes: `{etr.get('etr_minutes_p50') or ''}`",
+                f"- q10-q90 minutes: `{etr.get('q10') or ''}`-`{etr.get('q90') or ''}`",
+                f"- Risk: `{etr.get('risk_level') or ''}`",
+                f"- Model version: `{etr.get('model_version') or ''}`",
+                f"- Production gate: `{etr.get('production_gate') or ''}`",
+                "",
+                "## Shadow Decision",
+                "",
+                f"- Answer: `{decision.get('answer') or ''}`",
+                f"- Next action: `{decision.get('next_action') or ''}`",
+                f"- Auto customer ETR allowed: `{decision.get('auto_customer_etr_allowed')}`",
+                f"- Production send: `{decision.get('production_send') or 'blocked'}`",
+                "",
+                "## Integration Notes",
+                "",
+            ]
+        )
+        for note in report.get("integration_notes") or []:
+            lines.append(f"- {note}")
+
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- This report omits full meter numbers, PEANO lists, WebEx room ids, verbatim WebEx text, tokens, secrets, and customer identity.",
+            "- The rehearsal uses shadow mode only and captures callback evidence without posting to AIS.",
+            "- AIS outage/restore remains the customer-facing truth source.",
+            "- Auto ETR production sending remains blocked.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _model_demo_row_lines(item: dict[str, Any]) -> list[str]:
+    return [
+        f"- Request ID: `{item.get('request_id') or ''}`",
+        f"- Request type: `{item.get('request_type') or ''}`",
+        f"- Meter last4: `{item.get('meter_last4') or ''}`",
+        f"- Verification: `{item.get('verification_status') or ''}`",
+        f"- Cause lane: `{item.get('cause_lane') or ''}`",
+        f"- Protection match: `{item.get('match_level') or ''}` at confidence `{item.get('match_confidence') or ''}`",
+        f"- Device evidence: `{item.get('device_type') or ''}` `{item.get('device_id') or ''}` on feeder `{item.get('feeder') or ''}`",
+        f"- Time delta minutes: `{item.get('time_delta_minutes') or ''}`",
+        f"- ETR candidate: p50 `{item.get('etr_minutes_p50') or ''}`, q10-q90 `{item.get('q10') or ''}`-`{item.get('q90') or ''}`, risk `{item.get('risk_level') or ''}`",
+        f"- Callback status: `{item.get('callback_status') or ''}`",
+        f"- Production send: `{item.get('production_send') or 'blocked'}`",
+    ]
 
 
 def _inbound_status_item_lines(item: dict[str, Any]) -> list[str]:

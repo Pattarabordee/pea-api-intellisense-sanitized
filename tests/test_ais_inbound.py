@@ -3,6 +3,7 @@ import gc
 import json
 import re
 import sqlite3
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -23,12 +24,14 @@ from ais_etr.ais_inbound import (
     build_ais_inbound_audit_export,
     build_ais_inbound_db_snapshot,
     build_ais_inbound_first_hit_packet,
+    build_ais_inbound_model_demo_readiness,
     build_ais_inbound_readiness_gate,
     build_ais_inbound_status_report,
     build_pilot_completion_gate,
     create_ais_inbound_server,
     process_ais_inbound_request,
     replay_ais_inbound_callbacks,
+    run_ais_inbound_shadow_demo_rehearsal,
 )
 from ais_etr.db import RuntimeDb
 from ais_etr.schemas import (
@@ -78,6 +81,192 @@ class AisInboundTests(unittest.TestCase):
             logged = request_log.read_text(encoding="utf-8") + callback_log.read_text(encoding="utf-8")
             self.assertNotIn("1234567890", logged)
             self.assertIn("7890", logged)
+
+    def test_model_demo_readiness_reports_complete_shadow_chain_without_raw_identifiers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db_path = root / "runtime.sqlite"
+            _seed_runtime(db_path)
+            process_ais_inbound_request(
+                db_path=db_path,
+                payload={
+                    "request_id": "AIS-DEMO-READY",
+                    "meter_no": "REDACTED-METER-0000",
+                    "timestamp": "2026-06-19T10:04:00+00:00",
+                    "main_cause": "Faulty AC main failed",
+                    "subcause": "PEA no back up",
+                },
+                requests_output=root / "requests.jsonl",
+                callbacks_output=root / "callbacks.jsonl",
+                post_callback=False,
+            )
+
+            output = root / "demo_readiness.md"
+            report = build_ais_inbound_model_demo_readiness(db_path, output=output)
+
+            self.assertEqual(report["status"], "READY_FOR_SHADOW_DEMO")
+            self.assertEqual(report["mode"], "shadow")
+            self.assertEqual(report["production_send"], "blocked")
+            self.assertEqual(report["shadow_etr_demo_candidates"], 1)
+            self.assertEqual(report["latest_candidate"]["match_level"], "cb")
+            self.assertEqual(report["latest_candidate"]["cause_lane"], "pea_no_backup")
+            self.assertEqual(report["latest_candidate"]["etr_minutes_p50"], "45.0")
+            self.assertEqual(report["gaps"], [])
+            markdown = output.read_text(encoding="utf-8")
+            self.assertIn("READY_FOR_SHADOW_DEMO", markdown)
+            self.assertIn("Auto ETR production sending remains blocked", markdown)
+            self.assertNotIn("1234567890", json.dumps(report, ensure_ascii=False) + markdown)
+            self.assertNotIn("room-1", json.dumps(report, ensure_ascii=False) + markdown)
+
+    def test_shadow_demo_rehearsal_creates_redacted_queryable_shadow_chain(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db_path = root / "runtime.sqlite"
+            _seed_runtime(db_path)
+
+            output = root / "rehearsal.md"
+            report = run_ais_inbound_shadow_demo_rehearsal(
+                db_path,
+                output=output,
+                request_id="AIS-DEMO-SHADOW-TEST",
+                requests_output=root / "requests.jsonl",
+                callbacks_output=root / "callbacks.jsonl",
+            )
+
+            self.assertEqual(report["status"], "READY_FOR_SHADOW_DEMO")
+            self.assertEqual(report["mode"], "shadow")
+            self.assertEqual(report["production_send"], "blocked")
+            self.assertTrue(report["created_request"])
+            self.assertEqual(report["request_id"], "AIS-DEMO-SHADOW-TEST")
+            self.assertEqual(report["verification_status"], "CONFIRMED_PEA_OUTAGE")
+            self.assertEqual(report["evidence"]["match_level"], "cb")
+            self.assertEqual(report["etr"]["status"], "SHADOW_ONLY")
+            self.assertEqual(report["decision"]["production_send"], "blocked")
+
+            markdown = output.read_text(encoding="utf-8")
+            combined = json.dumps(report, ensure_ascii=False) + markdown
+            self.assertNotIn("1234567890", combined)
+            self.assertNotIn("room-1", combined)
+            self.assertNotIn("raw_text", combined)
+
+            conn = sqlite3.connect(db_path)
+            try:
+                request_count = conn.execute("SELECT COUNT(*) FROM ais_inbound_requests").fetchone()[0]
+                callback_payload = conn.execute(
+                    "SELECT payload_json FROM ais_inbound_callbacks WHERE request_id = ?",
+                    ("AIS-DEMO-SHADOW-TEST",),
+                ).fetchone()[0]
+            finally:
+                conn.close()
+            self.assertEqual(request_count, 1)
+            self.assertNotIn("1234567890", callback_payload)
+            self.assertIn("SHADOW_ONLY", callback_payload)
+            self.assertIn('"production_send": "blocked"', callback_payload)
+
+            readiness = build_ais_inbound_model_demo_readiness(db_path, output=None)
+            self.assertEqual(readiness["status"], "READY_FOR_SHADOW_DEMO")
+            self.assertEqual(readiness["shadow_etr_demo_candidates"], 1)
+
+    def test_shadow_demo_rehearsal_blocks_without_runtime_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db_path = root / "runtime.sqlite"
+            RuntimeDb(db_path).init()
+
+            report = run_ais_inbound_shadow_demo_rehearsal(
+                db_path,
+                output=root / "rehearsal.md",
+                request_id="AIS-DEMO-SHADOW-EMPTY",
+                requests_output=root / "requests.jsonl",
+                callbacks_output=root / "callbacks.jsonl",
+            )
+
+            self.assertEqual(report["status"], "BLOCKED_NO_RUNTIME_CANDIDATE")
+            self.assertFalse(report["created_request"])
+            self.assertEqual(report["production_send"], "blocked")
+            conn = sqlite3.connect(db_path)
+            try:
+                request_count = conn.execute("SELECT COUNT(*) FROM ais_inbound_requests").fetchone()[0]
+            finally:
+                conn.close()
+            self.assertEqual(request_count, 0)
+
+    def test_local_hit_checker_excludes_shadow_demo_from_real_hits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            requests_log = root / "ais_inbound_requests.jsonl"
+            rows = [
+                {
+                    "received_at": "2026-06-22T01:00:00+00:00",
+                    "callback_status": "CAPTURED_NO_CALLBACK_URL",
+                    "accepted_response": {
+                        "request_id": "AIS-REAL-1",
+                        "http_status": 202,
+                        "status": "RECEIVED",
+                    },
+                    "request": {"district": "redacted", "peano": {"last4": "1111"}},
+                },
+                {
+                    "received_at": "2026-06-22T01:01:00+00:00",
+                    "callback_status": "CAPTURED_NO_CALLBACK_URL",
+                    "accepted_response": {
+                        "request_id": "AIS-DEMO-SHADOW-20260622T010343Z",
+                        "http_status": 202,
+                        "status": "RECEIVED",
+                    },
+                    "request": {"district": "shadow_demo", "peano": {"last4": "6059"}},
+                },
+            ]
+            requests_log.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+            script = Path(__file__).resolve().parents[1] / "runtime" / "ais_inbound_hit_check.ps1"
+            result = subprocess.run(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    str(script),
+                    "-RequestsLog",
+                    str(requests_log),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            report = json.loads(result.stdout)
+
+            self.assertEqual(report["total_requests"], 2)
+            self.assertEqual(report["non_smoke_requests"], 1)
+            self.assertEqual(report["latest_non_smoke_request_id"], "AIS-REAL-1")
+
+    def test_model_demo_readiness_flags_missing_inbound_evidence_chain(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db_path = root / "runtime.sqlite"
+            RuntimeDb(db_path).init()
+            process_ais_inbound_request(
+                db_path=db_path,
+                payload={
+                    "request_id": "AIS-DEMO-GAP",
+                    "meter_no": "REDACTED-METER-0000",
+                    "timestamp": "2026-06-19T10:04:00+00:00",
+                    "main_cause": "Faulty AC main failed",
+                    "subcause": "PEA no back up",
+                },
+                requests_output=root / "requests.jsonl",
+                callbacks_output=root / "callbacks.jsonl",
+                post_callback=False,
+            )
+
+            report = build_ais_inbound_model_demo_readiness(db_path, output=None)
+
+            self.assertEqual(report["status"], "NEEDS_RUNTIME_EVIDENCE")
+            self.assertIn("no_inbound_request_matched_webex_topology_evidence", report["gaps"])
+            self.assertIn("no_shadow_etr_candidate_returned_to_ais_inbound_callback", report["gaps"])
+            self.assertIn("no_single_request_completes_request_trace_evidence_cause_etr_shadow_chain", report["gaps"])
+            self.assertEqual(report["chain_counts"]["shadow_response_blocked"], 1)
 
     def test_no_registry_asset_returns_no_pea_evidence_found(self):
         with tempfile.TemporaryDirectory() as tmp:

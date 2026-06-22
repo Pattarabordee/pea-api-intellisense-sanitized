@@ -8,7 +8,31 @@ export type OperatorItem = {
   etr_status?: string;
   meter?: { hash?: string; last4?: string };
   result?: {
-    evidence?: { reason?: string };
+    evidence?: {
+      reason?: string;
+      source?: string;
+      match_found?: boolean;
+      match_level?: string;
+      device_type?: string;
+      device_id?: string;
+      feeder?: string;
+      event_time?: string;
+      time_delta_minutes?: number;
+    };
+    pea_distribution?: {
+      status?: string;
+      reason?: string;
+      cause_lane?: string;
+    };
+    etr?: {
+      status?: string;
+      etr_minutes_p50?: number;
+      q10?: number;
+      q90?: number;
+      risk_level?: string;
+      model_version?: string;
+      production_gate?: string;
+    };
   };
 };
 
@@ -41,21 +65,47 @@ export const demoOperatorData: OperatorData = {
   metrics: {
     total_requests: 3,
     duplicate_callbacks: 1,
-    pending_worker_traces: 3,
-    not_ready_etr: 3,
+    pending_worker_traces: 2,
+    not_ready_etr: 2,
     latest_received_at: "2026-06-21T09:05:12Z"
   },
   items: [
     {
-      request_id: "AIS-DEMO-0003",
+      request_id: "AIS-DEMO-VIDEO-0001",
       received_at: "2026-06-21T09:05:12Z",
       detected_at: "2026-06-21T16:04:00+07:00",
       status: "COMPLETED",
       callback_status: "CAPTURED_NO_CALLBACK_URL",
       production_send: "blocked",
-      etr_status: "NOT_READY_FOR_AUTO_SEND",
+      etr_status: "SHADOW_ONLY",
       meter: { hash: "6ca13d52ca70c883", last4: "7890" },
-      result: { evidence: { reason: "python_worker_pending_or_no_evidence_loaded" } }
+      result: {
+        evidence: {
+          reason: "synthetic_demo_meter_to_protection_match",
+          source: "Demo topology + protection event",
+          match_found: true,
+          match_level: "protection_device",
+          device_type: "CB",
+          device_id: "DEMO-CB-01",
+          feeder: "DEMO-FDR-03",
+          event_time: "2026-06-21T16:00:00+07:00",
+          time_delta_minutes: 4
+        },
+        pea_distribution: {
+          status: "SHADOW_CONFIRMED_PEA_CONTEXT",
+          reason: "demo_meter_to_protection_and_event_time_match",
+          cause_lane: "pea_no_backup"
+        },
+        etr: {
+          status: "SHADOW_ONLY",
+          etr_minutes_p50: 45,
+          q10: 20,
+          q90: 95,
+          risk_level: "LOW",
+          model_version: "shadow-demo",
+          production_gate: "blocked_until_green_subset_passes"
+        }
+      }
     },
     {
       request_id: "AIS-DEMO-0002",

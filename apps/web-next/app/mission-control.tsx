@@ -6,127 +6,224 @@ import type { OperatorData, OperatorItem } from "../lib/demo-data";
 const missionSteps = [
   {
     id: "ais",
-    title: "AIS sends outage signal",
-    detail: "AIS posts request_id, meter_no, timestamp, and area context to the PEA endpoint.",
+    title: "AIS request",
+    shortTitle: "AIS request",
+    detail: "AIS posts one governed outage verification request with request_id, detected time, and redacted meter reference.",
     metric: "202 Accepted"
   },
   {
     id: "trace",
-    title: "PEA traces grid context",
-    detail: "PEA maps the redacted meter reference to feeder and protection-device context.",
-    metric: "Topology lane"
+    title: "PEA trace",
+    shortTitle: "PEA trace",
+    detail: "PEA resolves the request into feeder and protection context without exposing customer identity.",
+    metric: "Grid context"
   },
   {
     id: "evidence",
-    title: "Evidence gate checks device action",
-    detail: "The system compares detected time with WebEx/protection evidence before any answer is trusted.",
+    title: "Protection evidence",
+    shortTitle: "Evidence",
+    detail: "Device action and operator evidence are checked before cause or ETR is treated as usable.",
     metric: "Shadow evidence"
   },
   {
+    id: "cause",
+    title: "Cause",
+    shortTitle: "Cause",
+    detail: "Cause is shown as candidate context only until evidence is complete and owner-approved.",
+    metric: "Candidate only"
+  },
+  {
     id: "etr",
-    title: "ETR candidate stays blocked",
-    detail: "ETR is generated as a candidate only. Customer-facing auto send waits for green gate and approval.",
+    title: "ETR candidate",
+    shortTitle: "ETR",
+    detail: "ETR remains a candidate while AIS outage/restore stays the customer-facing truth source.",
     metric: "production_send = blocked"
+  },
+  {
+    id: "shadow",
+    title: "Shadow response",
+    shortTitle: "Shadow",
+    detail: "Response is recorded for review and callback audit. No Auto ETR production send is enabled.",
+    metric: "Operator review"
   }
+];
+
+const manualWorkflow = [
+  "Phone call starts with repeated site/time",
+  "PEA searches grid context by hand",
+  "Cause and ETR are relayed verbally",
+  "Notes become the audit trail"
+];
+
+const apiWorkflow = [
+  "AIS sends one governed request_id",
+  "PEA stores redacted request evidence",
+  "Trace links protection and cause context",
+  "Shadow response becomes queryable"
+];
+
+const guardrails = [
+  "mode = shadow",
+  "production_send = blocked",
+  "Auto ETR not enabled",
+  "AIS outage/restore stays truth"
+];
+
+const executiveBeats = [
+  { label: "Manual", value: "Call + notes", note: "slow, variable audit" },
+  { label: "API", value: "One request", note: "repeatable evidence chain" },
+  { label: "Pilot", value: "Shadow only", note: "no customer auto-send" }
 ];
 
 export function MissionControl({ initialData }: { initialData: OperatorData }) {
   const [activeStep, setActiveStep] = useState(0);
   const latest = initialData.items?.[0];
   const counts = useMemo(() => summarize(initialData.items || []), [initialData.items]);
+  const story = useMemo(() => buildTraceStory(latest), [latest]);
   const step = missionSteps[activeStep];
 
   return (
     <main className="shell">
-      <section className="hero">
+      <header className="topbar" aria-label="demo status">
         <div>
-          <p className="eyebrow">PEA x AIS Production Cloud Shadow</p>
-          <h1>Grid Intelligence Mission Control</h1>
-          <p className="lede">
-            Turn AIS outage calls into an auditable API workflow: receive signal, trace PEA grid context,
-            check evidence, and keep ETR safely blocked until the gate passes.
-          </p>
+          <span>PEA API Intellisense</span>
+          <strong>AIS ETR executive demo</strong>
         </div>
-        <div className="status-strip" aria-label="guardrails">
-          <span>mode: shadow</span>
-          <span>production_send: blocked</span>
-          <span>Auto ETR: gated</span>
+        <div className="topbar-status">
+          <span>Shadow pilot</span>
+          <span>Recording-ready demo</span>
+          <span>Thai context: สาธิตเท่านั้น</span>
         </div>
-      </section>
+      </header>
 
-      <section className="grid two">
-        <div className="panel mission">
-          <div className="panel-head">
-            <p className="eyebrow">Interactive demo</p>
-            <h2>{step.title}</h2>
+      <section className="demo-stage" aria-labelledby="page-title">
+        <div className="stage-copy">
+          <div>
+            <p className="eyebrow">PEA x AIS shadow demo</p>
+            <h1 id="page-title">From phone call to governed API ETR trace</h1>
+            <p className="lede">Demo path: AIS request &rarr; PEA trace &rarr; protection evidence &rarr; cause &rarr; ETR candidate &rarr; shadow response. Customer-facing truth remains AIS outage/restore.</p>
           </div>
-          <p className="mission-detail">{step.detail}</p>
-          <div className="mission-metric">{step.metric}</div>
-          <div className="stepper" role="tablist" aria-label="mission steps">
-            {missionSteps.map((item, index) => (
-              <button
-                key={item.id}
-                className={index === activeStep ? "step active" : "step"}
-                onClick={() => setActiveStep(index)}
-                type="button"
-              >
-                <span>{index + 1}</span>
-                {item.id}
-              </button>
+          <div className="beat-row" aria-label="executive demo beats">
+            {executiveBeats.map((item) => (
+              <div className="beat" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <em>{item.note}</em>
+              </div>
+            ))}
+          </div>
+          <div className="guardrail-strip" aria-label="shadow guardrails">
+            {guardrails.map((item) => (
+              <span key={item}>{item}</span>
             ))}
           </div>
         </div>
 
-        <div className="panel comparison">
-          <div className="panel-head">
-            <p className="eyebrow">Before vs API</p>
-            <h2>Manual call becomes traceable data product</h2>
-          </div>
-          <div className="lanes">
+        <div className="workflow-compare" aria-label="manual workflow compared with api workflow">
+          <WorkflowLane title="Manual phone-call workflow" label="Current" tone="manual" items={manualWorkflow} />
+          <WorkflowLane title="API workflow" label="Shadow demo" tone="api" items={apiWorkflow} />
+        </div>
+
+        <div className="trace-card" aria-label="six step api trace">
+          <div className="panel-head row">
             <div>
-              <h3>Old workflow</h3>
-              <p>AIS operator calls PEA, repeats site details, waits for context, then records status manually.</p>
-              <strong>Slow, unstructured, hard to audit</strong>
+              <p className="eyebrow">Governed trace</p>
+              <h2>{latest?.request_id || "Waiting for AIS request"}</h2>
+            </div>
+            <span className="source">{initialData.source || "live API when configured"}</span>
+          </div>
+          <div className="flow-line" role="tablist" aria-label="AIS request to shadow response">
+            {missionSteps.map((item, index) => (
+              <button
+                key={item.id}
+                className={index === activeStep ? "flow-step active" : "flow-step"}
+                onClick={() => setActiveStep(index)}
+                type="button"
+                aria-selected={index === activeStep}
+              >
+                <span>{index + 1}</span>
+                <strong>{item.shortTitle}</strong>
+              </button>
+            ))}
+          </div>
+          <div className="selected-step">
+            <span>{step.metric}</span>
+            <strong>{step.title}</strong>
+            <p>{step.detail}</p>
+          </div>
+          <div className="shadow-preview" aria-label="shadow response summary">
+            <div>
+              <span>Request</span>
+              <strong>{latest?.request_id || "AIS request pending"}</strong>
+              <em>{story[0].body}</em>
             </div>
             <div>
-              <h3>API workflow</h3>
-              <p>AIS sends one request_id. PEA captures evidence, traces context, and exposes status lookup.</p>
-              <strong>Fast, durable, governed</strong>
+              <span>Candidate</span>
+              <strong>{story[4].body}</strong>
+              <em>{story[3].body}</em>
+            </div>
+            <div>
+              <span>Send gate</span>
+              <strong>Blocked</strong>
+              <em>{story[5].body}</em>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid four">
+      <section className="metric-row" aria-label="shadow run metrics">
         <Metric label="Inbound requests" value={String(initialData.metrics?.total_requests ?? counts.total)} note="redacted store" />
         <Metric label="Real AIS hits" value={String(counts.real)} note="excludes smoke IDs" />
-        <Metric label="Pending worker" value={String(initialData.metrics?.pending_worker_traces ?? counts.total)} note="shadow handoff" />
+        <Metric label="ETR candidate" value={formatEtrMetricValue(latest)} note={formatEtrMetricNote(latest)} />
         <Metric label="Production sends" value="0" note="blocked by design" />
       </section>
 
-      <section className="grid main-grid">
-        <div className="panel trace">
-          <div className="panel-head">
-            <p className="eyebrow">Latest trace</p>
+      <section className="panel trace">
+        <div className="panel-head row">
+          <div>
+          <p className="eyebrow">Request evidence chain</p>
             <h2>{latest?.request_id || "Waiting for request"}</h2>
           </div>
-          <div className="trace-rail">
-            <TraceNode title="AIS Signal" body={latest?.detected_at || "No live timestamp yet"} />
-            <TraceNode title="Meter Ref" body={latest?.meter?.last4 ? `hash + last4 ${latest.meter.last4}` : "redacted only"} />
-            <TraceNode title="Evidence" body={latest?.result?.evidence?.reason || "worker pending"} />
-            <TraceNode title="ETR Gate" body={latest?.etr_status || "NOT_READY_FOR_AUTO_SEND"} />
+          <span className="source">{initialData.source || "live/postgres when configured"}</span>
+        </div>
+        <div className="trace-rail" aria-label="AIS request to shadow response trace">
+          {story.map((node) => (
+            <TraceNode key={node.title} title={node.title} body={node.body} meta={node.meta} />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid main-grid">
+        <div className="panel response">
+          <div className="panel-head">
+            <p className="eyebrow">Shadow response preview</p>
+            <h2>Operator-visible answer, not customer auto-send</h2>
+          </div>
+          <div className="response-body">
+            <div>
+              <span>Cause</span>
+              <strong>{story[3].body}</strong>
+            </div>
+            <div>
+              <span>ETR candidate</span>
+              <strong>{story[4].body}</strong>
+            </div>
+            <div>
+              <span>Shadow response</span>
+              <strong>{story[5].body}</strong>
+            </div>
           </div>
         </div>
 
         <div className="panel ask">
           <div className="panel-head">
-            <p className="eyebrow">CEO ask</p>
-            <h2>Approve cloud shadow production path</h2>
+            <p className="eyebrow">Pilot decision frame</p>
+            <h2>Approve cloud shadow, not Auto ETR production</h2>
           </div>
           <ul>
             <li>Render-managed HTTPS endpoint and PostgreSQL.</li>
             <li>Named PEA/AIS API owners for pilot cutover.</li>
-            <li>Green-gate evidence collection before Auto ETR.</li>
+            <li>Green-gate evidence collection before any production ETR step.</li>
           </ul>
         </div>
       </section>
@@ -137,7 +234,7 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
             <p className="eyebrow">Operator queue</p>
             <h2>Recent AIS verification requests</h2>
           </div>
-          <span className="source">{initialData.source || "live/postgres when configured"}</span>
+          <span className="source">{initialData.count ?? initialData.items?.length ?? 0} records visible</span>
         </div>
         <div className="table-wrap">
           <table>
@@ -170,6 +267,32 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
   );
 }
 
+function WorkflowLane({
+  title,
+  label,
+  tone,
+  items
+}: {
+  title: string;
+  label: string;
+  tone: "manual" | "api";
+  items: string[];
+}) {
+  return (
+    <section className={`workflow-lane ${tone}`} aria-labelledby={`${tone}-workflow`}>
+      <div className="lane-head">
+        <span>{label}</span>
+        <h2 id={`${tone}-workflow`}>{title}</h2>
+      </div>
+      <ol>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function Metric({ label, value, note }: { label: string; value: string; note: string }) {
   return (
     <div className="metric">
@@ -180,11 +303,12 @@ function Metric({ label, value, note }: { label: string; value: string; note: st
   );
 }
 
-function TraceNode({ title, body }: { title: string; body: string }) {
+function TraceNode({ title, body, meta }: { title: string; body: string; meta: string }) {
   return (
     <div className="trace-node">
       <span>{title}</span>
       <strong>{body}</strong>
+      <em>{meta}</em>
     </div>
   );
 }
@@ -194,4 +318,104 @@ function summarize(items: OperatorItem[]) {
     total: items.length,
     real: items.filter((item) => !item.request_id.includes("SMOKE") && !item.request_id.includes("DEMO")).length
   };
+}
+
+function buildTraceStory(latest?: OperatorItem) {
+  const evidence = latest?.result?.evidence;
+  const distribution = latest?.result?.pea_distribution;
+  const evidenceReason = evidence?.reason || "worker pending";
+  const evidenceReady =
+    evidence?.match_found === true || !/pending|no_evidence|cloud_shadow|duplicate|already_received/i.test(evidenceReason);
+  const callback = latest?.callback_status === "SKIPPED_DUPLICATE" ? "duplicate captured; no resend" : "captured for audit";
+  const feeder = evidence?.feeder ? `feeder ${evidence.feeder}` : "feeder pending";
+  const protection = evidence?.device_id ? `${evidence.device_type || "Device"} ${evidence.device_id}` : evidenceReason;
+  const protectionMeta =
+    typeof evidence?.time_delta_minutes === "number"
+      ? `${formatTimestamp(evidence.event_time)}; ${evidence.time_delta_minutes} min from AIS timestamp`
+      : evidenceReady
+        ? "evidence available"
+        : "evidence gate not green";
+  const cause = distribution?.cause_lane
+    ? `shadow lane: ${formatCauseLane(distribution.cause_lane)}`
+    : evidenceReady
+      ? "candidate cause ready for owner review"
+      : "cause held pending evidence";
+
+  return [
+    {
+      title: "AIS request",
+      body: formatTimestamp(latest?.detected_at) || "No live timestamp yet",
+      meta: latest?.request_id || "request_id pending"
+    },
+    {
+      title: "PEA trace",
+      body: latest?.meter?.last4 ? `redacted meter ref ending ${latest.meter.last4}; ${feeder}` : `redacted meter reference; ${feeder}`,
+      meta: "customer identity hidden"
+    },
+    {
+      title: "Protection evidence",
+      body: protection,
+      meta: protectionMeta
+    },
+    {
+      title: "Cause",
+      body: cause,
+      meta: "not customer-facing truth"
+    },
+    {
+      title: "ETR candidate",
+      body: formatEtrCandidate(latest),
+      meta: latest?.result?.etr?.production_gate || "candidate only"
+    },
+    {
+      title: "Shadow response",
+      body: `${callback}; production_send ${latest?.production_send || "blocked"}`,
+      meta: "operator review only"
+    }
+  ];
+}
+
+function formatCauseLane(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function formatEtrMetricValue(item?: OperatorItem) {
+  const p50 = item?.result?.etr?.etr_minutes_p50;
+  return typeof p50 === "number" ? `${p50} min` : item?.etr_status || "blocked";
+}
+
+function formatEtrMetricNote(item?: OperatorItem) {
+  const etr = item?.result?.etr;
+  if (typeof etr?.q10 === "number" && typeof etr.q90 === "number") {
+    return `shadow P50; ${etr.q10}-${etr.q90} min band`;
+  }
+  return "shadow only";
+}
+
+function formatEtrCandidate(item?: OperatorItem) {
+  const etr = item?.result?.etr;
+  if (typeof etr?.etr_minutes_p50 === "number") {
+    const band =
+      typeof etr.q10 === "number" && typeof etr.q90 === "number" ? ` (${etr.q10}-${etr.q90} min band)` : "";
+    return `${etr.etr_minutes_p50} min P50${band}`;
+  }
+  return item?.etr_status || "NOT_READY_FOR_AUTO_SEND";
+}
+
+function formatTimestamp(value?: string) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Bangkok",
+    timeZoneName: "short"
+  }).format(date);
 }

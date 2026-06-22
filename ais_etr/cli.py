@@ -28,11 +28,13 @@ from .ais_inbound import (
     build_ais_inbound_audit_export,
     build_ais_inbound_db_snapshot,
     build_ais_inbound_first_hit_packet,
+    build_ais_inbound_model_demo_readiness,
     build_ais_inbound_readiness_gate,
     build_ais_inbound_status_report,
     build_pilot_completion_gate,
     process_ais_inbound_request,
     replay_ais_inbound_callbacks,
+    run_ais_inbound_shadow_demo_rehearsal,
     serve_ais_inbound_api,
     write_demo_request as write_ais_inbound_demo_request,
 )
@@ -628,6 +630,29 @@ def cmd_ais_inbound_status(args: argparse.Namespace) -> None:
         settings.resolve(settings.db_path),
         output=settings.resolve(args.output) if args.output else None,
         limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_inbound_model_demo_readiness(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_ais_inbound_model_demo_readiness(
+        settings.resolve(settings.db_path),
+        output=settings.resolve(args.output) if args.output else None,
+        limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_inbound_shadow_demo_rehearsal(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = run_ais_inbound_shadow_demo_rehearsal(
+        settings.resolve(settings.db_path),
+        output=settings.resolve(args.output) if args.output else None,
+        request_id=args.request_id,
+        requests_output=settings.resolve(args.requests_output) if args.requests_output else None,
+        callbacks_output=settings.resolve(args.callbacks_output) if args.callbacks_output else None,
+        match_window_minutes=args.match_window_minutes,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2743,6 +2768,25 @@ def build_parser() -> argparse.ArgumentParser:
     ais_inbound_status.add_argument("--output", default="runtime/ais_inbound_status_report.md")
     ais_inbound_status.add_argument("--limit", type=int, default=20)
     ais_inbound_status.set_defaults(func=cmd_ais_inbound_status)
+
+    ais_inbound_demo_ready = sub.add_parser(
+        "ais-inbound-model-demo-readiness",
+        help="Report whether AIS inbound SQLite evidence contains a redacted end-to-end shadow ETR demo path",
+    )
+    ais_inbound_demo_ready.add_argument("--output", default="runtime/ais_inbound_model_demo_readiness.md")
+    ais_inbound_demo_ready.add_argument("--limit", type=int, default=5)
+    ais_inbound_demo_ready.set_defaults(func=cmd_ais_inbound_model_demo_readiness)
+
+    ais_inbound_demo_rehearsal = sub.add_parser(
+        "ais-inbound-shadow-demo-rehearsal",
+        help="Create one redacted smoke/demo AIS inbound request from existing runtime evidence",
+    )
+    ais_inbound_demo_rehearsal.add_argument("--output", default="runtime/ais_inbound_model_demo_rehearsal.md")
+    ais_inbound_demo_rehearsal.add_argument("--request-id", default=None)
+    ais_inbound_demo_rehearsal.add_argument("--requests-output", default="runtime/ais_inbound_requests.jsonl")
+    ais_inbound_demo_rehearsal.add_argument("--callbacks-output", default="runtime/ais_inbound_callbacks.jsonl")
+    ais_inbound_demo_rehearsal.add_argument("--match-window-minutes", type=int, default=360)
+    ais_inbound_demo_rehearsal.set_defaults(func=cmd_ais_inbound_shadow_demo_rehearsal)
 
     ais_inbound_audit = sub.add_parser(
         "ais-inbound-audit-export",

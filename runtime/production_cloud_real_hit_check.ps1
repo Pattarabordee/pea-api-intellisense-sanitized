@@ -33,9 +33,25 @@ if ($metrics.production_send -ne "blocked") {
 }
 
 $items = @($operator.items)
+$smokePrefixes = @(
+  "AIS-CLOUD-SMOKE-",
+  "AIS-SMOKE-",
+  "AIS-PUBLIC-ALIAS-SMOKE-",
+  "AIS-FINAL-LOCAL-SMOKE-",
+  "AIS-BEARER-SMOKE-",
+  "AIS-DEMO-SHADOW-"
+)
 $realItems = @($items | Where-Object {
   $rid = [string]$_.request_id
-  $rid -and ($rid -notlike "AIS-CLOUD-SMOKE-*")
+  if (-not $rid) {
+    return $false
+  }
+  foreach ($prefix in $smokePrefixes) {
+    if ($rid.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
+      return $false
+    }
+  }
+  return $true
 })
 $latestAny = $items | Select-Object -First 1
 $latestReal = $realItems | Select-Object -First 1
