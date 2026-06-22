@@ -1,0 +1,14 @@
+﻿PEA API Intellisense V3 Clean Pitch QA
+PPTX: D:\PEA Intellisense data\runtime\weekend_delivery_freeze\presentation\pea_api_intellisense_v3_clean_pitch.pptx
+Slides: 12
+Preview: D:\PEA Intellisense data\runtime\weekend_delivery_freeze\presentation\v3_clean_preview
+Script: D:\PEA Intellisense data\runtime\pea_api_intellisense_v3_clean_pitch_script_th.md
+
+Checks:
+- slide count = 12
+- on-slide text primarily English
+- guardrail footer present on all slides
+- financial claims labeled strategic estimate/upside
+- no Auto ETR production live claim
+- Last Gasp/SCADA/operation-text mining framed as approved target lane, not current public claim
+- forbidden pattern scan: PASS
