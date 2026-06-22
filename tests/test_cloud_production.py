@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from ais_etr.cloud_production import (
+    build_mvp_daily_qa_pack,
     build_green_eligibility_report,
     build_production_approval_evidence_pack,
     build_production_gate_packet,
@@ -316,6 +317,74 @@ class CloudProductionTests(unittest.TestCase):
             self.assertNotIn("secret-pass", combined)
             self.assertNotIn("postgres://secret-user", combined)
             self.assertIn("X-API-Key: <cloud pilot key via secure channel only>", combined)
+
+    def test_mvp_daily_qa_pack_keeps_blocked_truth_and_writes_recording_pack(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            approval = root / "approval.json"
+            packet = root / "packet.json"
+            real_hit = root / "real_hit.json"
+            privacy = root / "privacy.json"
+            approval.write_text(
+                json.dumps(
+                    {
+                        "mode": "shadow",
+                        "production_send": "blocked",
+                        "decision": "AUTO_ETR_NO_GO",
+                        "cloud": {
+                            "api_base_url": "https://example.invalid",
+                            "web_console_url": "https://web.example.invalid",
+                            "health_status": "ok",
+                            "database": "ok",
+                            "total_requests": 5,
+                            "non_smoke_requests": 0,
+                        },
+                        "green_gate": {"green_rows": 0, "min_green_rows": 30, "additional_green_rows_needed": 30},
+                        "owner_queues": {"ais_truth_owner_rows": 30, "pea_topology_owner_rows": 30},
+                        "ops_controls": {
+                            "backup_restore_drill": "BLOCKED_MISSING_POSTGRES_TOOLS_OR_URLS",
+                            "missing_tools": ["pg_dump"],
+                            "missing_env": ["DATABASE_URL"],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            packet.write_text(json.dumps({"production_send": "blocked"}), encoding="utf-8")
+            real_hit.write_text(json.dumps({"latest_request": {"request_id": "SMOKE", "production_send": "blocked"}}), encoding="utf-8")
+            privacy.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+            old_database_url = os.environ.get("DATABASE_URL")
+            os.environ["DATABASE_URL"] = "postgres://secret-user:secret-pass@example/db"
+            try:
+                result = build_mvp_daily_qa_pack(
+                    approval_pack_json=approval,
+                    owner_packet_json=packet,
+                    real_hit_status_json=real_hit,
+                    privacy_scan_json=privacy,
+                    output_json=root / "qa.json",
+                    markdown_output=root / "qa.md",
+                    recording_pack_output=root / "recording.md",
+                )
+            finally:
+                if old_database_url is None:
+                    os.environ.pop("DATABASE_URL", None)
+                else:
+                    os.environ["DATABASE_URL"] = old_database_url
+
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertIn("green_model_gate", {check["name"] for check in result["checks"]})
+            combined = "\n".join(
+                [
+                    (root / "qa.json").read_text(encoding="utf-8"),
+                    (root / "qa.md").read_text(encoding="utf-8"),
+                    (root / "recording.md").read_text(encoding="utf-8"),
+                ]
+            )
+            self.assertIn("customer-facing Auto ETR", combined)
+            self.assertIn("production_send", combined)
+            self.assertNotIn("secret-pass", combined)
+            self.assertNotIn("postgres://secret-user", combined)
 
 
 def _write_readiness(path: Path) -> None:

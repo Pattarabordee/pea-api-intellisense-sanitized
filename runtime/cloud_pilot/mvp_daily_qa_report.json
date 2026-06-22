@@ -1,4 +1,41 @@
 {
+  "checks": [
+    {
+      "detail": "health=ok; database=ok",
+      "name": "cloud_health",
+      "status": "PASS"
+    },
+    {
+      "detail": "real_ais_cloud_requests=0",
+      "name": "real_ais_cloud_hit",
+      "status": "WARN"
+    },
+    {
+      "detail": "green_rows=0/30",
+      "name": "green_model_gate",
+      "status": "BLOCKED"
+    },
+    {
+      "detail": "ais_truth=30; topology=30",
+      "name": "owner_evidence_queues",
+      "status": "PASS"
+    },
+    {
+      "detail": "BLOCKED_MISSING_POSTGRES_TOOLS_OR_URLS",
+      "name": "ops_backup_restore_ready",
+      "status": "BLOCKED"
+    },
+    {
+      "detail": "status=PASS",
+      "name": "privacy_red_team_scan",
+      "status": "PASS"
+    },
+    {
+      "detail": "production_send=blocked; decision=AUTO_ETR_NO_GO",
+      "name": "production_guardrail",
+      "status": "PASS"
+    }
+  ],
   "cloud": {
     "api_base_url": "https://pea-api-intellisense-api.onrender.com",
     "database": "ok",
@@ -24,10 +61,10 @@
     "q50_mae_minutes": null
   },
   "guardrails": [
+    "no_customer_facing_auto_etr",
     "production_send_remains_blocked",
-    "api_key_db_url_and_tokens_not_written",
-    "smoke_demo_cases_do_not_count_as_green_truth",
-    "ais_outage_restore_remains_customer_facing_truth"
+    "no_secret_values_written",
+    "demo_uses_redacted_or_synthetic_data"
   ],
   "mode": "shadow",
   "ops_controls": {
@@ -56,12 +93,9 @@
     }
   },
   "outputs": {
-    "ais_test_window_request": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\ais_real_cloud_test_window_request.md",
-    "ais_truth_queue": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_owner_top30_ais_truth_queue.csv",
-    "json": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\production_approval_evidence_next_actions.json",
-    "markdown": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\production_approval_evidence_next_actions.md",
-    "ops_report": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\ops_controls_blocker_report.md",
-    "topology_queue": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\green_owner_top30_topology_queue.csv"
+    "json": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\mvp_daily_qa_report.json",
+    "markdown": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\mvp_daily_qa_report.md",
+    "recording_pack": "D:\\PEA Intellisense data\\runtime\\cloud_pilot\\mvp_demo_recording_pack.md"
   },
   "owner_queues": {
     "ais_truth_owner_rows": 30,
@@ -69,10 +103,5 @@
     "top_n": 30
   },
   "production_send": "blocked",
-  "readiness": {
-    "auto_etr_ready": "BLOCKED_GREEN_GATE",
-    "cloud_endpoint_ready": "READY_FOR_DEPLOYMENT_PACKAGE",
-    "production_infra_ready": "BLOCKED_PENDING_OWNER_OR_CONTROL"
-  },
-  "status": "PASS"
+  "status": "BLOCKED"
 }

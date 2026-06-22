@@ -20,6 +20,7 @@ from .confidence_gate import (
 )
 from .cloud_production import (
     build_green_eligibility_report,
+    build_mvp_daily_qa_pack,
     build_production_approval_evidence_pack,
     build_production_gate_packet,
     run_cloud_worker_shadow_loop,
@@ -1161,6 +1162,33 @@ def cmd_production_approval_evidence_pack(args: argparse.Namespace) -> None:
         markdown_output=settings.resolve(args.markdown_output),
         json_output=settings.resolve(args.json_output),
         top_n=args.top_n,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_mvp_daily_qa(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    build_production_approval_evidence_pack(
+        gap_actions_csv=settings.resolve(args.gap_actions_csv),
+        owner_packet_json=settings.resolve(args.owner_packet_json),
+        real_hit_status_json=settings.resolve(args.real_hit_status_json),
+        readiness_gate_json=settings.resolve(args.readiness_gate_json),
+        ais_truth_queue_output=settings.resolve(args.ais_truth_queue_output),
+        topology_queue_output=settings.resolve(args.topology_queue_output),
+        ops_report_output=settings.resolve(args.ops_report_output),
+        ais_test_window_output=settings.resolve(args.ais_test_window_output),
+        markdown_output=settings.resolve(args.approval_markdown_output),
+        json_output=settings.resolve(args.approval_json_output),
+        top_n=args.top_n,
+    )
+    result = build_mvp_daily_qa_pack(
+        approval_pack_json=settings.resolve(args.approval_json_output),
+        owner_packet_json=settings.resolve(args.owner_packet_json),
+        real_hit_status_json=settings.resolve(args.real_hit_status_json),
+        privacy_scan_json=settings.resolve(args.privacy_scan_json),
+        output_json=settings.resolve(args.json_output),
+        markdown_output=settings.resolve(args.markdown_output),
+        recording_pack_output=settings.resolve(args.recording_pack_output),
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -3278,6 +3306,27 @@ def build_parser() -> argparse.ArgumentParser:
     approval_pack.add_argument("--json-output", default="runtime/cloud_pilot/production_approval_evidence_next_actions.json")
     approval_pack.add_argument("--top-n", type=int, default=30)
     approval_pack.set_defaults(func=cmd_production_approval_evidence_pack)
+
+    mvp_daily = sub.add_parser(
+        "mvp-daily-qa",
+        help="Build one-command MVP QA, recording pack, and current approval evidence outputs",
+    )
+    mvp_daily.add_argument("--gap-actions-csv", default="runtime/cloud_pilot/production_gate_gap_actions.csv")
+    mvp_daily.add_argument("--owner-packet-json", default="runtime/cloud_pilot/production_gate_owner_packet.json")
+    mvp_daily.add_argument("--real-hit-status-json", default="runtime/production_cloud_real_hit_status.json")
+    mvp_daily.add_argument("--readiness-gate-json", default="runtime/production_path_readiness_gate.json")
+    mvp_daily.add_argument("--privacy-scan-json", default="runtime/production_cloud_privacy_red_team_scan_report.json")
+    mvp_daily.add_argument("--ais-truth-queue-output", default="runtime/cloud_pilot/green_owner_top30_ais_truth_queue.csv")
+    mvp_daily.add_argument("--topology-queue-output", default="runtime/cloud_pilot/green_owner_top30_topology_queue.csv")
+    mvp_daily.add_argument("--ops-report-output", default="runtime/cloud_pilot/ops_controls_blocker_report.md")
+    mvp_daily.add_argument("--ais-test-window-output", default="runtime/cloud_pilot/ais_real_cloud_test_window_request.md")
+    mvp_daily.add_argument("--approval-markdown-output", default="runtime/cloud_pilot/production_approval_evidence_next_actions.md")
+    mvp_daily.add_argument("--approval-json-output", default="runtime/cloud_pilot/production_approval_evidence_next_actions.json")
+    mvp_daily.add_argument("--markdown-output", default="runtime/cloud_pilot/mvp_daily_qa_report.md")
+    mvp_daily.add_argument("--json-output", default="runtime/cloud_pilot/mvp_daily_qa_report.json")
+    mvp_daily.add_argument("--recording-pack-output", default="runtime/cloud_pilot/mvp_demo_recording_pack.md")
+    mvp_daily.add_argument("--top-n", type=int, default=30)
+    mvp_daily.set_defaults(func=cmd_mvp_daily_qa)
 
     cloud_worker = sub.add_parser(
         "cloud-worker-shadow-loop",

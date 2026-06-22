@@ -82,6 +82,11 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
   const counts = useMemo(() => summarize(initialData.items || []), [initialData.items]);
   const story = useMemo(() => buildTraceStory(latest), [latest]);
   const step = missionSteps[activeStep];
+  const mvp = initialData.mvp;
+  const green = mvp?.green_gate || {};
+  const queues = mvp?.owner_queues || {};
+  const ops = mvp?.ops_controls || {};
+  const readiness = mvp?.readiness || {};
 
   return (
     <main className="shell">
@@ -178,6 +183,48 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
         <Metric label="ETR candidate" value={formatEtrMetricValue(latest)} note={formatEtrMetricNote(latest)} />
         <Metric label="Production sends" value="0" note="blocked by design" />
         <Metric label="Dry-run outbox" value={String(initialData.metrics?.outbox_dry_run_held ?? counts.outboxHeld)} note="no network send" />
+      </section>
+
+      <section className="panel mvp-panel" aria-labelledby="mvp-gate-title">
+        <div className="panel-head row">
+          <div>
+            <p className="eyebrow">Production gate MVP</p>
+            <h2 id="mvp-gate-title">What can move today without waiting</h2>
+          </div>
+          <span className="source">Auto ETR remains blocked</span>
+        </div>
+        <div className="mvp-grid" aria-label="production gate and owner evidence work">
+          <GateCard
+            tone="blocked"
+            label="Green gate"
+            value={`${green.green_rows ?? 0}/${green.min_green_rows ?? 30}`}
+            detail={`${green.additional_green_rows_needed ?? 30} more validated green rows needed`}
+          />
+          <GateCard
+            tone="ready"
+            label="AIS truth queue"
+            value={String(queues.ais_truth_owner_rows ?? 30)}
+            detail="active outage confirmation rows ready for AIS owner"
+          />
+          <GateCard
+            tone="ready"
+            label="PEA topology queue"
+            value={String(queues.pea_topology_owner_rows ?? 30)}
+            detail="downstream protection approval rows ready for PEA owner"
+          />
+          <GateCard
+            tone="blocked"
+            label="Ops drill"
+            value={formatShortStatus(ops.backup_restore_drill)}
+            detail={formatMissingList(ops.missing_tools, "missing local PostgreSQL tools")}
+          />
+        </div>
+        <div className="mvp-status-row" aria-label="production readiness split">
+          <StatusChip label="Cloud shadow" value={readiness.cloud_endpoint_ready || "READY_FOR_DEPLOYMENT_PACKAGE"} />
+          <StatusChip label="Production infra" value={readiness.production_infra_ready || "BLOCKED_PENDING_OWNER_OR_CONTROL"} />
+          <StatusChip label="Auto ETR" value={readiness.auto_etr_ready || "BLOCKED_GREEN_GATE"} />
+          <StatusChip label="Key rotation" value={ops.key_rotation_drill || "DEFER_UNTIL_FIRST_REAL_AIS_HIT"} />
+        </div>
       </section>
 
       <section className="panel trace">
@@ -327,6 +374,35 @@ function TraceNode({ title, body, meta }: { title: string; body: string; meta: s
   );
 }
 
+function GateCard({
+  label,
+  value,
+  detail,
+  tone
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: "ready" | "blocked";
+}) {
+  return (
+    <div className={`gate-card ${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <em>{detail}</em>
+    </div>
+  );
+}
+
+function StatusChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="status-chip">
+      <span>{label}</span>
+      <strong>{formatShortStatus(value)}</strong>
+    </div>
+  );
+}
+
 function summarize(items: OperatorItem[]) {
   return {
     total: items.length,
@@ -434,6 +510,20 @@ function formatOutbox(item?: OperatorItem) {
   }
   const attempts = typeof outbox.attempts === "number" ? `; attempts ${outbox.attempts}` : "";
   return `${outbox.status}; ${outbox.transport || "dry_run"}${attempts}`;
+}
+
+function formatShortStatus(value?: string) {
+  if (!value) {
+    return "pending";
+  }
+  return value.replace(/_/g, " ").toLowerCase();
+}
+
+function formatMissingList(values?: string[], fallback = "no blocker reported") {
+  if (!values || values.length === 0) {
+    return fallback;
+  }
+  return values.join(", ");
 }
 
 function formatTimestamp(value?: string) {

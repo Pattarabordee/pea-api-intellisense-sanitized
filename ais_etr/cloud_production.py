@@ -257,6 +257,109 @@ def build_production_approval_evidence_pack(
     return summary
 
 
+def build_mvp_daily_qa_pack(
+    *,
+    approval_pack_json: str | Path = "runtime/cloud_pilot/production_approval_evidence_next_actions.json",
+    owner_packet_json: str | Path = "runtime/cloud_pilot/production_gate_owner_packet.json",
+    real_hit_status_json: str | Path = "runtime/production_cloud_real_hit_status.json",
+    privacy_scan_json: str | Path = "runtime/production_cloud_privacy_red_team_scan_report.json",
+    output_json: str | Path = "runtime/cloud_pilot/mvp_daily_qa_report.json",
+    markdown_output: str | Path = "runtime/cloud_pilot/mvp_daily_qa_report.md",
+    recording_pack_output: str | Path = "runtime/cloud_pilot/mvp_demo_recording_pack.md",
+) -> dict[str, Any]:
+    approval = _read_json(approval_pack_json)
+    owner_packet = _read_json(owner_packet_json)
+    real_hit = _read_json(real_hit_status_json)
+    privacy = _read_json(privacy_scan_json)
+    cloud = approval.get("cloud") if isinstance(approval.get("cloud"), dict) else {}
+    green_gate = approval.get("green_gate") if isinstance(approval.get("green_gate"), dict) else {}
+    queues = approval.get("owner_queues") if isinstance(approval.get("owner_queues"), dict) else {}
+    ops = approval.get("ops_controls") if isinstance(approval.get("ops_controls"), dict) else {}
+
+    checks = [
+        _qa_check(
+            "cloud_health",
+            "PASS" if cloud.get("health_status") == "ok" and cloud.get("database") == "ok" else "FAIL",
+            f"health={cloud.get('health_status', '')}; database={cloud.get('database', '')}",
+        ),
+        _qa_check(
+            "real_ais_cloud_hit",
+            "PASS" if (_to_int(cloud.get("non_smoke_requests")) or 0) > 0 else "WARN",
+            f"real_ais_cloud_requests={cloud.get('non_smoke_requests', 0)}",
+        ),
+        _qa_check(
+            "green_model_gate",
+            "PASS"
+            if (_to_int(green_gate.get("green_rows")) or 0) >= (_to_int(green_gate.get("min_green_rows")) or 30)
+            else "BLOCKED",
+            f"green_rows={green_gate.get('green_rows', 0)}/{green_gate.get('min_green_rows', 30)}",
+        ),
+        _qa_check(
+            "owner_evidence_queues",
+            "PASS"
+            if (_to_int(queues.get("ais_truth_owner_rows")) or 0) >= 30
+            and (_to_int(queues.get("pea_topology_owner_rows")) or 0) >= 30
+            else "WARN",
+            f"ais_truth={queues.get('ais_truth_owner_rows', 0)}; topology={queues.get('pea_topology_owner_rows', 0)}",
+        ),
+        _qa_check(
+            "ops_backup_restore_ready",
+            "PASS" if ops.get("backup_restore_drill") == "READY_TO_RUN" else "BLOCKED",
+            str(ops.get("backup_restore_drill") or "unknown"),
+        ),
+        _qa_check(
+            "privacy_red_team_scan",
+            "PASS" if privacy.get("status") == "PASS" else "FAIL" if privacy else "WARN",
+            f"status={privacy.get('status', 'missing') if privacy else 'missing'}",
+        ),
+        _qa_check(
+            "production_guardrail",
+            "PASS"
+            if approval.get("production_send") == "blocked"
+            and owner_packet.get("production_send") == "blocked"
+            and approval.get("decision") == "AUTO_ETR_NO_GO"
+            else "FAIL",
+            f"production_send={approval.get('production_send', '')}; decision={approval.get('decision', '')}",
+        ),
+    ]
+    overall = _overall_status(checks)
+    summary = {
+        "generated_at": _utc_now_iso(),
+        "status": overall,
+        "mode": "shadow",
+        "production_send": "blocked",
+        "decision": "AUTO_ETR_NO_GO",
+        "checks": checks,
+        "cloud": {
+            "api_base_url": cloud.get("api_base_url", ""),
+            "web_console_url": cloud.get("web_console_url", ""),
+            "health_status": cloud.get("health_status", ""),
+            "database": cloud.get("database", ""),
+            "total_requests": cloud.get("total_requests", 0),
+            "non_smoke_requests": cloud.get("non_smoke_requests", 0),
+            "latest_request": _safe_latest_request(cloud.get("latest_request") or real_hit.get("latest_request")),
+        },
+        "green_gate": green_gate,
+        "owner_queues": queues,
+        "ops_controls": ops,
+        "outputs": {
+            "markdown": str(markdown_output),
+            "json": str(output_json),
+            "recording_pack": str(recording_pack_output),
+        },
+        "guardrails": [
+            "no_customer_facing_auto_etr",
+            "production_send_remains_blocked",
+            "no_secret_values_written",
+            "demo_uses_redacted_or_synthetic_data",
+        ],
+    }
+    _write_json(output_json, summary)
+    _write_text(markdown_output, _render_mvp_daily_qa_report(summary))
+    _write_text(recording_pack_output, _render_mvp_demo_recording_pack(summary))
+    return summary
+
+
 def build_green_eligibility_report(
     *,
     ais_only_readiness: str | Path = "runtime/ais_only_readiness.csv",
@@ -670,6 +773,21 @@ def _ops_controls_status(real_hit: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _qa_check(name: str, status: str, detail: str) -> dict[str, str]:
+    return {"name": name, "status": status, "detail": detail}
+
+
+def _overall_status(checks: list[dict[str, str]]) -> str:
+    statuses = {check.get("status", "") for check in checks}
+    if "FAIL" in statuses:
+        return "FAIL"
+    if "BLOCKED" in statuses:
+        return "BLOCKED"
+    if "WARN" in statuses:
+        return "WARN"
+    return "PASS"
+
+
 def _sql_text(value: Any) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
@@ -890,6 +1008,124 @@ def _render_production_approval_evidence_pack(summary: dict[str, Any]) -> str:
             "- Smoke/demo rows prove flow only; they do not count toward green model gate.",
         ]
     )
+    return "\n".join(lines) + "\n"
+
+
+def _render_mvp_daily_qa_report(summary: dict[str, Any]) -> str:
+    cloud = summary["cloud"]
+    green = summary.get("green_gate") or {}
+    queues = summary.get("owner_queues") or {}
+    ops = summary.get("ops_controls") or {}
+    lines = [
+        "# MVP Daily QA Report",
+        "",
+        f"- Generated: `{summary['generated_at']}`",
+        f"- Overall: `{summary['status']}`",
+        "- Mode: `shadow`",
+        "- Production send: `blocked`",
+        "- Decision: `AUTO_ETR_NO_GO`",
+        "",
+        "## Checks",
+        "",
+        "| Check | Status | Detail |",
+        "| --- | --- | --- |",
+    ]
+    for check in summary.get("checks", []):
+        lines.append(f"| `{check['name']}` | `{check['status']}` | {check['detail']} |")
+    lines.extend(
+        [
+            "",
+            "## MVP Snapshot",
+            "",
+            f"- API health: `{cloud.get('health_status', '')}`",
+            f"- Database: `{cloud.get('database', '')}`",
+            f"- Total cloud requests: `{cloud.get('total_requests', 0)}`",
+            f"- Real AIS cloud requests: `{cloud.get('non_smoke_requests', 0)}`",
+            f"- Green rows: `{green.get('green_rows', 0)}` / `{green.get('min_green_rows', 30)}`",
+            f"- AIS truth owner queue: `{queues.get('ais_truth_owner_rows', 0)}` rows",
+            f"- PEA topology owner queue: `{queues.get('pea_topology_owner_rows', 0)}` rows",
+            f"- Backup/restore drill: `{ops.get('backup_restore_drill', '')}`",
+            "",
+            "## Today MVP Work",
+            "",
+            "1. Record demo using `mvp_demo_recording_pack.md` and the web console.",
+            "2. Send AIS test-window request to AIS through normal working channel; send key separately.",
+            "3. Send owner queues to AIS truth owner and PEA topology owner.",
+            "4. Install PostgreSQL client tools before backup/restore drill.",
+            "",
+            "## Guardrails",
+            "",
+            "- This report does not approve customer-facing Auto ETR.",
+            "- Do not expose API key, DB URL, token, room ID, verbatim WebEx text, full meter/PEANO, or customer identity.",
+            "- Smoke/demo rows do not count toward green model gate.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _render_mvp_demo_recording_pack(summary: dict[str, Any]) -> str:
+    cloud = summary["cloud"]
+    green = summary.get("green_gate") or {}
+    queues = summary.get("owner_queues") or {}
+    lines = [
+        "# MVP Demo Recording Pack",
+        "",
+        f"- Generated: `{summary['generated_at']}`",
+        "- Target length: `4-5 minutes`",
+        "- UI language: English first",
+        "- Spoken script: Thai",
+        "- Mode: `shadow`",
+        "- Production send: `blocked`",
+        "",
+        "## Before Recording",
+        "",
+        "- Open web console: `https://pea-api-intellisense-web.onrender.com`",
+        "- Keep API health tab optional: `https://pea-api-intellisense-api.onrender.com/health`",
+        "- Do not show Render env, API key, DB URL, verbatim WebEx, full meter/PEANO, or customer identity.",
+        "- Point to visible guardrails: `mode = shadow`, `production_send = blocked`, `Auto ETR not enabled`.",
+        "",
+        "## Current Evidence To Mention",
+        "",
+        f"- Cloud health/database: `{cloud.get('health_status', '')}` / `{cloud.get('database', '')}`",
+        f"- Real AIS cloud requests: `{cloud.get('non_smoke_requests', 0)}`",
+        f"- Green rows: `{green.get('green_rows', 0)}` / `{green.get('min_green_rows', 30)}`",
+        f"- AIS truth owner queue: `{queues.get('ais_truth_owner_rows', 0)}` rows",
+        f"- PEA topology owner queue: `{queues.get('pea_topology_owner_rows', 0)}` rows",
+        "",
+        "## Spoken Script",
+        "",
+        "### 0:00-0:30 Hook",
+        "",
+        "ปัญหาเดิมคือเวลา site ของ AIS มีไฟดับ ทีม AIS เห็นว่า site fail แต่ไม่เห็น grid context ของ PEA จึงต้องโทรถามกันเอง ข้อมูลกระจัดกระจาย ช้า และ audit ย้อนหลังยาก.",
+        "",
+        "### 0:30-1:20 API Request",
+        "",
+        "แนวทางใหม่คือ AIS ส่ง request เดียวเข้ามาที่ PEA API พร้อม `request_id`, timestamp, meter reference และพื้นที่ ระบบตอบ `202 Accepted` แล้วเก็บหลักฐานแบบ redacted ใน cloud.",
+        "",
+        "### 1:20-2:10 PEA Trace",
+        "",
+        "ฝั่ง PEA ไม่ได้ตอบจาก meter อย่างเดียว แต่ trace ว่า meter นั้นอยู่หลัง feeder และ protection device ตัวไหน โดยยังซ่อน customer identity และไม่โชว์เลข meter จริง.",
+        "",
+        "### 2:10-3:00 Evidence Gate",
+        "",
+        "ระบบตรวจต่อว่า protection device มีเหตุการณ์ในช่วงเวลาใกล้กับ AIS แจ้งมาหรือไม่ จุดนี้สำคัญ เพราะเราไม่เดา เราใช้ evidence gate ก่อนให้ cause หรือ ETR มีน้ำหนัก.",
+        "",
+        "### 3:00-3:45 ETR Candidate",
+        "",
+        "เมื่อ evidence เพียงพอ ระบบสร้าง cause lane และ ETR candidate พร้อม uncertainty band แต่ยังเป็น shadow candidate เท่านั้น AIS outage/restore ยังเป็น truth สำหรับวัดผล.",
+        "",
+        "### 3:45-4:30 Guardrail",
+        "",
+        "ตอนนี้ cloud shadow pilot พร้อมรับ request จริงแล้ว แต่ Auto ETR production ยังไม่เปิด เพราะ green rows ยังไม่ถึง 30 และยังต้องมี owner approval. ดังนั้น `production_send` ยังถูก block.",
+        "",
+        "### 4:30-5:00 Ask",
+        "",
+        "สิ่งที่ต้องขอคือให้ AIS ยิง cloud pilot จริง, ให้ owner ช่วยยืนยัน AIS truth และ PEA topology จาก queue ที่เตรียมไว้, แล้วค่อยใช้หลักฐานนี้ตัดสิน production Auto ETR แบบปลอดภัย.",
+        "",
+        "## One-Line Close",
+        "",
+        "โปรเจกต์นี้เปลี่ยนงานโทรถามแบบ manual ให้เป็น API trace ที่มีหลักฐาน ตรวจสอบได้ และคุมความเสี่ยงก่อนเปิด production.",
+    ]
     return "\n".join(lines) + "\n"
 
 

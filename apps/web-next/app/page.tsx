@@ -23,9 +23,9 @@ async function loadOperatorData(): Promise<OperatorData> {
       headers: { "X-API-Key": apiKey }
     });
     if (metricsResponse.ok) {
-      return { ...data, metrics: await metricsResponse.json() };
+      return { ...data, metrics: await metricsResponse.json(), mvp: data.mvp || demoOperatorData.mvp };
     }
-    return data;
+    return { ...data, mvp: data.mvp || demoOperatorData.mvp };
   } catch (error) {
     return { ...demoOperatorData, source: `fallback: ${(error as Error).message}` };
   }

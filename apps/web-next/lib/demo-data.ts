@@ -67,6 +67,29 @@ export type OperatorData = {
     dead_letters?: number;
     latest_received_at?: string;
   };
+  mvp?: {
+    green_gate?: {
+      green_rows?: number;
+      min_green_rows?: number;
+      additional_green_rows_needed?: number;
+    };
+    owner_queues?: {
+      ais_truth_owner_rows?: number;
+      pea_topology_owner_rows?: number;
+    };
+    ops_controls?: {
+      backup_restore_drill?: string;
+      render_alerts?: string;
+      key_rotation_drill?: string;
+      missing_tools?: string[];
+      missing_env?: string[];
+    };
+    readiness?: {
+      cloud_endpoint_ready?: string;
+      production_infra_ready?: string;
+      auto_etr_ready?: string;
+    };
+  };
   items: OperatorItem[];
 };
 
@@ -86,6 +109,29 @@ export const demoOperatorData: OperatorData = {
     outbox_dry_run_held: 3,
     dead_letters: 0,
     latest_received_at: "2026-06-21T09:05:12Z"
+  },
+  mvp: {
+    green_gate: {
+      green_rows: 0,
+      min_green_rows: 30,
+      additional_green_rows_needed: 30
+    },
+    owner_queues: {
+      ais_truth_owner_rows: 30,
+      pea_topology_owner_rows: 30
+    },
+    ops_controls: {
+      backup_restore_drill: "BLOCKED_MISSING_POSTGRES_TOOLS_OR_URLS",
+      render_alerts: "MANUAL_CONFIRM_REQUIRED_OR_RENDER_API_KEY_MISSING",
+      key_rotation_drill: "DEFER_UNTIL_FIRST_REAL_AIS_HIT",
+      missing_tools: ["pg_dump", "pg_restore", "psql"],
+      missing_env: ["DATABASE_URL", "RESTORE_TEST_DATABASE_URL", "RENDER_API_KEY"]
+    },
+    readiness: {
+      cloud_endpoint_ready: "READY_FOR_DEPLOYMENT_PACKAGE",
+      production_infra_ready: "BLOCKED_PENDING_OWNER_OR_CONTROL",
+      auto_etr_ready: "BLOCKED_GREEN_GATE"
+    }
   },
   items: [
     {

@@ -462,6 +462,83 @@ h3 {
   margin-top: 14px;
 }
 
+.mvp-panel {
+  margin-top: 14px;
+}
+
+.mvp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.gate-card {
+  min-height: 132px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-3);
+}
+
+.gate-card.ready {
+  border-color: rgba(150, 212, 124, 0.5);
+  background: linear-gradient(180deg, rgba(150, 212, 124, 0.08), var(--panel-3));
+}
+
+.gate-card.blocked {
+  border-color: rgba(242, 182, 83, 0.5);
+  background: linear-gradient(180deg, rgba(242, 182, 83, 0.08), var(--panel-3));
+}
+
+.gate-card span,
+.gate-card em,
+.status-chip span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.3;
+}
+
+.gate-card span {
+  color: var(--blue);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gate-card strong {
+  display: block;
+  margin: 10px 0 8px;
+  overflow-wrap: anywhere;
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.mvp-status-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.status-chip {
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.status-chip strong {
+  display: block;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+  color: var(--green);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
 .main-grid {
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
 }
@@ -629,6 +706,8 @@ td {
   .beat-row,
   .shadow-preview,
   .metric-row,
+  .mvp-grid,
+  .mvp-status-row,
   .main-grid {
     grid-template-columns: 1fr;
   }
