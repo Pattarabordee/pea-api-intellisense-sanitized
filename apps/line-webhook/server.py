@@ -31,13 +31,24 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def split_env(name: str) -> tuple[str, ...]:
+    raw = os.environ.get(name, "")
+    return tuple(part.strip() for part in raw.replace("\n", ",").replace(" ", ",").split(",") if part.strip())
+
+
 def settings() -> dict[str, Any]:
-    allowed = tuple(part.strip() for part in os.environ.get("LINE_ALLOWED_GROUP_IDS", "").replace("\n", ",").split(",") if part.strip())
     return {
         "secret": os.environ.get("LINE_CHANNEL_SECRET", ""),
-        "allowed": allowed,
+        "allowed": split_env("LINE_ALLOWED_GROUP_IDS"),
+        "allowed_hashes": split_env("LINE_ALLOWED_CHAT_HASHES"),
         "mode": os.environ.get("LINE_CAPTURE_MODE", "shadow").strip().lower(),
     }
+
+
+def log_event(payload: dict[str, Any]) -> None:
+    safe = dict(payload)
+    safe.setdefault("generated_at", utc_now())
+    print(json.dumps(safe, ensure_ascii=False, sort_keys=True), flush=True)
 
 
 def verify_signature(body: bytes, signature: str | None, secret: str) -> bool:
@@ -88,25 +99,29 @@ def hash_id(prefix: str, value: Any) -> str | None:
     return f"{prefix}_{hashlib.sha256(raw.encode('utf-8')).hexdigest()[:16]}"
 
 
-def normalize_event(event: dict[str, Any], allowed: tuple[str, ...]) -> tuple[dict[str, Any] | None, str | None]:
+def normalize_event(
+    event: dict[str, Any],
+    allowed: tuple[str, ...],
+    allowed_hashes: tuple[str, ...],
+) -> tuple[dict[str, Any] | None, str | None, dict[str, Any]]:
     if event.get("type") != "message":
-        return None, "ignored_event_type"
+        return None, "ignored_event_type", {}
     message = event.get("message") if isinstance(event.get("message"), dict) else {}
     if message.get("type") != "text":
-        return None, "ignored_non_text_message"
+        return None, "ignored_non_text_message", {}
     source = event.get("source") if isinstance(event.get("source"), dict) else {}
     if source.get("type") not in {"group", "room"}:
-        return None, "ignored_non_group_source"
+        return None, "ignored_non_group_source", {}
     chat_id = str(source.get("groupId") or source.get("roomId") or "").strip()
     if not chat_id:
-        return None, "missing_group_id"
-    if chat_id not in set(allowed):
-        return None, "group_not_allowlisted"
+        return None, "missing_group_id", {}
+    chat_hash = hash_id("chat", chat_id)
+    if chat_id not in set(allowed) and chat_hash not in set(allowed_hashes):
+        return None, "group_not_allowlisted", {"chat_id_hash": chat_hash}
     text, flags = sanitize_text(message.get("text"))
     if not text:
-        return None, "missing_text"
+        return None, "missing_text", {"chat_id_hash": chat_hash}
     created = iso_from_line_ts(event.get("timestamp"))
-    chat_hash = hash_id("chat", chat_id)
     sender_hash = hash_id("sender", source.get("userId"))
     message_id = str(message.get("id") or "").strip()
     if not message_id:
@@ -123,7 +138,7 @@ def normalize_event(event: dict[str, Any], allowed: tuple[str, ...]) -> tuple[di
         "consent_manifest_id": "line-webhook",
         "raw_redaction_flags": flags,
     }
-    return record, None
+    return record, None, {"chat_id_hash": chat_hash}
 
 
 def write_records(records: list[dict[str, Any]]) -> int:
@@ -202,6 +217,7 @@ class Handler(BaseHTTPRequestHandler):
             "production_send": "blocked",
             "secret_configured": bool(cfg["secret"]),
             "allowed_group_count": len(cfg["allowed"]),
+            "allowed_chat_hash_count": len(cfg["allowed_hashes"]),
         })
 
     def do_POST(self) -> None:
@@ -215,8 +231,8 @@ class Handler(BaseHTTPRequestHandler):
         if not cfg["secret"]:
             self.send_json(503, {"status": "LINE_CHANNEL_SECRET_REQUIRED"})
             return
-        if not cfg["allowed"]:
-            self.send_json(503, {"status": "LINE_ALLOWED_GROUP_IDS_REQUIRED"})
+        if not cfg["allowed"] and not cfg["allowed_hashes"]:
+            self.send_json(503, {"status": "LINE_ALLOWLIST_REQUIRED"})
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -245,11 +261,15 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(event, dict):
                 rejected["invalid_event"] = rejected.get("invalid_event", 0) + 1
                 continue
-            record, reason = normalize_event(event, cfg["allowed"])
+            record, reason, meta = normalize_event(event, cfg["allowed"], cfg["allowed_hashes"])
             if record:
                 accepted.append(record)
+                log_event({"event": "line_accepted", "chat_id_hash": record.get("chat_id_hash")})
             elif reason:
                 rejected[reason] = rejected.get(reason, 0) + 1
+                log_payload = {"event": "line_rejected", "reason": reason}
+                log_payload.update({k: v for k, v in meta.items() if v})
+                log_event(log_payload)
         inserted = write_records(accepted)
         self.send_json(200, {
             "status": "CAPTURED",
