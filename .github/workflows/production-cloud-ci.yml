@@ -17,6 +17,10 @@ jobs:
           python3 --version
           export PYTHONPATH="$PWD"
           python3 tests/test_production_path.py
+      - name: Run full Python unittest suite
+        run: |
+          export PYTHONPATH="$PWD"
+          python3 -m unittest discover -s tests
       - name: Build sanitized source bundle
         run: |
           export PYTHONPATH="$PWD"
