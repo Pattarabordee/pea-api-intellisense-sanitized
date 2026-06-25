@@ -1,0 +1,57 @@
+name: Production Cloud CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python-guardrails:
+    name: Python guardrails and sanitized export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Python guardrail tests
+        run: |
+          python3 --version
+          export PYTHONPATH="$PWD"
+          python3 tests/test_production_path.py
+      - name: Build sanitized source bundle
+        run: |
+          export PYTHONPATH="$PWD"
+          python3 -m ais_etr export-sanitized-codebase
+          python3 -c 'import json; from pathlib import Path; m=json.loads(Path("runtime/sanitized_codebase_manifest.json").read_text(encoding="utf-8")); assert m.get("status") == "PASS", m.get("scan_failures"); print("sanitized export PASS")'
+
+  go-api:
+    name: Go API tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api-go
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Go API
+        run: |
+          go version
+          go mod download
+          go test ./...
+
+  next-console:
+    name: Next.js console build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web-next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web-next/package-lock.json
+      - name: Install, audit, and build
+        run: |
+          npm ci
+          npm audit --audit-level=moderate
+          npm run build

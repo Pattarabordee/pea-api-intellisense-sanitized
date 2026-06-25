@@ -1,0 +1,16 @@
+{
+  "name": "pea-intellisense-data",
+  "version": "1.0.0",
+  "description": "This repository is the sanitized source-of-truth export for the PEA API Intellisense / AIS ETR project.",
+  "main": "reportserver_main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

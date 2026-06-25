@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AIS ETR Shadow Pilot</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="Project status">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 2.25 4.5 5.58v5.78c0 4.63 3.2 8.94 7.5 10.39 4.3-1.45 7.5-5.76 7.5-10.39V5.58L12 2.25Z" />
+              <path d="m13.2 6.65-5.05 6.18h3.07l-.42 4.52 5.05-6.18h-3.07l.42-4.52Z" />
+            </svg>
+          </div>
+          <div>
+            <p class="eyebrow">PEA Intellisense Data</p>
+            <h1>AIS ETR Shadow Pilot</h1>
+          </div>
+        </div>
+        <div class="safety-badge" role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="10" width="14" height="10" rx="2" />
+            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            <path d="M12 14v2" />
+          </svg>
+          <span>No production send</span>
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="Current pilot KPIs">
+        <article class="kpi-card purple">
+          <span class="kpi-label">AIS assets</span>
+          <strong>390</strong>
+          <p>Registry loaded from traced AIS meter data</p>
+        </article>
+        <article class="kpi-card green">
+          <span class="kpi-label">Traced</span>
+          <strong>271</strong>
+          <p>Assets with upstream protection hierarchy</p>
+        </article>
+        <article class="kpi-card orange">
+          <span class="kpi-label">Backlog</span>
+          <strong>119</strong>
+          <p>NO_METER rows blocked from confident send</p>
+        </article>
+        <article class="kpi-card blue">
+          <span class="kpi-label">q50 MAE</span>
+          <strong>19.82<span> min</span></strong>
+          <p>Baseline model still below approval gate</p>
+        </article>
+      </section>
+
+      <section class="workflow-panel" aria-label="Automation workflow">
+        <header>
+          <div>
+            <p class="eyebrow">Shadow workflow</p>
+            <h2>Webex outage event to customer-safe payload</h2>
+          </div>
+          <span class="mode-pill">Human approval required</span>
+        </header>
+
+        <div class="workflow" role="list">
+          <article class="workflow-step" role="listitem">
+            <div class="step-icon purple">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 5.5h16v10H8.8L4 19.5v-14Z" />
+                <path d="M8 10.5h.01M12 10.5h.01M16 10.5h.01" />
+              </svg>
+            </div>
+            <h3>Webex</h3>
+            <p>Outage message</p>
+          </article>
+          <span class="connector" aria-hidden="true"></span>
+          <article class="workflow-step" role="listitem">
+            <div class="step-icon blue">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 3.5h7l3 3v14H7v-17Z" />
+                <path d="M14 3.5v4h4M9.5 11h5M9.5 14h5M9.5 17h3.5" />
+              </svg>
+            </div>
+            <h3>Parse</h3>
+            <p>Device and feeder</p>
+          </article>
+          <span class="connector" aria-hidden="true"></span>
+          <article class="workflow-step" role="listitem">
+            <div class="step-icon green">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4v5M7 13v-2h10v2M7 13v4M12 13v4M17 13v4" />
+                <rect x="9.5" y="2.5" width="5" height="5" rx="1" />
+                <rect x="4.5" y="16.5" width="5" height="5" rx="1" />
+                <rect x="9.5" y="16.5" width="5" height="5" rx="1" />
+                <rect x="14.5" y="16.5" width="5" height="5" rx="1" />
+              </svg>
+            </div>
+            <h3>Match</h3>
+            <p>Protection hierarchy</p>
+          </article>
+          <span class="connector" aria-hidden="true"></span>
+          <article class="workflow-step" role="listitem">
+            <div class="step-icon orange">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 17a8 8 0 0 1 16 0" />
+                <path d="M12 17l4-5M7.5 15.5 6 14M16.5 8.5 18 7M12 9V6" />
+                <circle cx="12" cy="17" r="1.8" />
+              </svg>
+            </div>
+            <h3>Predict</h3>
+            <p>ETR range</p>
+          </article>
+          <span class="connector" aria-hidden="true"></span>
+          <article class="workflow-step" role="listitem">
+            <div class="step-icon blue">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="6" r="3" />
+                <circle cx="18" cy="18" r="3" />
+                <path d="m8.5 10.7 7-3.4M8.5 13.3l7 3.4" />
+              </svg>
+            </div>
+            <h3>Notify</h3>
+            <p>Mock webhook</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel readiness-panel">
+          <header>
+            <div>
+              <p class="eyebrow">Readiness gate</p>
+              <h2>Production send remains blocked</h2>
+            </div>
+          </header>
+          <div class="gate-list">
+            <div class="gate-row ok">
+              <span aria-hidden="true"></span>
+              <div>
+                <strong>Pipeline exists</strong>
+                <p>Parser, matcher, baseline predictor, mock webhook, and SQLite audit state are in place.</p>
+              </div>
+            </div>
+            <div class="gate-row warn">
+              <span aria-hidden="true"></span>
+              <div>
+                <strong>Model gate not passed</strong>
+                <p>q50 MAE is 19.82 minutes against the 16 minute target.</p>
+              </div>
+            </div>
+            <div class="gate-row stop">
+              <span aria-hidden="true"></span>
+              <div>
+                <strong>Real Webex polling not enabled</strong>
+                <p>Bot token and room id are still missing from pilot runtime configuration.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel actions-panel">
+          <header>
+            <div>
+              <p class="eyebrow">Next actions</p>
+              <h2>Work queue</h2>
+            </div>
+          </header>
+          <ol class="action-list">
+            <li>
+              <span>1</span>
+              <div>
+                <strong>Collect Webex samples</strong>
+                <p>Target 20-50 real messages, sanitized where needed.</p>
+              </div>
+            </li>
+            <li>
+              <span>2</span>
+              <div>
+                <strong>Repair NO_METER</strong>
+                <p>Review 119 registry rows before confident matching.</p>
+              </div>
+            </li>
+            <li>
+              <span>3</span>
+              <div>
+                <strong>Run shadow evaluation</strong>
+                <p>Compare shadow predictions against ReportPO or AIS truth.</p>
+              </div>
+            </li>
+          </ol>
+        </article>
+
+        <article class="panel evidence-panel">
+          <header>
+            <div>
+              <p class="eyebrow">Reference report</p>
+              <h2>ReportPO dashboard source</h2>
+            </div>
+          </header>
+          <figure>
+            <img src="../reportpo_tab_etr.png" alt="ReportPO ETR dashboard screenshot" />
+          </figure>
+        </article>
+
+        <article class="panel payload-panel">
+          <header>
+            <div>
+              <p class="eyebrow">Shadow payload preview</p>
+              <h2>Customer-facing fields only</h2>
+            </div>
+          </header>
+          <div class="payload-preview" aria-label="Sample shadow payload">
+            <div>
+              <span>mode</span>
+              <strong>shadow</strong>
+            </div>
+            <div>
+              <span>affected_assets</span>
+              <strong>matched downstream AIS meters</strong>
+            </div>
+            <div>
+              <span>etr_range</span>
+              <strong>q10 / q50 / q90 minutes</strong>
+            </div>
+            <div>
+              <span>send_status</span>
+              <strong>skipped or mock webhook only</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

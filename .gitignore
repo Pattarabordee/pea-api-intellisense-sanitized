@@ -1,0 +1,90 @@
+__pycache__/
+*.py[cod]
+.env
+.env.backup-*
+runtime/*.sqlite
+runtime/*.sqlite-*
+node_modules/
+.next/
+apps/**/.next/
+apps/**/node_modules/
+apps/**/out/
+apps/**/dist/
+coverage/
+*.test.log
+*.tsbuildinfo
+
+# Secrets and credentials — never commit
+runtime/webex_oauth_token.json
+runtime/**/*oauth_token*
+runtime/**/*pilot_key*
+runtime/private/
+runtime/**/private/
+**/Trust Tokens
+**/Trust Tokens-journal
+
+# Browser profiles (may contain session/cookies)
+runtime/**/chrome_profile*/
+runtime/**/browser_profile/
+runtime/pea_pitch_game_demo/chrome_profile*/
+runtime/ai_consultation_*/browser_profile/
+
+# Large raw data files (regenerable / sensitive)
+*.xlsx
+*.xls
+*.pbix
+AC MAIN FAIL.csv
+AC_MAIN_FAIL*.csv
+*.csv.gz
+
+# Pitching/demo archives (large, regenerable) — keep only final source, not materials
+Pitching_deck_v1.pdf
+Pitching_decks/
+Pitching_Slides/
+Pitching_slide_example/
+*.pptx
+
+# Tmp / outputs / scratch (regenerable)
+tmp/
+outputs/
+Created_by_NotebookLM/
+Line_record/
+
+# Binaries and installers (regenerable / platform-specific)
+runtime/tools/cloudflared.exe
+runtime/tools/go1.23.*.zip
+runtime/tools/*.exe
+runtime/tools/*.zip
+runtime/tools/ponytail/
+
+# Runtime: track source + small audit/governance reports only.
+# Bundles, snapshots, large evidence CSVs/JSONs stay on disk (queryable) but are regenerable.
+runtime/**/*sanitized_source*
+runtime/**/*sanitized_source*.zip
+runtime/github_sanitized_source/
+runtime/github_sanitized_source_stage/
+runtime/dev_export/
+runtime/chatgpt_production_review/
+runtime/ai_consultation_*/
+runtime/shareable_pea_pitch_pack/
+runtime/pitch_extract/
+runtime/demo_assets/
+runtime/snapshots/
+runtime/*.zip
+runtime/*.tar
+runtime/*.tar.gz
+
+# Large evidence files (>5MB) — regenerable from CLI, kept on disk for queryability
+runtime/reportpo_features_latest.csv
+runtime/reportpo_features_querydata_latest.json
+runtime/reportpo_etr_latest.csv
+runtime/reportpo_etr_querydata_latest.json
+runtime/reportpo_lifecycle_latest.csv
+runtime/reportpo_lifecycle_querydata_latest.json
+runtime/reportpo_lifecycle_querydata_latest_page02.json
+runtime/data_integrity_audit.csv
+runtime/sfsd_modelsAndExploration.json
+runtime/sfsd_events_latest.csv
+runtime/line_training_corpus_all.jsonl
+runtime/line_replay_all.sqlite
+runtime/line_replay_all_with_registry.sqlite

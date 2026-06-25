@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: pea-line-webhook
+    runtime: python
+    plan: starter
+    buildCommand: python -m compileall -q ais_etr
+    startCommand: python -m ais_etr line-webhook-server --host 0.0.0.0 --port $PORT --output runtime/line_webhook_capture.jsonl --sqlite-output runtime/line_webhook_capture.sqlite
+    healthCheckPath: /health
+    envVars:
+      - key: AIS_NOTIFICATION_MODE
+        value: shadow
+      - key: PRODUCTION_SEND_MODE
+        value: blocked
+      - key: LINE_CHANNEL_SECRET
+        sync: false
+      - key: LINE_ALLOWED_GROUP_IDS
+        sync: false
+      - key: LINE_ALLOWED_CHAT_HASHES
+        sync: false
+      - key: LINE_CAPTURE_MODE
+        value: shadow
