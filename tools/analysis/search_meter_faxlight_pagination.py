@@ -1,0 +1,52 @@
+import urllib.request
+import urllib.parse
+import json
+import pandas as pd
+
+def fetch_page(name, offset, page_size=1000):
+    encoded = urllib.parse.quote(name)
+    url = (
+        "https://gisne1.pea.co.th/arcgis/rest/services/PEA_QUERY/MapServer/29/query"
+        f"?where=CUSTOMERNAME+LIKE+%27%25{encoded}%25%27"
+        "&outFields=OBJECTID,FACILITYID,FEEDERID"
+        "&returnGeometry=false"
+        f"&resultOffset={offset}"
+        f"&resultRecordCount={page_size}"
+        "&orderByFields=OBJECTID"
+        "&f=pjson"
+    )
+    with urllib.request.urlopen(url, timeout=30) as r:
+        return json.loads(r.read().decode())
+
+# ===== Pagination =====
+CUSTOMER = "SYNTHETIC_CUSTOMER_NAME"
+PAGE_SIZE = 1000
+all_rows = []
+offset = 0
+
+while True:
+    print(f"ดึงข้อมูล offset {offset}...")
+    data = fetch_page(CUSTOMER, offset, PAGE_SIZE)
+    features = data.get("features", [])
+    
+    if not features:
+        break
+    
+    for f in features:
+        all_rows.append(f.get("attributes", {}))
+    
+    print(f"  ได้ {len(features)} records | รวมสะสม {len(all_rows)}")
+    
+    if len(features) < PAGE_SIZE:
+        break  # หน้าสุดท้ายแล้ว
+    
+    offset += PAGE_SIZE
+
+# ===== Export =====
+print(f"\nรวมทั้งหมด {len(all_rows)} รายการ")
+df = pd.DataFrame(all_rows)
+df.to_excel("meter_customer_lookup.xlsx", index=False)
+df.to_csv("meter_customer_lookup.csv", index=False, encoding="utf-8-sig")
+print("Export เสร็จ:")
+print("  meter_customer_lookup.xlsx")
+print("  meter_customer_lookup.csv")
