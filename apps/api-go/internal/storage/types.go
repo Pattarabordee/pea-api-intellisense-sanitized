@@ -12,7 +12,7 @@ var ErrNotFound = errors.New("record not found")
 type Store interface {
 	Init(ctx context.Context) error
 	Health(ctx context.Context) error
-	InsertInbound(ctx context.Context, request InboundRequest, callback Callback, evidence EvidenceTrace, etr ETRCandidate, send SendDecision, outbox CallbackOutbox) (duplicate bool, err error)
+	InsertInbound(ctx context.Context, request InboundRequest, truth TruthObservation, callback Callback, evidence EvidenceTrace, etr ETRCandidate, send SendDecision, outbox CallbackOutbox) (duplicate bool, err error)
 	InsertCallback(ctx context.Context, callback Callback) error
 	GetStatus(ctx context.Context, requestID string) (*RequestStatus, error)
 	ListStatuses(ctx context.Context, limit int) ([]RequestStatus, error)
@@ -33,6 +33,25 @@ type InboundRequest struct {
 	RequestJSON        json.RawMessage
 	ResponseJSON       json.RawMessage
 	CallbackStatus     string
+}
+
+type TruthObservation struct {
+	RequestID          string
+	Source            string
+	SourceEventID     string
+	SiteHash          string
+	SiteLast4         string
+	MeterHash         string
+	MeterLast4        string
+	EventType         string
+	DetectedAt        time.Time
+	OutageAt          *time.Time
+	RestoreAt         *time.Time
+	TimestampQuality  json.RawMessage
+	PayloadSummaryJSON json.RawMessage
+	ValidationStatus  string
+	ProductionSend    string
+	CreatedAt         time.Time
 }
 
 type Callback struct {
@@ -128,6 +147,11 @@ type RequestStatus struct {
 	CallbackOutboxStatus string
 	CallbackTransport string
 	CallbackAttempts  int
+	TruthEventType       string
+	TruthValidation      string
+	TruthSourceEventID   string
+	TruthSiteHash        string
+	TruthSiteLast4       string
 }
 
 type MetricsSnapshot struct {
@@ -137,6 +161,12 @@ type MetricsSnapshot struct {
 	NotReadyETR         int64
 	OutboxDryRunHeld    int64
 	DeadLetters         int64
+	TruthObservations   int64
+	TruthReviewNeeded   int64
+	TruthOutageEvents   int64
+	TruthRestoreEvents  int64
+	TruthOpenIntervals  int64
+	TruthClosedIntervals int64
 	CallbackCounts      map[string]int64
 	LatestReceivedAt    *time.Time
 }

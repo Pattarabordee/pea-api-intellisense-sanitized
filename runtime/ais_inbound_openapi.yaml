@@ -5,7 +5,7 @@ info:
   description: Pilot shadow API for AIS to ask whether an AIS meter outage is supported
     by PEA distribution-system evidence. Production customer ETR sending is blocked.
 servers:
-- url: https://<REDACTED_TUNNEL>
+- url: https://ais-etr-pea-pilot.loca.lt
   description: Pilot public tunnel
 security:
 - ApiKeyAuth: []
@@ -65,8 +65,12 @@ paths:
                 summary: Request with AIS alarm context
                 value:
                   request_id: AIS-20260620-0001
+                  source_event_id: AIS-ALARM-0001
+                  event_type: OUTAGE
+                  site_id: <AIS site/location id>
                   meter_no: <PEA meter number / PEANO>
                   timestamp: '2026-06-20T00:35:00+07:00'
+                  outage_at: '2026-06-20T00:35:00+07:00'
                   province: Sakon Nakhon
                   district: <district>
                   subdistrict: <subdistrict>
@@ -267,10 +271,36 @@ components:
           maxLength: 64
           pattern: ^[A-Za-z0-9][A-Za-z0-9._:@-]*$
           description: PEA meter number / PEANO. Do not include slash, space, or newline.
+        source_event_id:
+          type: string
+          maxLength: 128
+          description: AIS source alarm/event id when different from request_id.
+        event_type:
+          type: string
+          enum:
+          - OUTAGE
+          - RESTORE
+          description: AIS truth observation type. STATUS/UNKNOWN values are inferred and review-only.
+        site_id:
+          type: string
+          maxLength: 128
+          description: AIS site/location reference. API stores hash/last4 only.
+        location_id:
+          type: string
+          maxLength: 128
+          description: Alias for AIS site/location reference. API stores hash/last4 only.
         timestamp:
           type: string
           format: date-time
           description: AIS detected outage time. Include +07:00 when possible.
+        outage_at:
+          type: string
+          format: date-time
+          description: AIS site power outage timestamp. Include timezone.
+        restore_at:
+          type: string
+          format: date-time
+          description: AIS site power restore timestamp. Include timezone.
         province:
           type: string
         district:
@@ -376,8 +406,35 @@ components:
               type: string
         meter:
           type: object
+        site:
+          type: object
         area:
           type: object
+        truth_observation:
+          type: object
+          properties:
+            source:
+              type: string
+              const: AIS
+            source_event_id:
+              type: string
+            event_type:
+              type: string
+              enum:
+              - OUTAGE
+              - RESTORE
+              - STATUS
+              - UNKNOWN
+            validation_status:
+              type: string
+              enum:
+              - READY_FOR_LEDGER
+              - REVIEW_EVENT_TYPE
+              - REVIEW_TIMESTAMP
+              - REVIEW_RESTORE_BEFORE_OUTAGE
+            production_send:
+              type: string
+              const: blocked
         result:
           type:
           - object

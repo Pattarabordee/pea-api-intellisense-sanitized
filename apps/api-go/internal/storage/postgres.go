@@ -98,7 +98,7 @@ func (s *PostgresStore) Health(ctx context.Context) error {
 	return s.pool.Ping(ctx)
 }
 
-func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundRequest, callback Callback, evidence EvidenceTrace, etr ETRCandidate, send SendDecision, outbox CallbackOutbox) (bool, error) {
+func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundRequest, truth TruthObservation, callback Callback, evidence EvidenceTrace, etr ETRCandidate, send SendDecision, outbox CallbackOutbox) (bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -133,6 +133,9 @@ func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundReques
 	duplicate := tag.RowsAffected() == 0
 	if duplicate {
 		return true, tx.Commit(ctx)
+	}
+	if err := insertTruthObservation(ctx, tx, truth); err != nil {
+		return false, err
 	}
 	if err := insertCallback(ctx, tx, callback); err != nil {
 		return false, err
@@ -238,6 +241,26 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM callback_dead_letters`).Scan(&snapshot.DeadLetters); err != nil {
 		return nil, err
 	}
+	if err := s.pool.QueryRow(
+		ctx,
+		`SELECT
+			count(*),
+			count(*) FILTER (WHERE validation_status <> 'READY_FOR_LEDGER'),
+			count(*) FILTER (WHERE event_type = 'OUTAGE'),
+			count(*) FILTER (WHERE event_type = 'RESTORE')
+		 FROM ais_truth_ledger`,
+	).Scan(&snapshot.TruthObservations, &snapshot.TruthReviewNeeded, &snapshot.TruthOutageEvents, &snapshot.TruthRestoreEvents); err != nil {
+		return nil, err
+	}
+	if err := s.pool.QueryRow(
+		ctx,
+		`SELECT
+			count(*) FILTER (WHERE pair_status = 'OPEN'),
+			count(*) FILTER (WHERE pair_status = 'CLOSED')
+		 FROM ais_truth_intervals`,
+	).Scan(&snapshot.TruthOpenIntervals, &snapshot.TruthClosedIntervals); err != nil {
+		return nil, err
+	}
 	rows, err := s.pool.Query(ctx, `SELECT status, count(*) FROM ais_inbound_callbacks GROUP BY status ORDER BY status`)
 	if err != nil {
 		return nil, err
@@ -285,6 +308,12 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			request_id, status, transport, attempt_count
 		FROM callback_outbox
 		ORDER BY request_id, id DESC
+	),
+	latest_truth AS (
+		SELECT DISTINCT ON (request_id)
+			request_id, source_event_id, event_type, validation_status, site_hash, site_last4
+		FROM ais_truth_ledger
+		ORDER BY request_id, id DESC
 	)
 	SELECT r.request_id, r.received_at, r.detected_at, r.detected_at_original,
 		r.timestamp_quality, r.meter_hash, r.meter_last4, r.province, r.district, r.subdistrict,
@@ -294,13 +323,16 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 		coalesce(s.policy_mode, 'blocked'), coalesce(s.effective_mode, 'blocked'),
 		coalesce(s.eligibility_status, 'red_blocked'), coalesce(s.decision, 'blocked'),
 		coalesce(s.reason, 'production_send_blocked_by_default'), coalesce(s.gate_version, 'blocked_green_gate'),
-		coalesce(o.status, ''), coalesce(o.transport, 'dry_run'), coalesce(o.attempt_count, 0)
+		coalesce(o.status, ''), coalesce(o.transport, 'dry_run'), coalesce(o.attempt_count, 0),
+		coalesce(tl.event_type, ''), coalesce(tl.validation_status, ''), coalesce(tl.source_event_id, ''),
+		coalesce(tl.site_hash, ''), coalesce(tl.site_last4, '')
 	FROM ais_inbound_requests r
 	LEFT JOIN latest_callbacks c ON c.request_id = r.request_id
 	LEFT JOIN latest_evidence e ON e.request_id = r.request_id
 	LEFT JOIN latest_etr t ON t.request_id = r.request_id
 	LEFT JOIN latest_send s ON s.request_id = r.request_id
 	LEFT JOIN latest_outbox o ON o.request_id = r.request_id
+	LEFT JOIN latest_truth tl ON tl.request_id = r.request_id
 	` + where + `
 	ORDER BY r.received_at DESC
 	LIMIT $` + fmt.Sprint(len(args)+1)
@@ -343,12 +375,46 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			&item.CallbackOutboxStatus,
 			&item.CallbackTransport,
 			&item.CallbackAttempts,
+			&item.TruthEventType,
+			&item.TruthValidation,
+			&item.TruthSourceEventID,
+			&item.TruthSiteHash,
+			&item.TruthSiteLast4,
 		); err != nil {
 			return nil, err
 		}
 		result = append(result, item)
 	}
 	return result, rows.Err()
+}
+
+func insertTruthObservation(ctx context.Context, tx pgx.Tx, truth TruthObservation) error {
+	_, err := tx.Exec(
+		ctx,
+		`INSERT INTO ais_truth_ledger (
+			request_id, source, source_event_id, site_hash, site_last4, meter_hash, meter_last4,
+			event_type, detected_at, outage_at, restore_at, timestamp_quality, payload_summary_json,
+			validation_status, production_send, created_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+		ON CONFLICT (request_id) DO NOTHING`,
+		truth.RequestID,
+		truth.Source,
+		truth.SourceEventID,
+		truth.SiteHash,
+		truth.SiteLast4,
+		truth.MeterHash,
+		truth.MeterLast4,
+		truth.EventType,
+		truth.DetectedAt,
+		truth.OutageAt,
+		truth.RestoreAt,
+		truth.TimestampQuality,
+		truth.PayloadSummaryJSON,
+		truth.ValidationStatus,
+		truth.ProductionSend,
+		truth.CreatedAt,
+	)
+	return err
 }
 
 func insertCallback(ctx context.Context, tx pgx.Tx, callback Callback) error {

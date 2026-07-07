@@ -2,15 +2,17 @@
 
 Generated: `2026-06-20T07:03:14+00:00`
 
+Updated: `2026-07-07T00:00:00+07:00` to add AIS outage/restore truth-observation fields.
+
 Status: **pilot / shadow mode**. This API accepts real AIS test requests, stores redacted evidence in the local pilot runtime, and lets AIS/PEA read the verification result by `request_id`. **Automatic production ETR sending is still blocked.**
 
 ## Endpoints
 
 ```http
-GET  https://<REDACTED_TUNNEL>/health
-GET  https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications
-POST https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications
-GET  https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications/{request_id}
+GET  https://ais-etr-pea-pilot.loca.lt/health
+GET  https://ais-etr-pea-pilot.loca.lt/api/v1/ais/outage-verifications
+POST https://ais-etr-pea-pilot.loca.lt/api/v1/ais/outage-verifications
+GET  https://ais-etr-pea-pilot.loca.lt/api/v1/ais/outage-verifications/{request_id}
 ```
 
 ## Headers
@@ -37,6 +39,11 @@ Recommended:
 
 | Field | Meaning |
 | --- | --- |
+| `event_type` | AIS event type. Preferred values: `OUTAGE` or `RESTORE`. If omitted, the API infers from `power_status`, `status`, `alarm_type`, `main_cause`, or `subcause`; unclear events are stored for review. |
+| `source_event_id` | AIS source alarm/event id when different from `request_id`. |
+| `site_id` or `location_id` | AIS site/location reference. The API stores hash/last4 only. |
+| `outage_at` | AIS site power outage timestamp, ISO 8601 with timezone. |
+| `restore_at` | AIS site power restore timestamp, ISO 8601 with timezone. |
 | `province`, `district`, `subdistrict` | AIS site area. |
 | `alarm_type` | For example `AC_MAIN_FAIL`. |
 | `main_cause`, `subcause` | Used to separate PEA no-backup, PEA activity, and AIS equipment/backup cases. |
@@ -46,14 +53,32 @@ Example:
 ```json
 {
   "request_id": "AIS-20260620-0001",
-  "meter_no": "REDACTED-METER-0000",
+  "source_event_id": "AIS-ALARM-0001",
+  "event_type": "OUTAGE",
+  "site_id": "<AIS site/location id>",
+  "meter_no": "<PEA meter number / PEANO>",
   "timestamp": "2026-06-20T00:35:00+07:00",
+  "outage_at": "2026-06-20T00:35:00+07:00",
   "province": "Sakon Nakhon",
   "district": "<district>",
   "subdistrict": "<subdistrict>",
   "alarm_type": "AC_MAIN_FAIL",
   "main_cause": "Faulty AC main failed",
   "subcause": "PEA no back up"
+}
+```
+
+Restore example:
+
+```json
+{
+  "request_id": "AIS-20260620-0001-RESTORE",
+  "source_event_id": "AIS-ALARM-0001",
+  "event_type": "RESTORE",
+  "site_id": "<AIS site/location id>",
+  "meter_no": "<PEA meter number / PEANO>",
+  "timestamp": "2026-06-20T02:10:00+07:00",
+  "restore_at": "2026-06-20T02:10:00+07:00"
 }
 ```
 
@@ -82,12 +107,21 @@ When the request is valid and the pilot key passes, the API returns HTTP `202 Ac
 AIS/PEA can read the stored verification result by `request_id`:
 
 ```http
-GET https://<REDACTED_TUNNEL>/api/v1/ais/outage-verifications/{request_id}
+GET https://ais-etr-pea-pilot.loca.lt/api/v1/ais/outage-verifications/{request_id}
 ```
 
 The result indicates whether PEA evidence currently supports a distribution-side outage, the confidence level, the evidence lane used, and whether any ETR output is still `SHADOW_ONLY`.
 
 The lookup also returns `timestamp_quality`. If AIS sends a timestamp without a timezone, the API treats it as Asia/Bangkok time and flags `timezone_assumed_bangkok`. Very old or future timestamps are accepted for audit, but flagged as `REVIEW` so operators do not silently compare bad timing evidence.
+
+The lookup now also returns `truth_observation` with:
+
+| Field | Meaning |
+| --- | --- |
+| `event_type` | Normalized `OUTAGE`, `RESTORE`, `STATUS`, or `UNKNOWN`. |
+| `validation_status` | `READY_FOR_LEDGER`, `REVIEW_EVENT_TYPE`, `REVIEW_TIMESTAMP`, or `REVIEW_RESTORE_BEFORE_OUTAGE`. |
+| `source_event_id` | AIS source id supplied by AIS. |
+| `production_send` | Always `blocked` in this release. |
 
 ## Decision Status
 
@@ -138,6 +172,7 @@ Common HTTP status:
 - Default pilot rate limit is `120` POST requests per minute per client.
 - WebEx is used as trigger/device evidence, not restoration truth.
 - AIS outage/restore timestamps remain the primary customer-facing truth source for ETR evaluation.
+- AIS outage/restore events are stored in `ais_truth_ledger` as redacted truth observations.
 - Feeder-only matches are review/audit-only.
 - Automatic customer ETR is blocked until the green subset passes the production gate.
 
