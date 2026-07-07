@@ -6,7 +6,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "https://<REDACTED_TUNNEL>"
+      "value": "https://ais-etr-pea-pilot.loca.lt"
     },
     {
       "key": "api_key",
@@ -61,7 +61,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"request_id\": \"AIS-20260620-0001\",\n  \"meter_no\": \"<PEA meter number / PEANO>\",\n  \"timestamp\": \"2026-06-20T00:35:00+07:00\",\n  \"province\": \"Sakon Nakhon\",\n  \"district\": \"<district>\",\n  \"subdistrict\": \"<subdistrict>\",\n  \"alarm_type\": \"AC_MAIN_FAIL\",\n  \"main_cause\": \"Faulty AC main failed\",\n  \"subcause\": \"PEA no back up\"\n}"
+          "raw": "{\n  \"request_id\": \"AIS-20260620-0001\",\n  \"source_event_id\": \"AIS-ALARM-0001\",\n  \"event_type\": \"OUTAGE\",\n  \"site_id\": \"<AIS site/location id>\",\n  \"meter_no\": \"<PEA meter number / PEANO>\",\n  \"timestamp\": \"2026-06-20T00:35:00+07:00\",\n  \"outage_at\": \"2026-06-20T00:35:00+07:00\",\n  \"province\": \"Sakon Nakhon\",\n  \"district\": \"<district>\",\n  \"subdistrict\": \"<subdistrict>\",\n  \"alarm_type\": \"AC_MAIN_FAIL\",\n  \"main_cause\": \"Faulty AC main failed\",\n  \"subcause\": \"PEA no back up\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/api/v1/ais/outage-verifications",

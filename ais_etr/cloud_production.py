@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 import csv
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -55,19 +56,43 @@ latest_etr AS (
     SELECT DISTINCT ON (request_id) request_id, status
     FROM etr_candidates
     ORDER BY request_id, id DESC
+),
+latest_truth AS (
+    SELECT DISTINCT ON (request_id)
+        request_id, source_event_id, event_type, validation_status, site_hash, site_last4
+    FROM ais_truth_ledger
+    ORDER BY request_id, id DESC
 )
 SELECT coalesce(json_agg(row_to_json(t)), '[]'::json)
 FROM (
     SELECT r.request_id, r.received_at, r.detected_at_original, r.meter_hash, r.meter_last4,
            r.province, r.district, r.subdistrict,
            coalesce(e.trace_status, '') AS trace_status,
-           coalesce(et.status, '') AS etr_status
+           coalesce(et.status, '') AS etr_status,
+           coalesce(tl.source_event_id, '') AS truth_source_event_id,
+           coalesce(tl.event_type, '') AS truth_event_type,
+           coalesce(tl.validation_status, '') AS truth_validation_status,
+           coalesce(tl.site_hash, '') AS truth_site_hash,
+           coalesce(tl.site_last4, '') AS truth_site_last4
     FROM ais_inbound_requests r
     LEFT JOIN latest_evidence e ON e.request_id = r.request_id
     LEFT JOIN latest_etr et ON et.request_id = r.request_id
+    LEFT JOIN latest_truth tl ON tl.request_id = r.request_id
     WHERE coalesce(e.trace_status, '') = 'PENDING_WORKER'
        OR coalesce(et.status, '') = 'NOT_READY_FOR_AUTO_SEND'
     ORDER BY r.received_at ASC
+    LIMIT {limit}
+) t;
+"""
+
+TRUTH_LEDGER_SQL = """
+SELECT coalesce(json_agg(row_to_json(t)), '[]'::json)
+FROM (
+    SELECT request_id, source, source_event_id, site_hash, site_last4, meter_hash, meter_last4,
+           event_type, detected_at, outage_at, restore_at, validation_status, production_send, created_at
+    FROM ais_truth_ledger
+    WHERE production_send = 'blocked'
+    ORDER BY detected_at ASC, id ASC
     LIMIT {limit}
 ) t;
 """
@@ -440,6 +465,13 @@ def run_cloud_worker_shadow_loop(
         raise ValueError("--apply cannot be combined with dry_run=True")
     rows = _load_pending_rows(database_url=database_url, input_json=input_json, limit=limit)
     decisions = [_worker_decision(row) for row in rows[: max(limit, 0)]]
+    truth_event_counts = Counter(str(row.get("truth_event_type") or "<missing>") for row in rows)
+    truth_ready = sum(1 for row in rows if row.get("truth_validation_status") == "READY_FOR_LEDGER")
+    truth_review = sum(
+        1
+        for row in rows
+        if row.get("truth_validation_status") and row.get("truth_validation_status") != "READY_FOR_LEDGER"
+    )
     applied = False
     if apply and decisions:
         if not database_url:
@@ -452,6 +484,9 @@ def run_cloud_worker_shadow_loop(
         "production_send": "blocked",
         "status": "APPLIED" if applied else "DRY_RUN",
         "rows_seen": len(rows),
+        "truth_ready_observations": truth_ready,
+        "truth_review_needed": truth_review,
+        "truth_event_counts": dict(truth_event_counts.most_common()),
         "decisions": decisions,
         "guardrails": [
             "no_customer_facing_send",
@@ -463,6 +498,56 @@ def run_cloud_worker_shadow_loop(
     _write_json(output_json, summary)
     Path(markdown_output).parent.mkdir(parents=True, exist_ok=True)
     Path(markdown_output).write_text(_render_worker_report(summary), encoding="utf-8")
+    return summary
+
+
+def run_ais_truth_interval_pairing(
+    *,
+    database_url: str | None = None,
+    input_json: str | Path | dict[str, Any] | list[dict[str, Any]] | None = None,
+    output_json: str | Path = "runtime/cloud_pilot/ais_truth_interval_pairing_report.json",
+    markdown_output: str | Path = "runtime/cloud_pilot/ais_truth_interval_pairing_report.md",
+    limit: int = 500,
+    dry_run: bool = True,
+    apply: bool = False,
+) -> dict[str, Any]:
+    if apply and dry_run:
+        raise ValueError("--apply cannot be combined with dry_run=True")
+    rows = _load_truth_observations(database_url=database_url, input_json=input_json, limit=limit)
+    decisions = _pair_truth_observations(rows[: max(limit, 0)])
+    interval_rows = [item for item in decisions if item.get("action") in {"OPEN_INTERVAL", "CLOSE_INTERVAL"}]
+    review_rows = [item for item in decisions if item.get("action") == "REVIEW"]
+    applied = False
+    if apply and interval_rows:
+        if not database_url:
+            raise ValueError("DATABASE_URL is required for --apply")
+        _apply_truth_intervals(database_url, interval_rows)
+        applied = True
+    status_counts = Counter(str(item.get("action") or "<blank>") for item in decisions)
+    event_counts = Counter(str(row.get("event_type") or "<blank>") for row in rows)
+    validation_counts = Counter(str(row.get("validation_status") or "<blank>") for row in rows)
+    summary = {
+        "generated_at": _utc_now_iso(),
+        "mode": "shadow",
+        "production_send": "blocked",
+        "status": "APPLIED" if applied else "DRY_RUN",
+        "rows_seen": len(rows),
+        "interval_rows": len(interval_rows),
+        "review_rows": len(review_rows),
+        "action_counts": dict(status_counts.most_common()),
+        "event_counts": dict(event_counts.most_common()),
+        "validation_counts": dict(validation_counts.most_common()),
+        "decisions": decisions,
+        "guardrails": [
+            "raw_ais_observations_remain_source_of_truth",
+            "derived_intervals_use_hash_or_last4_only",
+            "production_send_remains_blocked",
+            "real_customer_etr_not_sent",
+        ],
+    }
+    _write_json(output_json, summary)
+    Path(markdown_output).parent.mkdir(parents=True, exist_ok=True)
+    Path(markdown_output).write_text(_render_truth_interval_pairing_report(summary), encoding="utf-8")
     return summary
 
 
@@ -482,6 +567,41 @@ def _load_pending_rows(*, database_url: str | None, input_json: str | Path | Non
     if not psql:
         raise RuntimeError("psql was not found; install PostgreSQL client tools or pass --input-json for dry-run")
     query = PENDING_WORKER_SQL.format(limit=max(limit, 0))
+    result = subprocess.run(
+        [psql, database_url, "-At", "-c", query],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    text = result.stdout.strip() or "[]"
+    value = json.loads(text)
+    return [dict(item) for item in value]
+
+
+def _load_truth_observations(
+    *,
+    database_url: str | None,
+    input_json: str | Path | dict[str, Any] | list[dict[str, Any]] | None,
+    limit: int,
+) -> list[dict[str, Any]]:
+    if input_json is not None:
+        if isinstance(input_json, dict | list):
+            payload = input_json
+        else:
+            payload = json.loads(Path(input_json).read_text(encoding="utf-8-sig"))
+        if isinstance(payload, dict) and isinstance(payload.get("items"), list):
+            return [dict(item) for item in payload["items"]]
+        if isinstance(payload, dict) and isinstance(payload.get("observations"), list):
+            return [dict(item) for item in payload["observations"]]
+        if isinstance(payload, list):
+            return [dict(item) for item in payload]
+        raise ValueError("input_json must be a list or contain items/observations")
+    if not database_url:
+        return []
+    psql = shutil.which("psql")
+    if not psql:
+        raise RuntimeError("psql was not found; install PostgreSQL client tools or pass --input-json for dry-run")
+    query = TRUTH_LEDGER_SQL.format(limit=max(limit, 0))
     result = subprocess.run(
         [psql, database_url, "-At", "-c", query],
         check=True,
@@ -616,6 +736,15 @@ def _worker_decision(row: dict[str, Any]) -> dict[str, Any]:
     request_id = str(row.get("request_id") or "").strip()
     evidence_status = "SECURE_TOPOLOGY_LOOKUP_REQUIRED"
     reason = "cloud_store_has_only_hashed_meter_reference"
+    truth = _truth_observation(row)
+    truth_validation = truth.get("validation_status")
+    truth_event_type = truth.get("event_type")
+    if truth_validation == "READY_FOR_LEDGER" and truth_event_type in {"OUTAGE", "RESTORE"}:
+        evidence_status = "REVIEW_REQUIRED"
+        reason = "ais_truth_observation_ready_but_topology_lookup_required"
+    elif truth_validation and truth_validation != "READY_FOR_LEDGER":
+        evidence_status = "REVIEW_REQUIRED"
+        reason = "ais_truth_observation_needs_review"
     if _evidence_already_ready(row):
         evidence_status = "REVIEW_REQUIRED"
         reason = "existing_shadow_evidence_needs_operator_review"
@@ -630,6 +759,8 @@ def _worker_decision(row: dict[str, Any]) -> dict[str, Any]:
                 "source": "python_cloud_shadow_worker",
                 "reason": reason,
                 "meter_ref": _meter_ref(row),
+                "site_ref": _site_ref(row),
+                "truth_observation": truth,
                 "production_send": "blocked",
             },
         },
@@ -647,6 +778,7 @@ def _worker_decision(row: dict[str, Any]) -> dict[str, Any]:
             "event_type": "cloud_shadow_worker_review",
             "details_json": {
                 "reason": reason,
+                "truth_observation": truth,
                 "dry_run_safe": True,
                 "production_send": "blocked",
             },
@@ -670,6 +802,266 @@ def _meter_ref(row: dict[str, Any]) -> dict[str, str]:
         "hash": str(row.get("meter_hash") or ""),
         "last4": str(row.get("meter_last4") or ""),
     }
+
+
+def _site_ref(row: dict[str, Any]) -> dict[str, str]:
+    site = row.get("site")
+    if isinstance(site, dict):
+        return {"hash": str(site.get("hash") or ""), "last4": str(site.get("last4") or "")}
+    return {
+        "hash": str(row.get("truth_site_hash") or ""),
+        "last4": str(row.get("truth_site_last4") or ""),
+    }
+
+
+def _truth_observation(row: dict[str, Any]) -> dict[str, str]:
+    truth = row.get("truth_observation")
+    if isinstance(truth, dict):
+        return {
+            "source": str(truth.get("source") or "AIS"),
+            "source_event_id": str(truth.get("source_event_id") or ""),
+            "event_type": str(truth.get("event_type") or ""),
+            "validation_status": str(truth.get("validation_status") or ""),
+            "production_send": str(truth.get("production_send") or "blocked"),
+        }
+    return {
+        "source": "AIS",
+        "source_event_id": str(row.get("truth_source_event_id") or ""),
+        "event_type": str(row.get("truth_event_type") or ""),
+        "validation_status": str(row.get("truth_validation_status") or ""),
+        "production_send": "blocked",
+    }
+
+
+def _pair_truth_observations(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized = [_normalize_truth_row(row) for row in rows]
+    normalized.sort(key=lambda row: (row.get("event_time") or "", row.get("request_id") or ""))
+    open_by_key: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    paired_outage_ids: set[str] = set()
+    for row in normalized:
+        event_type = row.get("event_type")
+        validation = row.get("validation_status")
+        key = row.get("pair_key") or ""
+        if validation != "READY_FOR_LEDGER":
+            decisions.append(_truth_review_decision(row, "truth_observation_not_ready_for_ledger"))
+            continue
+        if not key:
+            decisions.append(_truth_review_decision(row, "missing_site_or_meter_hash_for_pairing"))
+            continue
+        if event_type == "OUTAGE":
+            open_by_key.setdefault(key, []).append(row)
+            continue
+        if event_type == "RESTORE":
+            restore_time = row.get("restore_at") or row.get("detected_at")
+            outage = _pop_latest_open_before(open_by_key.get(key, []), restore_time)
+            if not outage:
+                decisions.append(_truth_review_decision(row, "restore_without_prior_ready_outage"))
+                continue
+            paired_outage_ids.add(str(outage.get("request_id") or ""))
+            decisions.append(_truth_interval_decision(outage, row))
+            continue
+        decisions.append(_truth_review_decision(row, "unsupported_event_type_for_interval_pairing"))
+    for queue in open_by_key.values():
+        for outage in queue:
+            if str(outage.get("request_id") or "") not in paired_outage_ids:
+                decisions.append(_truth_open_interval_decision(outage))
+    decisions.sort(key=lambda item: (str(item.get("outage_at") or item.get("event_time") or ""), str(item.get("request_id") or "")))
+    return decisions
+
+
+def _normalize_truth_row(row: dict[str, Any]) -> dict[str, Any]:
+    event_type = str(row.get("event_type") or row.get("truth_event_type") or "").strip().upper()
+    validation = str(row.get("validation_status") or row.get("truth_validation_status") or "").strip().upper()
+    detected_at = _parse_iso_datetime(row.get("detected_at"))
+    outage_at = _parse_iso_datetime(row.get("outage_at")) or detected_at
+    restore_at = _parse_iso_datetime(row.get("restore_at"))
+    event_time = restore_at if event_type == "RESTORE" and restore_at else outage_at or detected_at
+    site_hash = str(row.get("site_hash") or row.get("truth_site_hash") or "").strip()
+    meter_hash = str(row.get("meter_hash") or "").strip()
+    pair_key = site_hash or meter_hash
+    return {
+        "request_id": str(row.get("request_id") or "").strip(),
+        "source": str(row.get("source") or "AIS").strip() or "AIS",
+        "source_event_id": str(row.get("source_event_id") or row.get("truth_source_event_id") or "").strip(),
+        "event_type": event_type or "UNKNOWN",
+        "validation_status": validation or "REVIEW_EVENT_TYPE",
+        "site_hash": site_hash,
+        "site_last4": str(row.get("site_last4") or row.get("truth_site_last4") or "").strip(),
+        "meter_hash": meter_hash,
+        "meter_last4": str(row.get("meter_last4") or "").strip(),
+        "detected_at": detected_at,
+        "outage_at": outage_at,
+        "restore_at": restore_at,
+        "event_time": event_time,
+        "pair_key": pair_key,
+        "production_send": "blocked",
+    }
+
+
+def _parse_iso_datetime(value: Any) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _pop_latest_open_before(queue: list[dict[str, Any]], restore_time: datetime | None) -> dict[str, Any] | None:
+    if not queue or restore_time is None:
+        return None
+    selected_index: int | None = None
+    for index, outage in enumerate(queue):
+        outage_time = outage.get("outage_at") or outage.get("detected_at")
+        if outage_time and outage_time <= restore_time:
+            selected_index = index
+    if selected_index is None:
+        return None
+    return queue.pop(selected_index)
+
+
+def _truth_interval_decision(outage: dict[str, Any], restore: dict[str, Any]) -> dict[str, Any]:
+    outage_at = outage.get("outage_at") or outage.get("detected_at")
+    restore_at = restore.get("restore_at") or restore.get("detected_at")
+    if not outage_at or not restore_at or restore_at < outage_at:
+        return _truth_review_decision(restore, "restore_before_or_missing_outage_time")
+    duration_minutes = round((restore_at - outage_at).total_seconds() / 60.0, 3)
+    return {
+        "action": "CLOSE_INTERVAL",
+        "interval_id": _truth_interval_id(outage),
+        "outage_request_id": outage.get("request_id", ""),
+        "restore_request_id": restore.get("request_id", ""),
+        "source": "AIS",
+        "meter_hash": outage.get("meter_hash") or restore.get("meter_hash") or "",
+        "meter_last4": outage.get("meter_last4") or restore.get("meter_last4") or "",
+        "site_hash": outage.get("site_hash") or restore.get("site_hash") or "",
+        "site_last4": outage.get("site_last4") or restore.get("site_last4") or "",
+        "outage_at": _iso_or_blank(outage_at),
+        "restore_at": _iso_or_blank(restore_at),
+        "duration_minutes": duration_minutes,
+        "pair_status": "CLOSED",
+        "evidence_json": {
+            "source": "python_ais_truth_interval_pairing",
+            "reason": "ready_outage_restore_pair",
+            "outage_source_event_id": outage.get("source_event_id", ""),
+            "restore_source_event_id": restore.get("source_event_id", ""),
+            "pair_key": outage.get("pair_key") or restore.get("pair_key") or "",
+            "production_send": "blocked",
+        },
+        "production_send": "blocked",
+    }
+
+
+def _truth_open_interval_decision(outage: dict[str, Any]) -> dict[str, Any]:
+    outage_at = outage.get("outage_at") or outage.get("detected_at")
+    return {
+        "action": "OPEN_INTERVAL",
+        "interval_id": _truth_interval_id(outage),
+        "outage_request_id": outage.get("request_id", ""),
+        "restore_request_id": "",
+        "source": "AIS",
+        "meter_hash": outage.get("meter_hash") or "",
+        "meter_last4": outage.get("meter_last4") or "",
+        "site_hash": outage.get("site_hash") or "",
+        "site_last4": outage.get("site_last4") or "",
+        "outage_at": _iso_or_blank(outage_at),
+        "restore_at": "",
+        "duration_minutes": None,
+        "pair_status": "OPEN",
+        "evidence_json": {
+            "source": "python_ais_truth_interval_pairing",
+            "reason": "ready_outage_waiting_for_restore",
+            "outage_source_event_id": outage.get("source_event_id", ""),
+            "pair_key": outage.get("pair_key") or "",
+            "production_send": "blocked",
+        },
+        "production_send": "blocked",
+    }
+
+
+def _truth_review_decision(row: dict[str, Any], reason: str) -> dict[str, Any]:
+    return {
+        "action": "REVIEW",
+        "request_id": row.get("request_id", ""),
+        "event_type": row.get("event_type", ""),
+        "validation_status": row.get("validation_status", ""),
+        "reason": reason,
+        "meter_ref": {"hash": row.get("meter_hash", ""), "last4": row.get("meter_last4", "")},
+        "site_ref": {"hash": row.get("site_hash", ""), "last4": row.get("site_last4", "")},
+        "event_time": _iso_or_blank(row.get("event_time")),
+        "production_send": "blocked",
+    }
+
+
+def _truth_interval_id(outage: dict[str, Any]) -> str:
+    basis = "|".join(
+        [
+            str(outage.get("pair_key") or ""),
+            str(outage.get("request_id") or ""),
+            _iso_or_blank(outage.get("outage_at") or outage.get("detected_at")),
+        ]
+    )
+    return "ais-" + hashlib.sha256(basis.encode("utf-8")).hexdigest()[:20]
+
+
+def _iso_or_blank(value: Any) -> str:
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return str(value or "")
+
+
+def _apply_truth_intervals(database_url: str, interval_rows: list[dict[str, Any]]) -> None:
+    psql = shutil.which("psql")
+    if not psql:
+        raise RuntimeError("psql was not found; cannot apply truth intervals")
+    statements = []
+    for row in interval_rows:
+        statements.append(_truth_interval_upsert_sql(row))
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".sql", delete=False) as handle:
+        handle.write("\n".join(statements))
+        script_path = Path(handle.name)
+    try:
+        subprocess.run([psql, database_url, "-v", "ON_ERROR_STOP=1", "-f", str(script_path)], check=True)
+    finally:
+        script_path.unlink(missing_ok=True)
+
+
+def _truth_interval_upsert_sql(row: dict[str, Any]) -> str:
+    duration = row.get("duration_minutes")
+    duration_sql = "NULL" if duration is None else str(float(duration))
+    restore_at = row.get("restore_at") or ""
+    restore_request_id = row.get("restore_request_id") or ""
+    return (
+        "INSERT INTO ais_truth_intervals "
+        "(interval_id, source, outage_request_id, restore_request_id, meter_hash, meter_last4, "
+        "site_hash, site_last4, outage_at, restore_at, duration_minutes, pair_status, evidence_json, production_send) "
+        "VALUES ("
+        f"{_sql_text(row['interval_id'])}, {_sql_text(row.get('source') or 'AIS')}, "
+        f"{_sql_text(row.get('outage_request_id') or '')}, {_sql_nullable_text(restore_request_id)}, "
+        f"{_sql_text(row.get('meter_hash') or '')}, {_sql_text(row.get('meter_last4') or '')}, "
+        f"{_sql_text(row.get('site_hash') or '')}, {_sql_text(row.get('site_last4') or '')}, "
+        f"{_sql_text(row.get('outage_at') or '')}::timestamptz, {_sql_nullable_timestamp(restore_at)}, "
+        f"{duration_sql}, {_sql_text(row.get('pair_status') or 'REVIEW')}, {_sql_json(row.get('evidence_json') or {})}, 'blocked') "
+        "ON CONFLICT (interval_id) DO UPDATE SET "
+        "restore_request_id = CASE WHEN ais_truth_intervals.pair_status = 'CLOSED' AND EXCLUDED.pair_status = 'OPEN' "
+        "THEN ais_truth_intervals.restore_request_id ELSE EXCLUDED.restore_request_id END, "
+        "restore_at = CASE WHEN ais_truth_intervals.pair_status = 'CLOSED' AND EXCLUDED.pair_status = 'OPEN' "
+        "THEN ais_truth_intervals.restore_at ELSE EXCLUDED.restore_at END, "
+        "duration_minutes = CASE WHEN ais_truth_intervals.pair_status = 'CLOSED' AND EXCLUDED.pair_status = 'OPEN' "
+        "THEN ais_truth_intervals.duration_minutes ELSE EXCLUDED.duration_minutes END, "
+        "pair_status = CASE WHEN ais_truth_intervals.pair_status = 'CLOSED' AND EXCLUDED.pair_status = 'OPEN' "
+        "THEN ais_truth_intervals.pair_status ELSE EXCLUDED.pair_status END, "
+        "evidence_json = EXCLUDED.evidence_json, "
+        "updated_at = now() "
+        "WHERE ais_truth_intervals.production_send = 'blocked';"
+    )
 
 
 def _apply_worker_decisions(database_url: str, decisions: list[dict[str, Any]]) -> None:
@@ -790,6 +1182,20 @@ def _overall_status(checks: list[dict[str, str]]) -> str:
 
 def _sql_text(value: Any) -> str:
     return "'" + str(value).replace("'", "''") + "'"
+
+
+def _sql_nullable_text(value: Any) -> str:
+    text = str(value or "")
+    if not text:
+        return "NULL"
+    return _sql_text(text)
+
+
+def _sql_nullable_timestamp(value: Any) -> str:
+    text = str(value or "")
+    if not text:
+        return "NULL"
+    return _sql_text(text) + "::timestamptz"
 
 
 def _sql_json(value: Any) -> str:
@@ -1238,16 +1644,21 @@ def _render_worker_report(summary: dict[str, Any]) -> str:
         "- Mode: `shadow`",
         "- Production send: `blocked`",
         f"- Pending rows reviewed: `{summary['rows_seen']}`",
+        f"- Truth ready observations: `{summary.get('truth_ready_observations', 0)}`",
+        f"- Truth review needed: `{summary.get('truth_review_needed', 0)}`",
         "",
         "## Decisions",
         "",
-        "| request_id | evidence | ETR | reason |",
-        "| --- | --- | --- | --- |",
+        "| request_id | truth | evidence | ETR | reason |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for item in summary.get("decisions", [])[:50]:
+        truth = item.get("evidence_trace", {}).get("evidence_json", {}).get("truth_observation", {})
         lines.append(
-            "| {request_id} | `{evidence}` | `{etr}` | {reason} |".format(
+            "| {request_id} | `{truth_type}/{truth_status}` | `{evidence}` | `{etr}` | {reason} |".format(
                 request_id=item.get("request_id", ""),
+                truth_type=truth.get("event_type", ""),
+                truth_status=truth.get("validation_status", ""),
                 evidence=item.get("evidence_trace", {}).get("trace_status", ""),
                 etr=item.get("etr_candidate", {}).get("status", ""),
                 reason=item.get("evidence_trace", {}).get("evidence_json", {}).get("reason", ""),
@@ -1261,6 +1672,71 @@ def _render_worker_report(summary: dict[str, Any]) -> str:
             "- Dry-run is default; `--apply` is required to write append-only worker rows.",
             "- No customer-facing callback is sent.",
             "- Full meter, PEANO lists, customer identity, room IDs, tokens, and verbatim WebEx text are not written.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _render_truth_interval_pairing_report(summary: dict[str, Any]) -> str:
+    lines = [
+        "# AIS Truth Interval Pairing",
+        "",
+        f"- Generated: `{summary['generated_at']}`",
+        f"- Status: `{summary['status']}`",
+        "- Mode: `shadow`",
+        "- Production send: `blocked`",
+        f"- Truth rows reviewed: `{summary['rows_seen']}`",
+        f"- Interval rows: `{summary['interval_rows']}`",
+        f"- Review rows: `{summary['review_rows']}`",
+        "",
+        "## Counts",
+        "",
+        "| group | value | count |",
+        "| --- | --- | ---: |",
+    ]
+    for group_name in ("action_counts", "event_counts", "validation_counts"):
+        for value, count in (summary.get(group_name) or {}).items():
+            lines.append(f"| `{group_name}` | `{value}` | {count} |")
+    lines.extend(
+        [
+            "",
+            "## Decisions",
+            "",
+            "| action | interval/request | status | outage_at | restore_at | reason |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for item in summary.get("decisions", [])[:80]:
+        if item.get("action") == "REVIEW":
+            lines.append(
+                "| REVIEW | `{request_id}` | `{event_type}/{validation}` | `{event_time}` |  | {reason} |".format(
+                    request_id=item.get("request_id", ""),
+                    event_type=item.get("event_type", ""),
+                    validation=item.get("validation_status", ""),
+                    event_time=item.get("event_time", ""),
+                    reason=item.get("reason", ""),
+                )
+            )
+        else:
+            lines.append(
+                "| {action} | `{interval_id}` | `{pair_status}` | `{outage_at}` | `{restore_at}` | {reason} |".format(
+                    action=item.get("action", ""),
+                    interval_id=item.get("interval_id", ""),
+                    pair_status=item.get("pair_status", ""),
+                    outage_at=item.get("outage_at", ""),
+                    restore_at=item.get("restore_at", ""),
+                    reason=(item.get("evidence_json") or {}).get("reason", ""),
+                )
+            )
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- Raw AIS observations remain the source of truth.",
+            "- Derived intervals use hash/last4 references only.",
+            "- Pairing does not send customer-facing ETR.",
+            "- `production_send` remains `blocked`.",
         ]
     )
     return "\n".join(lines) + "\n"
