@@ -2,7 +2,10 @@ package storage
 
 import (
 	"context"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -135,6 +138,9 @@ func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundReques
 		return true, tx.Commit(ctx)
 	}
 	if err := insertTruthObservation(ctx, tx, truth); err != nil {
+		return false, err
+	}
+	if err := upsertTruthInterval(ctx, tx, truth); err != nil {
 		return false, err
 	}
 	if err := insertCallback(ctx, tx, callback); err != nil {
@@ -417,6 +423,109 @@ func insertTruthObservation(ctx context.Context, tx pgx.Tx, truth TruthObservati
 	return err
 }
 
+func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation) error {
+	if truth.ValidationStatus != "READY_FOR_LEDGER" {
+		return nil
+	}
+	switch truth.EventType {
+	case "OUTAGE":
+		outageAt := truth.OutageAt
+		if outageAt == nil {
+			outageAt = &truth.DetectedAt
+		}
+		evidenceJSON, err := json.Marshal(map[string]any{
+			"source":                 "go_postgres_truth_pairing",
+			"reason":                 "ready_outage_waiting_for_restore",
+			"outage_source_event_id": truth.SourceEventID,
+			"pair_key":               truthPairKey(truth),
+			"production_send":        "blocked",
+		})
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(
+			ctx,
+			`INSERT INTO ais_truth_intervals (
+				interval_id, source, outage_request_id, meter_hash, meter_last4, site_hash, site_last4,
+				outage_at, pair_status, evidence_json, production_send
+			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'OPEN',$9,'blocked')
+			ON CONFLICT (interval_id) DO UPDATE SET
+				evidence_json = EXCLUDED.evidence_json,
+				updated_at = now()
+			WHERE ais_truth_intervals.production_send = 'blocked'
+			  AND ais_truth_intervals.pair_status <> 'CLOSED'`,
+			truthIntervalID(truth, *outageAt),
+			blankDefault(truth.Source, "AIS"),
+			truth.RequestID,
+			truth.MeterHash,
+			truth.MeterLast4,
+			truth.SiteHash,
+			truth.SiteLast4,
+			*outageAt,
+			evidenceJSON,
+		)
+		return err
+	case "RESTORE":
+		restoreAt := truth.RestoreAt
+		if restoreAt == nil {
+			restoreAt = &truth.DetectedAt
+		}
+		evidenceJSON, err := json.Marshal(map[string]any{
+			"source":                  "go_postgres_truth_pairing",
+			"reason":                  "ready_restore_closed_latest_open_interval",
+			"restore_source_event_id": truth.SourceEventID,
+			"pair_key":                truthPairKey(truth),
+			"production_send":         "blocked",
+		})
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(
+			ctx,
+			`WITH selected AS (
+				SELECT id
+				FROM ais_truth_intervals
+				WHERE pair_status = 'OPEN'
+				  AND production_send = 'blocked'
+				  AND outage_at <= $1
+				  AND (($2 <> '' AND site_hash = $2) OR ($2 = '' AND $3 <> '' AND meter_hash = $3))
+				ORDER BY outage_at DESC, id DESC
+				LIMIT 1
+			)
+			UPDATE ais_truth_intervals i
+			SET restore_request_id = $4,
+				restore_at = $1,
+				duration_minutes = round((EXTRACT(EPOCH FROM ($1 - i.outage_at)) / 60.0)::numeric, 3),
+				pair_status = 'CLOSED',
+				evidence_json = $5,
+				updated_at = now()
+			FROM selected
+			WHERE i.id = selected.id`,
+			*restoreAt,
+			truth.SiteHash,
+			truth.MeterHash,
+			truth.RequestID,
+			evidenceJSON,
+		)
+		return err
+	default:
+		return nil
+	}
+}
+
+func truthIntervalID(truth TruthObservation, outageAt time.Time) string {
+	basis := truthPairKey(truth) + "|" + truth.RequestID + "|" + outageAt.UTC().Format(time.RFC3339)
+	sum := sha256.Sum256([]byte(basis))
+	return "ais-" + hex.EncodeToString(sum[:])[:20]
+}
+
+func truthPairKey(truth TruthObservation) string {
+	if truth.SiteHash != "" {
+		return truth.SiteHash
+	}
+	return truth.MeterHash
+}
+
 func insertCallback(ctx context.Context, tx pgx.Tx, callback Callback) error {
 	_, err := tx.Exec(
 		ctx,
@@ -527,6 +636,13 @@ func callbackOutboxInsertArgs(decisionID int64, outbox CallbackOutbox) []any {
 func nullIfEmpty(value string) any {
 	if value == "" {
 		return nil
+	}
+	return value
+}
+
+func blankDefault(value string, fallback string) string {
+	if value == "" {
+		return fallback
 	}
 	return value
 }
