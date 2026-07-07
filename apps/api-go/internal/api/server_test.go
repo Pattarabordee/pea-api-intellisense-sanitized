@@ -40,6 +40,72 @@ func TestPostAcceptsValidRequestAndKeepsProductionBlocked(t *testing.T) {
 	}
 }
 
+func TestPostCapturesAISTruthObservationWithoutLeakingSiteOrMeter(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key", RateLimitPerMinute: 120}, store)
+	body := `{"request_id":"AIS-TRUTH-1","source_event_id":"SRC-1001","event_type":"OUTAGE","site_id":"SITE-SECRET-99","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T17:04:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	row := store.rows["AIS-TRUTH-1"]
+	if row.TruthEventType != "OUTAGE" || row.TruthValidation != "READY_FOR_LEDGER" {
+		t.Fatalf("truth observation was not stored as ready outage: %#v", row)
+	}
+	if row.TruthSiteHash == "" || row.TruthSiteLast4 != "T-99" {
+		t.Fatalf("site reference was not redacted into hash/last4: %#v", row)
+	}
+	if strings.Contains(res.Body.String(), "METER-1234") || strings.Contains(res.Body.String(), "SITE-SECRET-99") {
+		t.Fatalf("response leaked raw identifiers: %s", res.Body.String())
+	}
+}
+
+func TestPostWithoutEventTypeStoresTruthObservationForReview(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-REVIEW-1","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	row := store.rows["AIS-REVIEW-1"]
+	if row.TruthEventType != "UNKNOWN" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
+		t.Fatalf("unknown event type should be review-only: %#v", row)
+	}
+}
+
+func TestPostRestoreBeforeOutageIsReviewOnly(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-BAD-TRUTH-1","event_type":"RESTORE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T18:00:00+07:00","restore_at":"2026-06-19T17:30:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	row := store.rows["AIS-BAD-TRUTH-1"]
+	if row.TruthEventType != "RESTORE" || row.TruthValidation != "REVIEW_RESTORE_BEFORE_OUTAGE" {
+		t.Fatalf("restore before outage should be review-only: %#v", row)
+	}
+}
+
 func TestUnauthorizedRequestReturns401(t *testing.T) {
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, newFakeStore())
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(`{"request_id":"AIS-1"}`))
@@ -238,7 +304,7 @@ func (f *fakeStore) ListStatuses(ctx context.Context, limit int) ([]storage.Requ
 	return []storage.RequestStatus{}, nil
 }
 
-func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRequest, callback storage.Callback, evidence storage.EvidenceTrace, etr storage.ETRCandidate, send storage.SendDecision, outbox storage.CallbackOutbox) (bool, error) {
+func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRequest, truth storage.TruthObservation, callback storage.Callback, evidence storage.EvidenceTrace, etr storage.ETRCandidate, send storage.SendDecision, outbox storage.CallbackOutbox) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if _, ok := f.rows[request.RequestID]; ok {
@@ -273,6 +339,11 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 		CallbackOutboxStatus: outbox.Status,
 		CallbackTransport:    outbox.Transport,
 		CallbackAttempts:     outbox.AttemptCount,
+		TruthEventType:       truth.EventType,
+		TruthValidation:      truth.ValidationStatus,
+		TruthSourceEventID:   truth.SourceEventID,
+		TruthSiteHash:        truth.SiteHash,
+		TruthSiteLast4:       truth.SiteLast4,
 	}
 	return false, nil
 }
@@ -309,6 +380,18 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		snapshot.PendingWorkerTraces++
 		if row.CallbackOutboxStatus == "DRY_RUN_HELD" {
 			snapshot.OutboxDryRunHeld++
+		}
+		if row.TruthEventType != "" {
+			snapshot.TruthObservations++
+		}
+		if row.TruthValidation != "READY_FOR_LEDGER" {
+			snapshot.TruthReviewNeeded++
+		}
+		if row.TruthEventType == "OUTAGE" {
+			snapshot.TruthOutageEvents++
+		}
+		if row.TruthEventType == "RESTORE" {
+			snapshot.TruthRestoreEvents++
 		}
 	}
 	return snapshot, nil

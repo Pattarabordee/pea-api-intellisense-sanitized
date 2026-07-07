@@ -10,11 +10,91 @@ from ais_etr.cloud_production import (
     build_green_eligibility_report,
     build_production_approval_evidence_pack,
     build_production_gate_packet,
+    run_ais_truth_interval_pairing,
     run_cloud_worker_shadow_loop,
 )
 
 
 class CloudProductionTests(unittest.TestCase):
+    def test_ais_truth_interval_pairing_closes_and_reviews_safely(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "truth.json"
+            source.write_text(
+                json.dumps(
+                    {
+                        "observations": [
+                            {
+                                "request_id": "OUT-1",
+                                "source": "AIS",
+                                "source_event_id": "EV-1",
+                                "site_hash": "site-a",
+                                "site_last4": "1234",
+                                "meter_hash": "meter-a",
+                                "meter_last4": "5678",
+                                "event_type": "OUTAGE",
+                                "detected_at": "2026-07-07T01:00:00+07:00",
+                                "outage_at": "2026-07-07T01:00:00+07:00",
+                                "validation_status": "READY_FOR_LEDGER",
+                                "production_send": "blocked",
+                                "customer_name": "PRIVATE CUSTOMER SHOULD NOT APPEAR",
+                            },
+                            {
+                                "request_id": "REST-1",
+                                "source": "AIS",
+                                "source_event_id": "EV-1R",
+                                "site_hash": "site-a",
+                                "site_last4": "1234",
+                                "meter_hash": "meter-a",
+                                "meter_last4": "5678",
+                                "event_type": "RESTORE",
+                                "detected_at": "2026-07-07T01:45:00+07:00",
+                                "restore_at": "2026-07-07T01:45:00+07:00",
+                                "validation_status": "READY_FOR_LEDGER",
+                                "production_send": "blocked",
+                            },
+                            {
+                                "request_id": "OUT-2",
+                                "source": "AIS",
+                                "site_hash": "site-b",
+                                "event_type": "OUTAGE",
+                                "detected_at": "2026-07-07T02:00:00+07:00",
+                                "outage_at": "2026-07-07T02:00:00+07:00",
+                                "validation_status": "READY_FOR_LEDGER",
+                                "production_send": "blocked",
+                            },
+                            {
+                                "request_id": "UNK-1",
+                                "source": "AIS",
+                                "site_hash": "site-c",
+                                "event_type": "UNKNOWN",
+                                "detected_at": "2026-07-07T03:00:00+07:00",
+                                "validation_status": "REVIEW",
+                                "production_send": "blocked",
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "pairing.json"
+            markdown = root / "pairing.md"
+
+            result = run_ais_truth_interval_pairing(input_json=source, output_json=output, markdown_output=markdown)
+
+            self.assertEqual(result["status"], "DRY_RUN")
+            self.assertEqual(result["production_send"], "blocked")
+            self.assertEqual(result["action_counts"]["CLOSE_INTERVAL"], 1)
+            self.assertEqual(result["action_counts"]["OPEN_INTERVAL"], 1)
+            self.assertEqual(result["action_counts"]["REVIEW"], 1)
+            closed = [item for item in result["decisions"] if item["action"] == "CLOSE_INTERVAL"][0]
+            self.assertEqual(closed["duration_minutes"], 45.0)
+            self.assertEqual(closed["pair_status"], "CLOSED")
+            self.assertEqual(closed["production_send"], "blocked")
+            output_text = output.read_text(encoding="utf-8").lower()
+            self.assertNotIn("private customer should not appear", output_text)
+            self.assertIn("Pairing does not send customer-facing ETR", markdown.read_text(encoding="utf-8"))
+
     def test_cloud_worker_dry_run_keeps_guardrails_and_redaction(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

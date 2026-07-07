@@ -1,0 +1,15 @@
+{
+  "request_id": "AIS-20260620-0001",
+  "source_event_id": "AIS-ALARM-0001",
+  "event_type": "OUTAGE",
+  "site_id": "<AIS site/location id>",
+  "meter_no": "<PEA meter number / PEANO>",
+  "timestamp": "2026-06-20T00:35:00+07:00",
+  "outage_at": "2026-06-20T00:35:00+07:00",
+  "province": "Sakon Nakhon",
+  "district": "<district>",
+  "subdistrict": "<subdistrict>",
+  "alarm_type": "AC_MAIN_FAIL",
+  "main_cause": "Faulty AC main failed",
+  "subcause": "PEA no back up"
+}

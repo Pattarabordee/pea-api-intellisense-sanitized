@@ -23,6 +23,7 @@ from .cloud_production import (
     build_mvp_daily_qa_pack,
     build_production_approval_evidence_pack,
     build_production_gate_packet,
+    run_ais_truth_interval_pairing,
     run_cloud_worker_shadow_loop,
 )
 from .ais_active_state_challenger import build_active_state_remaining_challenger
@@ -1363,6 +1364,20 @@ def cmd_mvp_daily_qa(args: argparse.Namespace) -> None:
 def cmd_cloud_worker_shadow_loop(args: argparse.Namespace) -> None:
     settings = _settings(args)
     result = run_cloud_worker_shadow_loop(
+        database_url=args.database_url,
+        input_json=settings.resolve(args.input_json) if args.input_json else None,
+        output_json=settings.resolve(args.output_json),
+        markdown_output=settings.resolve(args.markdown_output),
+        limit=args.limit,
+        dry_run=not args.apply,
+        apply=args.apply,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_truth_interval_pairing(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = run_ais_truth_interval_pairing(
         database_url=args.database_url,
         input_json=settings.resolve(args.input_json) if args.input_json else None,
         output_json=settings.resolve(args.output_json),
@@ -3605,6 +3620,18 @@ def build_parser() -> argparse.ArgumentParser:
     cloud_worker.add_argument("--limit", type=int, default=50)
     cloud_worker.add_argument("--apply", action="store_true", help="Write append-only evidence/ETR/audit rows; default is dry-run")
     cloud_worker.set_defaults(func=cmd_cloud_worker_shadow_loop)
+
+    truth_pairing = sub.add_parser(
+        "ais-truth-interval-pairing",
+        help="Pair AIS OUTAGE/RESTORE truth observations into derived shadow intervals",
+    )
+    truth_pairing.add_argument("--database-url", default=None, help="PostgreSQL URL; omit with --input-json for local dry-run")
+    truth_pairing.add_argument("--input-json", default=None, help="Truth observation JSON fixture for dry-run without Postgres")
+    truth_pairing.add_argument("--output-json", default="runtime/cloud_pilot/ais_truth_interval_pairing_report.json")
+    truth_pairing.add_argument("--markdown-output", default="runtime/cloud_pilot/ais_truth_interval_pairing_report.md")
+    truth_pairing.add_argument("--limit", type=int, default=500)
+    truth_pairing.add_argument("--apply", action="store_true", help="Upsert derived interval rows; default is dry-run")
+    truth_pairing.set_defaults(func=cmd_ais_truth_interval_pairing)
 
     forward_template = sub.add_parser(
         "forward-capture-template",

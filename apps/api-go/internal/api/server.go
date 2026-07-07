@@ -177,6 +177,12 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"callback_counts":       snapshot.CallbackCounts,
 		"outbox_dry_run_held":   snapshot.OutboxDryRunHeld,
 		"dead_letters":          snapshot.DeadLetters,
+		"truth_observations":    snapshot.TruthObservations,
+		"truth_review_needed":   snapshot.TruthReviewNeeded,
+		"truth_outage_events":   snapshot.TruthOutageEvents,
+		"truth_restore_events":  snapshot.TruthRestoreEvents,
+		"truth_open_intervals":  snapshot.TruthOpenIntervals,
+		"truth_closed_intervals": snapshot.TruthClosedIntervals,
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
 	}
@@ -227,7 +233,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not build safe storage records", req.RequestID))
 		return
 	}
-	duplicate, err := s.store.InsertInbound(r.Context(), records.request, records.callback, records.evidence, records.etr, records.send, records.outbox)
+	duplicate, err := s.store.InsertInbound(r.Context(), records.request, records.truth, records.callback, records.evidence, records.etr, records.send, records.outbox)
 	if err != nil {
 		s.cfg.Logger.Error("insert inbound failed", "request_id", req.RequestID, "error", err)
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not persist request", req.RequestID))
@@ -314,9 +320,15 @@ func (s *Server) safeSendControlPayload() map[string]any {
 type inboundRequest struct {
 	RequestID          string
 	MeterNo            string
+	SiteID             string
+	SourceEventID      string
+	EventType          string
 	DetectedAt         time.Time
 	DetectedAtOriginal string
+	OutageAt           *time.Time
+	RestoreAt          *time.Time
 	TimestampQuality   map[string]any
+	TruthValidation    string
 	Province           string
 	District           string
 	Subdistrict        string
@@ -335,11 +347,27 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 	if err != nil {
 		return inboundRequest{}, err
 	}
+	siteID, err := optionalBoundedText(payload, "site_id", 128, "site_id", "siteId", "location_id", "locationId", "siteCode", "site_code")
+	if err != nil {
+		return inboundRequest{}, err
+	}
+	sourceEventID, err := optionalBoundedText(payload, "source_event_id", 128, "source_event_id", "sourceEventId", "event_id", "eventId", "alarm_id", "alarmId")
+	if err != nil {
+		return inboundRequest{}, err
+	}
 	rawTime := firstText(payload, "timestamp", "eventTime", "detected_at", "detectedAt")
 	if rawTime == "" {
 		return inboundRequest{}, errors.New("timestamp is required")
 	}
 	detectedAt, quality, err := parseTimestamp(rawTime)
+	if err != nil {
+		return inboundRequest{}, err
+	}
+	outageAt, err := parseOptionalTimestamp(payload, "outage_at", "outageAt", "power_outage_at", "powerOutageAt")
+	if err != nil {
+		return inboundRequest{}, err
+	}
+	restoreAt, err := parseOptionalTimestamp(payload, "restore_at", "restoreAt", "restored_at", "restoredAt", "power_restore_at", "powerRestoreAt")
 	if err != nil {
 		return inboundRequest{}, err
 	}
@@ -367,12 +395,19 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 	if err != nil {
 		return inboundRequest{}, err
 	}
+	eventType := normalizeTruthEventType(payload, alarmType, mainCause, subcause)
 	return inboundRequest{
 		RequestID:          requestID,
 		MeterNo:            meter,
+		SiteID:             siteID,
+		SourceEventID:      sourceEventID,
+		EventType:          eventType,
 		DetectedAt:         detectedAt,
 		DetectedAtOriginal: rawTime,
+		OutageAt:           outageAt,
+		RestoreAt:          restoreAt,
 		TimestampQuality:   quality,
+		TruthValidation:    truthValidationStatus(eventType, outageAt, restoreAt),
 		Province:           province,
 		District:           district,
 		Subdistrict:        subdistrict,
@@ -440,8 +475,21 @@ func parseTimestamp(value string) (time.Time, map[string]any, error) {
 	return time.Time{}, nil, errors.New("timestamp must be ISO 8601, preferably with timezone such as +07:00")
 }
 
+func parseOptionalTimestamp(payload map[string]any, keys ...string) (*time.Time, error) {
+	raw := firstText(payload, keys...)
+	if raw == "" {
+		return nil, nil
+	}
+	parsed, _, err := parseTimestamp(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%s must be ISO 8601, preferably with timezone such as +07:00", keys[0])
+	}
+	return &parsed, nil
+}
+
 type storageRecords struct {
 	request  storage.InboundRequest
+	truth    storage.TruthObservation
 	callback storage.Callback
 	evidence storage.EvidenceTrace
 	etr      storage.ETRCandidate
@@ -453,9 +501,15 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 	requestJSON := redactPayload(map[string]any{
 		"request_id":             req.RequestID,
 		"meter_no":               req.MeterNo,
+		"site_id":                req.SiteID,
+		"source_event_id":        req.SourceEventID,
+		"event_type":             req.EventType,
 		"detected_at":            req.DetectedAt.Format(time.RFC3339),
 		"detected_at_original":   req.DetectedAtOriginal,
+		"outage_at":              formatTimePtr(req.OutageAt),
+		"restore_at":             formatTimePtr(req.RestoreAt),
 		"timestamp_quality":      req.TimestampQuality,
+		"truth_validation":       req.TruthValidation,
 		"province":               req.Province,
 		"district":               req.District,
 		"subdistrict":            req.Subdistrict,
@@ -510,6 +564,24 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 			RequestJSON:        mustJSON(requestJSON),
 			ResponseJSON:       mustJSON(accepted),
 			CallbackStatus:     callbackStatus,
+		},
+		truth: storage.TruthObservation{
+			RequestID:           req.RequestID,
+			Source:              "AIS",
+			SourceEventID:       req.SourceEventID,
+			SiteHash:            hashOptional(req.SiteID),
+			SiteLast4:           last4(req.SiteID),
+			MeterHash:           hashMeter(req.MeterNo),
+			MeterLast4:          last4(req.MeterNo),
+			EventType:           req.EventType,
+			DetectedAt:          req.DetectedAt,
+			OutageAt:            req.OutageAt,
+			RestoreAt:           req.RestoreAt,
+			TimestampQuality:    mustJSON(req.TimestampQuality),
+			PayloadSummaryJSON:  mustJSON(truthSummaryPayload(req)),
+			ValidationStatus:    req.TruthValidation,
+			ProductionSend:      ProductionSend,
+			CreatedAt:           receivedAt,
 		},
 		callback: storage.Callback{
 			RequestID:   req.RequestID,
@@ -587,10 +659,21 @@ func shadowCallbackPayload(req inboundRequest, status string, confidence string,
 		"confidence":     confidence,
 		"received": map[string]any{
 			"meter_ref":   map[string]any{"hash": hashMeter(req.MeterNo), "last4": last4(req.MeterNo)},
+			"site_ref":    map[string]any{"hash": hashOptional(req.SiteID), "last4": last4(req.SiteID)},
 			"detected_at": req.DetectedAt.Format(time.RFC3339),
 			"province":    req.Province,
 			"district":    req.District,
 			"subdistrict": req.Subdistrict,
+		},
+		"truth_observation": map[string]any{
+			"source":             "AIS",
+			"source_event_id":    req.SourceEventID,
+			"event_type":         req.EventType,
+			"outage_at":          formatTimePtr(req.OutageAt),
+			"restore_at":         formatTimePtr(req.RestoreAt),
+			"validation_status":  req.TruthValidation,
+			"truth_target":       "ais_site_actual_restoration_minutes",
+			"production_send":    ProductionSend,
 		},
 		"pea_distribution": map[string]any{"status": status, "reason": reason, "cause_lane": classifyCause(req)},
 		"evidence": map[string]any{
@@ -662,7 +745,15 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 		"detected_at_original": row.DetectedAtOriginal,
 		"timestamp_quality":    timestampQuality,
 		"meter":                map[string]any{"hash": row.MeterHash, "last4": row.MeterLast4},
+		"site":                 map[string]any{"hash": row.TruthSiteHash, "last4": row.TruthSiteLast4},
 		"area":                 map[string]any{"province": row.Province, "district": row.District, "subdistrict": row.Subdistrict},
+		"truth_observation": map[string]any{
+			"source":            "AIS",
+			"source_event_id":   row.TruthSourceEventID,
+			"event_type":        row.TruthEventType,
+			"validation_status": row.TruthValidation,
+			"production_send":   ProductionSend,
+		},
 		"result":               result,
 		"last_callback": map[string]any{
 			"status":      row.LatestCallback,
@@ -719,6 +810,9 @@ func redactPayload(value any) any {
 			case lower == "meter_no" || lower == "meterno" || lower == "peano":
 				text := fmt.Sprint(item)
 				result[key] = map[string]string{"hash": hashMeter(text), "last4": last4(text)}
+			case lower == "site_id" || lower == "siteid" || lower == "location_id" || lower == "locationid":
+				text := fmt.Sprint(item)
+				result[key] = map[string]string{"hash": hashOptional(text), "last4": last4(text)}
 			case strings.Contains(lower, "token") || strings.Contains(lower, "secret") || strings.Contains(lower, "key") || strings.Contains(lower, "roomid"):
 				result[key] = "REDACTED"
 			case lower == "raw":
@@ -744,6 +838,13 @@ func hashMeter(value string) string {
 	return hex.EncodeToString(sum[:])[:16]
 }
 
+func hashOptional(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	return hashMeter(value)
+}
+
 func hashRaw(value []byte) string {
 	sum := sha256.Sum256(value)
 	return hex.EncodeToString(sum[:])
@@ -757,10 +858,75 @@ func blankDefault(value string, fallback string) string {
 }
 
 func last4(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
 	if len(value) <= 4 {
 		return value
 	}
 	return value[len(value)-4:]
+}
+
+func formatTimePtr(value *time.Time) string {
+	if value == nil {
+		return ""
+	}
+	return value.Format(time.RFC3339)
+}
+
+func normalizeTruthEventType(payload map[string]any, alarmType string, mainCause string, subcause string) string {
+	raw := strings.ToLower(strings.Join([]string{
+		firstText(payload, "event_type", "eventType", "power_status", "powerStatus", "event_status", "eventStatus", "status"),
+		alarmType,
+		mainCause,
+		subcause,
+	}, " "))
+	switch {
+	case containsAny(raw, "restore", "restored", "recover", "recovered", "power_on", "power on", "normal", "\u0e01\u0e25\u0e31\u0e1a\u0e04\u0e37\u0e19", "\u0e08\u0e48\u0e32\u0e22\u0e44\u0e1f"):
+		return "RESTORE"
+	case containsAny(raw, "outage", "power_off", "power off", "fail", "failure", "down", "ac main fail", "\u0e14\u0e31\u0e1a", "\u0e44\u0e1f\u0e14\u0e31\u0e1a"):
+		return "OUTAGE"
+	case strings.TrimSpace(raw) != "":
+		return "STATUS"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func containsAny(value string, needles ...string) bool {
+	for _, needle := range needles {
+		if strings.Contains(value, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func truthValidationStatus(eventType string, outageAt *time.Time, restoreAt *time.Time) string {
+	if eventType == "UNKNOWN" || eventType == "STATUS" {
+		return "REVIEW_EVENT_TYPE"
+	}
+	if outageAt != nil && restoreAt != nil && restoreAt.Before(*outageAt) {
+		return "REVIEW_RESTORE_BEFORE_OUTAGE"
+	}
+	return "READY_FOR_LEDGER"
+}
+
+func truthSummaryPayload(req inboundRequest) map[string]any {
+	return map[string]any{
+		"source":            "AIS",
+		"source_event_id":   req.SourceEventID,
+		"event_type":        req.EventType,
+		"detected_at":       req.DetectedAt.Format(time.RFC3339),
+		"outage_at":         formatTimePtr(req.OutageAt),
+		"restore_at":        formatTimePtr(req.RestoreAt),
+		"timestamp_quality": req.TimestampQuality,
+		"area_present":      req.Province != "" || req.District != "" || req.Subdistrict != "",
+		"site_ref_present":  req.SiteID != "",
+		"meter_ref":         map[string]any{"hash": hashMeter(req.MeterNo), "last4": last4(req.MeterNo)},
+		"site_ref":          map[string]any{"hash": hashOptional(req.SiteID), "last4": last4(req.SiteID)},
+	}
 }
 
 func mustJSON(value any) json.RawMessage {

@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "AIS -> PEA Outage Verification Pilot",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://ais-etr-pea-pilot.loca.lt"
+    },
+    {
+      "key": "api_key",
+      "value": "<shared pilot key>"
+    },
+    {
+      "key": "request_id",
+      "value": "AIS-TEST-0001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "bypass-tunnel-reminder",
+            "value": "true"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "ais-etr-pea-pilot",
+            "loca",
+            "lt"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Outage Verification",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "bypass-tunnel-reminder",
+            "value": "true"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"request_id\": \"AIS-20260620-0001\",\n  \"source_event_id\": \"AIS-ALARM-0001\",\n  \"event_type\": \"OUTAGE\",\n  \"site_id\": \"<AIS site/location id>\",\n  \"meter_no\": \"<PEA meter number / PEANO>\",\n  \"timestamp\": \"2026-06-20T00:35:00+07:00\",\n  \"outage_at\": \"2026-06-20T00:35:00+07:00\",\n  \"province\": \"Sakon Nakhon\",\n  \"district\": \"<district>\",\n  \"subdistrict\": \"<subdistrict>\",\n  \"alarm_type\": \"AC_MAIN_FAIL\",\n  \"main_cause\": \"Faulty AC main failed\",\n  \"subcause\": \"PEA no back up\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ais/outage-verifications",
+          "host": [
+            "ais-etr-pea-pilot",
+            "loca",
+            "lt"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ais",
+            "outage-verifications"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Verification Result",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "bypass-tunnel-reminder",
+            "value": "true"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ais/outage-verifications/{{request_id}}",
+          "host": [
+            "ais-etr-pea-pilot",
+            "loca",
+            "lt"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ais",
+            "outage-verifications",
+            "{{request_id}}"
+          ]
+        }
+      }
+    }
+  ]
+}
