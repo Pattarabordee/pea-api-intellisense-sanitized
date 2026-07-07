@@ -39,7 +39,8 @@ $smokePrefixes = @(
   "AIS-PUBLIC-ALIAS-SMOKE-",
   "AIS-FINAL-LOCAL-SMOKE-",
   "AIS-BEARER-SMOKE-",
-  "AIS-DEMO-SHADOW-"
+  "AIS-DEMO-SHADOW-",
+  "AIS-CODEX-"
 )
 $realItems = @($items | Where-Object {
   $rid = [string]$_.request_id
