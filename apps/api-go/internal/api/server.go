@@ -23,12 +23,13 @@ import (
 )
 
 const (
-	APIVersion             = "v1"
-	SchemaVersion          = "2026-06-20"
-	Mode                   = "shadow"
-	ProductionSend         = "blocked"
-	inboundPath            = "/api/v1/ais/outage-verifications"
-	maxBodyBytes     int64 = 1_000_000
+	APIVersion           = "v1"
+	SchemaVersion        = "2026-06-20"
+	Mode                 = "shadow"
+	ProductionSend       = "blocked"
+	inboundPath          = "/api/v1/ais/outage-verifications"
+	truthIntervalsPath   = "/api/v1/ais/truth-intervals"
+	maxBodyBytes   int64 = 1_000_000
 )
 
 var safeID = regexp.MustCompile(`^[A-Za-z0-9_.:@-]+$`)
@@ -79,6 +80,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleHealth(w, r)
 	case r.URL.Path == "/metrics" && r.Method == http.MethodGet:
 		s.handleMetrics(w, r)
+	case r.URL.Path == truthIntervalsPath && r.Method == http.MethodGet:
+		s.handleTruthIntervals(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodGet:
 		s.handleContract(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodPost:
@@ -88,6 +91,43 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSON(w, http.StatusNotFound, errorPayload("NOT_FOUND", "Unknown endpoint", ""))
 	}
+}
+
+func (s *Server) handleTruthIntervals(w http.ResponseWriter, r *http.Request) {
+	if !s.authorized(r) {
+		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
+		return
+	}
+	status := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("status")))
+	if status == "" {
+		status = "OPEN"
+	}
+	if status != "OPEN" && status != "CLOSED" && status != "REVIEW" && status != "ALL" {
+		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_STATUS", "status must be OPEN, CLOSED, REVIEW, or ALL", ""))
+		return
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	rows, err := s.store.ListTruthIntervals(r.Context(), status, limit)
+	if err != nil {
+		s.cfg.Logger.Error("truth interval list failed", "status", status, "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load truth intervals", ""))
+		return
+	}
+	items := make([]map[string]any, 0, len(rows))
+	for index := range rows {
+		row := rows[index]
+		items = append(items, truthIntervalPayload(&row))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"api_version":     APIVersion,
+		"schema_version":  SchemaVersion,
+		"mode":            Mode,
+		"production_send": ProductionSend,
+		"status_filter":   status,
+		"count":           len(items),
+		"items":           items,
+		"generated_at":    nowISO(),
+	})
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -775,6 +815,50 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 			"transport": blankDefault(row.CallbackTransport, "dry_run"),
 			"attempts":  row.CallbackAttempts,
 		},
+	}
+}
+
+func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
+	return map[string]any{
+		"interval_id":        row.IntervalID,
+		"source":             blankDefault(row.Source, "AIS"),
+		"pair_status":        row.PairStatus,
+		"outage_request_id":  row.OutageRequestID,
+		"restore_request_id": row.RestoreRequestID,
+		"outage_at":          row.OutageAt.Format(time.RFC3339),
+		"restore_at":         formatTimePtr(row.RestoreAt),
+		"duration_minutes":   row.DurationMinutes,
+		"meter":              map[string]any{"hash": row.MeterHash, "last4": row.MeterLast4},
+		"site":               map[string]any{"hash": row.SiteHash, "last4": row.SiteLast4},
+		"evidence":           safeIntervalEvidence(row.EvidenceJSON),
+		"review_hint":        truthIntervalReviewHint(row.PairStatus),
+		"production_send":    ProductionSend,
+		"updated_at":         row.UpdatedAt.Format(time.RFC3339),
+	}
+}
+
+func safeIntervalEvidence(raw json.RawMessage) map[string]any {
+	evidence := map[string]any{}
+	if len(raw) == 0 || json.Unmarshal(raw, &evidence) != nil {
+		return map[string]any{"production_send": ProductionSend}
+	}
+	return map[string]any{
+		"source":          evidence["source"],
+		"reason":          evidence["reason"],
+		"production_send": ProductionSend,
+	}
+}
+
+func truthIntervalReviewHint(status string) string {
+	switch status {
+	case "OPEN":
+		return "await_restore_or_owner_review"
+	case "CLOSED":
+		return "paired_outage_restore"
+	case "REVIEW":
+		return "manual_review_required"
+	default:
+		return "check_pair_status"
 	}
 }
 

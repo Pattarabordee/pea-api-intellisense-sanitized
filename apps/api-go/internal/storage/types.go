@@ -16,6 +16,7 @@ type Store interface {
 	InsertCallback(ctx context.Context, callback Callback) error
 	GetStatus(ctx context.Context, requestID string) (*RequestStatus, error)
 	ListStatuses(ctx context.Context, limit int) ([]RequestStatus, error)
+	ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error)
 	Metrics(ctx context.Context) (*MetricsSnapshot, error)
 }
 
@@ -152,6 +153,25 @@ type RequestStatus struct {
 	TruthSourceEventID   string
 	TruthSiteHash        string
 	TruthSiteLast4       string
+}
+
+type TruthInterval struct {
+	IntervalID       string
+	Source           string
+	OutageRequestID  string
+	RestoreRequestID string
+	MeterHash        string
+	MeterLast4       string
+	SiteHash         string
+	SiteLast4        string
+	OutageAt         time.Time
+	RestoreAt        *time.Time
+	DurationMinutes  *float64
+	PairStatus       string
+	EvidenceJSON     json.RawMessage
+	ProductionSend   string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type MetricsSnapshot struct {

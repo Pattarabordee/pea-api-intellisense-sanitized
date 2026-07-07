@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -198,6 +199,59 @@ func (s *PostgresStore) ListStatuses(ctx context.Context, limit int) ([]RequestS
 		limit = 50
 	}
 	return s.queryStatuses(ctx, "", limit)
+}
+
+func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	status = strings.ToUpper(strings.TrimSpace(status))
+	where := ""
+	args := []any{}
+	if status != "" && status != "ALL" {
+		where = "WHERE pair_status = $1"
+		args = append(args, status)
+	}
+	query := `
+	SELECT interval_id, source, coalesce(outage_request_id, ''), coalesce(restore_request_id, ''),
+		meter_hash, meter_last4, site_hash, site_last4, outage_at, restore_at,
+		duration_minutes::float8, pair_status, evidence_json, production_send, created_at, updated_at
+	FROM ais_truth_intervals
+	` + where + `
+	ORDER BY outage_at DESC, id DESC
+	LIMIT $` + fmt.Sprint(len(args)+1)
+	args = append(args, limit)
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []TruthInterval{}
+	for rows.Next() {
+		var item TruthInterval
+		if err := rows.Scan(
+			&item.IntervalID,
+			&item.Source,
+			&item.OutageRequestID,
+			&item.RestoreRequestID,
+			&item.MeterHash,
+			&item.MeterLast4,
+			&item.SiteHash,
+			&item.SiteLast4,
+			&item.OutageAt,
+			&item.RestoreAt,
+			&item.DurationMinutes,
+			&item.PairStatus,
+			&item.EvidenceJSON,
+			&item.ProductionSend,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+	return result, rows.Err()
 }
 
 func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
