@@ -58,6 +58,7 @@ from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
 from .ais_v2_baseline_stability import build_v2_baseline_stability_gate
+from .ais_v2_source_latency_audit import run_v2_source_latency_audit
 from .ais_v2_baseline_trend import build_v2_baseline_trend
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
@@ -325,6 +326,18 @@ def cmd_ais_v2_baseline_stability(args: argparse.Namespace) -> None:
         summary_json=settings.resolve(args.summary_json),
         report_md=settings.resolve(args.report),
         peacon_md=settings.resolve(args.peacon),
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_source_latency_audit(args: argparse.Namespace) -> None:
+    result = run_v2_source_latency_audit(
+        base_url=args.base_url,
+        output_csv=args.output,
+        summary_json=args.summary_json,
+        report_md=args.report,
+        peacon_md=args.peacon,
+        limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2920,6 +2933,18 @@ def build_parser() -> argparse.ArgumentParser:
     v2_stability.add_argument("--report", default="runtime/private/ais_v2_baseline_stability_report.md")
     v2_stability.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_stability.md")
     v2_stability.set_defaults(func=cmd_ais_v2_baseline_stability)
+
+    v2_latency = sub.add_parser(
+        "ais-v2-source-latency-audit-once",
+        help="Audit prospective AIS source latency using authenticated read-only cloud GETs",
+    )
+    v2_latency.add_argument("--base-url", required=True)
+    v2_latency.add_argument("--output", default="runtime/private/ais_v2_source_latency_audit.csv")
+    v2_latency.add_argument("--summary-json", default="runtime/private/ais_v2_source_latency_summary.json")
+    v2_latency.add_argument("--report", default="runtime/private/ais_v2_source_latency_report.md")
+    v2_latency.add_argument("--peacon", default="runtime/private/peacon_v2_source_latency.md")
+    v2_latency.add_argument("--limit", type=int, default=200)
+    v2_latency.set_defaults(func=cmd_ais_v2_source_latency_audit)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)
