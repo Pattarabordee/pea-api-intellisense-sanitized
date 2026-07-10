@@ -49,6 +49,7 @@ class V2BaselineEvaluationTests(unittest.TestCase):
                 report_md=root / "report.md",
                 peacon_md=root / "peacon.md",
                 registry_jsonl=root / "registry.jsonl",
+                rejection_csv=root / "rejections.csv",
                 now=datetime(2026, 7, 10, tzinfo=timezone.utc),
             )
             with (root / "groups.csv").open(encoding="utf-8-sig") as handle:
@@ -58,6 +59,7 @@ class V2BaselineEvaluationTests(unittest.TestCase):
                 + (root / "report.md").read_text(encoding="utf-8")
                 + (root / "peacon.md").read_text(encoding="utf-8")
                 + (root / "registry.jsonl").read_text(encoding="utf-8")
+                + (root / "rejections.csv").read_text(encoding="utf-8-sig")
                 + json.dumps(rows)
             )
             return result, rows, bundle
@@ -94,9 +96,13 @@ class V2BaselineEvaluationTests(unittest.TestCase):
     def test_prediction_at_or_after_restore_is_rejected(self):
         items = [self._item("r1", "2026-07-10T02:00:00Z")]
         intervals = [self._interval("r1", "2026-07-10T01:00:00Z", "2026-07-10T02:00:00Z", 60)]
-        result, rows, _ = self._run(items, intervals)
+        result, rows, bundle = self._run(items, intervals)
         self.assertEqual([], rows)
-        self.assertEqual(1, result["rejection_counts"]["prediction_time_leakage"])
+        self.assertEqual(1, result["rejection_counts"]["late_arriving_outage_after_restore"])
+        self.assertEqual(0, result["rejection_counts"]["prediction_time_leakage"])
+        self.assertFalse(result["time_leakage_detected"])
+        self.assertIn("late_arriving_outage_after_restore", bundle)
+        self.assertNotIn("r1", bundle)
         self.assertEqual("awaiting_first_scorable_incident", result["gate_status"])
 
     def test_missing_prediction_is_not_scored_retroactively(self):
@@ -146,6 +152,7 @@ class V2BaselineEvaluationTests(unittest.TestCase):
                 "report_md": root / "report.md",
                 "peacon_md": root / "peacon.md",
                 "registry_jsonl": root / "registry.jsonl",
+                "rejection_csv": root / "rejections.csv",
                 "now": datetime(2026, 7, 10, tzinfo=timezone.utc),
             }
             first = build_v2_baseline_evaluation({"production_send": "blocked"}, items, intervals, **kwargs)
