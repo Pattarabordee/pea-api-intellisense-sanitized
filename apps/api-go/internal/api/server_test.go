@@ -182,7 +182,7 @@ func TestStatusPayloadReturnsOnlySanitizedSemanticSignals(t *testing.T) {
 		RequestID:        "RAW-REQUEST-ID",
 		ReceivedAt:       receivedAt,
 		DetectedAt:       receivedAt,
-		RequestJSON:      json.RawMessage(`{"semantic_signals":{"alarm_type":{"present":true,"value":"AC_MAIN_FAIL","value_ref":"semantic_ref"}}}`),
+		RequestJSON:      json.RawMessage(`{"semantic_capture_version":"v1","semantic_signals":{"alarm_type":{"present":true,"value":"AC_MAIN_FAIL","value_ref":"semantic_ref"}}}`),
 		TruthEventType:   "OUTAGE",
 		TruthValidation:  "READY_FOR_LEDGER",
 		ProductionSend:   "blocked",
@@ -192,6 +192,9 @@ func TestStatusPayloadReturnsOnlySanitizedSemanticSignals(t *testing.T) {
 	alarm := signals["alarm_type"].(map[string]any)
 	if alarm["value"] != "AC_MAIN_FAIL" || alarm["value_ref"] != "semantic_ref" {
 		t.Fatalf("operator payload lost sanitized semantic evidence: %#v", payload)
+	}
+	if payload["semantic_capture_version"] != "v1" {
+		t.Fatalf("operator payload omitted semantic capture version: %#v", payload)
 	}
 	encoded, _ := json.Marshal(payload)
 	if strings.Contains(string(encoded), "RAW-REQUEST-ID") {

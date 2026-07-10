@@ -582,6 +582,7 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 		"main_cause":             req.MainCause,
 		"subcause":               req.Subcause,
 		"semantic_signals":       req.SemanticSignals,
+		"semantic_capture_version": "v1",
 		"production_send":        ProductionSend,
 		"trust_boundary_source":  "AIS",
 		"raw_field_names_stored": false,
@@ -803,6 +804,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 	if semanticSignals == nil {
 		semanticSignals = map[string]any{}
 	}
+	semanticCaptureVersion, _ := requestSummary["semantic_capture_version"].(string)
 	timestampQuality := map[string]any{}
 	_ = json.Unmarshal(row.TimestampQuality, &timestampQuality)
 	return map[string]any{
@@ -830,6 +832,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 			"production_send":   ProductionSend,
 		},
 		"semantic_signals": semanticSignals,
+		"semantic_capture_version": semanticCaptureVersion,
 		"result": result,
 		"last_callback": map[string]any{
 			"status": row.LatestCallback,

@@ -83,7 +83,8 @@ def build_event_semantic_audit(
     received_times: list[datetime] = []
     restore_candidates = 0
 
-    for item in items:
+    captured_items = [item for item in items if item.get("semantic_capture_version") == "v1"]
+    for item in captured_items:
         truth = item.get("truth_observation") or {}
         event_type = str(truth.get("event_type") or "UNKNOWN").strip().upper()
         event_source = str(truth.get("event_type_source") or "missing").strip()
@@ -109,7 +110,7 @@ def build_event_semantic_audit(
     observation_days = 0.0
     if received_times:
         observation_days = max(0.0, (current - min(received_times)).total_seconds() / 86400.0)
-    observation_complete = len(items) >= minimum_requests or observation_days >= minimum_days
+    observation_complete = len(captured_items) >= minimum_requests or observation_days >= minimum_days
     mapped_outages = event_counts["OUTAGE"]
     mapped_restores = event_counts["RESTORE"]
     model_ready = int(metrics.get("model_ready_clean_truth_rows") or 0)
@@ -150,7 +151,7 @@ def build_event_semantic_audit(
         "# AIS Event Semantic Audit\n\n"
         "- วิธีรัน: one-shot และใช้ authenticated GET เท่านั้น\n"
         f"- สถานะ gate: `{gate_status}`\n"
-        f"- request ที่ตรวจ: `{len(items)}`\n"
+        f"- request หลัง semantic capture v1: `{len(captured_items)}`\n"
         f"- ช่วงเวลาที่สังเกต: `{observation_days:.2f}` วัน\n"
         f"- OUTAGE ที่ map ได้: `{mapped_outages}`\n"
         f"- RESTORE ที่ map ได้: `{mapped_restores}`\n"
@@ -165,7 +166,7 @@ def build_event_semantic_audit(
     )
     return {
         "gate_status": gate_status,
-        "observed_requests": len(items),
+        "observed_requests": len(captured_items),
         "observation_days": round(observation_days, 3),
         "event_type_counts": dict(sorted(event_counts.items())),
         "event_type_source_counts": dict(sorted(source_counts.items())),
