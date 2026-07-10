@@ -1,41 +1,33 @@
-$ErrorActionPreference = "Stop"
-
 param(
   [string]$BaseUrl = "http://127.0.0.1:8090",
   [string]$ApiKey = $env:AIS_INBOUND_API_KEY
 )
 
+$ErrorActionPreference = "Stop"
+
 if (-not $ApiKey) {
-  throw "AIS_INBOUND_API_KEY is required in environment or -ApiKey for smoke check."
+  throw "AIS_INBOUND_API_KEY is required in environment or -ApiKey for read-only smoke check."
 }
 
-$health = Invoke-RestMethod -Method GET -Uri "$BaseUrl/health" -TimeoutSec 10
-if ($health.production_send -ne "blocked") {
-  throw "Unsafe health response: production_send=$($health.production_send)"
-}
+$cleanBase = $BaseUrl.TrimEnd("/")
+$headers = @{ "X-API-Key" = $ApiKey }
 
-$body = @{
-  request_id = "AIS-CLOUD-SMOKE-$(Get-Date -Format yyyyMMddHHmmss)"
-  meter_no = "REDACTED-METER-0000"
-  timestamp = (Get-Date).ToString("yyyy-MM-ddTHH:mm:sszzz")
-  province = "Sakon Nakhon"
-  district = "Phang Khon"
-  subdistrict = "Demo"
-} | ConvertTo-Json -Depth 4
+$health = Invoke-RestMethod -Method GET -Uri "$cleanBase/health" -TimeoutSec 10
+$metrics = Invoke-RestMethod -Method GET -Uri "$cleanBase/metrics" -Headers $headers -TimeoutSec 20
+$intervals = Invoke-RestMethod -Method GET -Uri "$cleanBase/api/v1/ais/truth-intervals?status=ALL&limit=1" -Headers $headers -TimeoutSec 20
 
-$response = Invoke-RestMethod -Method POST -Uri "$BaseUrl/api/v1/ais/outage-verifications" -Headers @{
-  "Content-Type" = "application/json"
-  "X-API-Key" = $ApiKey
-} -Body $body -TimeoutSec 20
-
-if ($response.http_status -ne 202 -or $response.production_send -ne "blocked") {
-  throw "Unexpected POST response."
+foreach ($item in @($health, $metrics, $intervals)) {
+  if ($item.production_send -ne "blocked") {
+    throw "Unsafe response: production_send=$($item.production_send)"
+  }
 }
 
 [pscustomobject]@{
   status = "PASS"
+  method_policy = "GET_ONLY"
   health = $health.status
-  post_status = $response.status
-  request_id = $response.request_id
-  production_send = $response.production_send
+  semantic_mapping_version = $metrics.semantic_mapping_version
+  model_ready_clean_truth_rows = $metrics.model_ready_clean_truth_rows
+  interval_endpoint = "PASS"
+  production_send = "blocked"
 } | ConvertTo-Json -Compress
