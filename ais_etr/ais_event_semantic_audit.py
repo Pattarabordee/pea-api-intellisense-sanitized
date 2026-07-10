@@ -156,7 +156,7 @@ def build_event_semantic_audit(
         f"- OUTAGE ที่ map ได้: `{mapped_outages}`\n"
         f"- RESTORE ที่ map ได้: `{mapped_restores}`\n"
         f"- restore candidate ที่ยังต้อง review: `{restore_candidates}`\n"
-        f"- open meter-state interval: `{int(metrics.get('truth_open_intervals') or 0)}`\n"
+        f"- open meter-state interval: `{int(metrics.get('truth_meter_state_open_intervals') or 0)}`\n"
         f"- stale open interval (>24h): `{int(metrics.get('truth_stale_open_intervals') or 0)}`\n"
         f"- model-ready interval: `{model_ready}`\n"
         "- ใช้ train/evaluation: `FALSE`\n"

@@ -354,7 +354,7 @@ func TestLongOptionalFieldReturns400(t *testing.T) {
 func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	store := newFakeStore()
 	store.intervals = []storage.TruthInterval{
-		{PairStatus: "OPEN"},
+		{PairStatus: "OPEN", BridgeStatus: "METER_STATE_AWAITING_RESTORE"},
 		{PairStatus: "REVIEW"},
 		{PairStatus: "CLOSED", BridgeStatus: "METER_STATE_MODEL_READY", RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
 	}
@@ -397,6 +397,9 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	}
 	if payload["truth_quarantine_intervals"].(float64) != 2 || payload["truth_accuracy_eligible_intervals"].(float64) != 1 {
 		t.Fatalf("truth interval quarantine metrics missing: %#v", payload)
+	}
+	if payload["truth_meter_state_open_intervals"].(float64) != 1 {
+		t.Fatalf("meter-state open interval metric is missing: %#v", payload)
 	}
 	if payload["truth_strict_identity_intervals"].(float64) != 0 || payload["truth_meter_state_intervals"].(float64) != 1 || payload["model_ready_clean_truth_rows"].(float64) != 1 {
 		t.Fatalf("meter-state metrics missing: %#v", payload)
@@ -680,6 +683,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		switch interval.PairStatus {
 		case "OPEN":
 			snapshot.TruthOpenIntervals++
+			if interval.BridgeStatus == "METER_STATE_AWAITING_RESTORE" {
+				snapshot.TruthMeterStateOpenIntervals++
+			}
 			snapshot.TruthQuarantineIntervals++
 		case "REVIEW":
 			snapshot.TruthReviewIntervals++

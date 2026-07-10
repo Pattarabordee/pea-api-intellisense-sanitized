@@ -48,7 +48,7 @@ GET  /api/v1/ais/outage-verifications/{request_id}
 Every endpoint except `/health` is operator/integration-only and requires `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate validation, event-semantic source, stale-open, and meter-state counts; no raw identifiers are returned.
 
 `/metrics` returns aggregate counts only: total requests, duplicate callbacks, pending worker traces,
-event-semantic mapping counts, meter-state intervals, stale open intervals, `NOT_READY_FOR_AUTO_SEND`,
+event-semantic mapping counts, meter-state open/closed intervals, stale open intervals, `NOT_READY_FOR_AUTO_SEND`,
 and `production_send=blocked`.
 
 Event semantics use strict precedence: explicit `event_type`, exact allowlisted status, then exact

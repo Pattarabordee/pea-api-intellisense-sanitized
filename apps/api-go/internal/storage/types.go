@@ -191,6 +191,7 @@ type MetricsSnapshot struct {
 	TruthOutageEvents             int64
 	TruthRestoreEvents            int64
 	TruthOpenIntervals            int64
+	TruthMeterStateOpenIntervals  int64
 	TruthReviewIntervals          int64
 	TruthClosedIntervals          int64
 	TruthQuarantineIntervals      int64

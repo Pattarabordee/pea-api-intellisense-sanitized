@@ -223,6 +223,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_outage_events":   snapshot.TruthOutageEvents,
 		"truth_restore_events":  snapshot.TruthRestoreEvents,
 		"truth_open_intervals":  snapshot.TruthOpenIntervals,
+		"truth_meter_state_open_intervals": snapshot.TruthMeterStateOpenIntervals,
 		"truth_review_intervals": snapshot.TruthReviewIntervals,
 		"truth_closed_intervals": snapshot.TruthClosedIntervals,
 		"truth_quarantine_intervals": snapshot.TruthQuarantineIntervals,
