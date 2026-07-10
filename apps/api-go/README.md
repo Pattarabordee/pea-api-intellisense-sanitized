@@ -78,4 +78,5 @@ python -m ais_etr ais-v2-lifecycle-audit-once --base-url https://pea-api-intelli
 The command writes redacted case, summary, operator report, and PEA-CON governance evidence under
 `runtime/private/`. RESTORE rows without an open v2 interval remain review/context-only and never
 increase model-ready counts. Training and evaluation remain blocked until incident grouping confirms
-at least 30 independent prospective incidents.
+at least 30 independent prospective incidents and every evaluation row has a numeric shadow prediction
+snapshot created before RESTORE.

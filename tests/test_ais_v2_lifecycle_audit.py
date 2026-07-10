@@ -158,7 +158,7 @@ class V2LifecycleAuditTests(unittest.TestCase):
         self.assertEqual("bounded_window_evidence_missing", rows[0]["classification"])
         self.assertEqual("bounded_lifecycle_evidence_review_required", result["gate_status"])
 
-    def test_clean_pair_is_counted_without_training_activation(self):
+    def test_clean_pair_without_prediction_snapshot_is_blocked(self):
         metrics = {
             "production_send": "blocked",
             "v2_activation_first_seen_at": "2026-07-10T01:00:00Z",
@@ -167,11 +167,37 @@ class V2LifecycleAuditTests(unittest.TestCase):
             "v2_open_intervals": 0,
             "v2_model_ready_rows": 1,
         }
-        result, rows, *_ = self._run([], [self._interval()], metrics)
+        outage = self._item(
+            request_ref="outage-ref",
+            meter_hash="meter-a",
+            event_time="2026-07-10T01:00:00Z",
+            event_type="OUTAGE",
+        )
+        interval = self._interval()
+        interval["outage_request_ref"] = "outage-ref"
+        result, rows, *_ = self._run([outage], [interval], metrics)
         self.assertEqual([], rows)
         self.assertEqual(1, result["clean_intervals_in_window"])
-        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertEqual("prediction_snapshot_missing", result["gate_status"])
+        self.assertEqual(1, result["missing_prediction_snapshots"])
         self.assertFalse(result["training_allowed"])
+
+    def test_numeric_prediction_before_restore_is_valid_snapshot(self):
+        outage = self._item(
+            request_ref="outage-ref",
+            meter_hash="meter-a",
+            event_time="2026-07-10T01:00:00Z",
+            event_type="OUTAGE",
+        )
+        outage["received_at"] = "2026-07-10T01:00:00Z"
+        outage["etr_status"] = "SHADOW_BASELINE_CAPTURED"
+        outage["result"] = {"etr": {"p50_minutes": 60, "prediction_created_at": "2026-07-10T01:00:00Z"}}
+        interval = self._interval()
+        interval["outage_request_ref"] = "outage-ref"
+        result, *_ = self._run([outage], [interval])
+        self.assertEqual(1, result["valid_prediction_snapshots"])
+        self.assertEqual(0, result["missing_prediction_snapshots"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
 
     def test_invalid_closed_pair_blocks_integrity(self):
         result, _, *_ = self._run([], [self._interval(duration=3, bridge="METER_STATE_DURATION_REVIEW")])

@@ -118,6 +118,29 @@ def build_v2_lifecycle_audit(
         elif row.get("pair_status") == "CLOSED":
             invalid_closed_intervals.append(row)
 
+    request_index = {str(item.get("request_ref") or "").strip(): item for item in v2_items}
+    prediction_status_counts: Counter[str] = Counter()
+    matched_outage_requests = 0
+    valid_prediction_snapshots = 0
+    invalid_prediction_timing = 0
+    for row in clean_intervals:
+        outage_ref = str(row.get("outage_request_ref") or "").strip()
+        item = request_index.get(outage_ref)
+        if item is None:
+            continue
+        matched_outage_requests += 1
+        prediction_status_counts[str(item.get("etr_status") or "missing").strip()] += 1
+        result_etr = ((item.get("result") or {}).get("etr") or {})
+        p50 = _float_or_none(result_etr.get("p50_minutes"))
+        prediction_time = _parse_time(result_etr.get("prediction_created_at") or item.get("received_at"))
+        restore_time = _parse_time(row.get("restore_at"))
+        if p50 is None or prediction_time is None or restore_time is None:
+            continue
+        if prediction_time >= restore_time:
+            invalid_prediction_timing += 1
+            continue
+        valid_prediction_snapshots += 1
+
     cases = []
     classification_counts: Counter[str] = Counter()
     for item in v2_items:
@@ -154,8 +177,24 @@ def build_v2_lifecycle_audit(
     no_open_ratio = no_open_count / restore_count if restore_count else 0.0
     lifecycle_review_count = bounded_evidence_missing + sequence_conflicts
     lifecycle_review_ratio = lifecycle_review_count / restore_count if restore_count else 0.0
+    missing_prediction_snapshots = len(clean_intervals) - valid_prediction_snapshots
+    blockers = []
+    if invalid_closed_intervals:
+        blockers.append("closed_pair_integrity")
+    if invalid_prediction_timing:
+        blockers.append("prediction_time_leakage")
+    if missing_prediction_snapshots:
+        blockers.append("prediction_snapshot_missing")
+    if lifecycle_review_count:
+        blockers.append("bounded_lifecycle_evidence_review")
+    if len(clean_intervals) < 30:
+        blockers.append("insufficient_clean_pairs")
     if invalid_closed_intervals:
         gate_status = "closed_pair_integrity_blocked"
+    elif invalid_prediction_timing:
+        gate_status = "prediction_time_leakage_blocked"
+    elif missing_prediction_snapshots:
+        gate_status = "prediction_snapshot_missing"
     elif lifecycle_review_count:
         gate_status = "bounded_lifecycle_evidence_review_required"
     elif no_open_count:
@@ -184,12 +223,18 @@ def build_v2_lifecycle_audit(
         "v2_model_ready_rows": int(metrics.get("v2_model_ready_rows") or 0),
         "clean_intervals_in_window": len(clean_intervals),
         "invalid_closed_intervals_in_window": len(invalid_closed_intervals),
+        "clean_interval_outage_request_matches": matched_outage_requests,
+        "valid_prediction_snapshots": valid_prediction_snapshots,
+        "missing_prediction_snapshots": missing_prediction_snapshots,
+        "invalid_prediction_timing": invalid_prediction_timing,
+        "prediction_status_counts": dict(sorted(prediction_status_counts.items())),
         "restore_without_open": no_open_count,
         "restore_without_open_ratio": round(no_open_ratio, 4),
         "restore_without_open_explained_context": no_open_count - lifecycle_review_count,
         "restore_without_open_requires_review": lifecycle_review_count,
         "lifecycle_review_ratio": round(lifecycle_review_ratio, 4),
         "classification_counts": dict(sorted(classification_counts.items())),
+        "blockers": blockers,
         "minimum_independent_incidents": 30,
         "training_allowed": False,
         "evaluation_allowed": False,
@@ -217,6 +262,10 @@ def build_v2_lifecycle_audit(
         f"- หลักฐานใน bounded window ยังไม่พอหรือ sequence ขัดแย้ง: `{lifecycle_review_count}` ({lifecycle_review_ratio:.1%})\n"
         f"- การจำแนก: `{json.dumps(summary['classification_counts'], ensure_ascii=False, sort_keys=True)}`\n"
         f"- closed pair ที่ integrity ไม่ผ่าน: `{len(invalid_closed_intervals)}`\n"
+        f"- clean pair ที่จับกลับไปยัง OUTAGE request ได้: `{matched_outage_requests}`\n"
+        f"- prediction snapshot ที่มีตัวเลขและเกิดก่อน RESTORE: `{valid_prediction_snapshots}`\n"
+        f"- clean pair ที่ยังไม่มี prediction snapshot: `{missing_prediction_snapshots}`\n"
+        f"- blockers: `{json.dumps(blockers, ensure_ascii=False)}`\n"
         "- ใช้ train/evaluation: `FALSE` จนกว่าจะผ่าน incident grouping และมีอย่างน้อย 30 เหตุการณ์อิสระ\n"
         "- production_send: `blocked`\n\n"
         "RESTORE ที่ไม่มี open interval ถูกเก็บเป็น audit/review เท่านั้น ไม่ถูกนำไปสร้าง target หรือทำให้จำนวน clean truth สูงขึ้น\n",
