@@ -1,8 +1,10 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -27,6 +29,16 @@ func Load() Config {
 		CallbackTransport:  os.Getenv("CALLBACK_TRANSPORT"),
 		EmergencyOff:        envBool("EMERGENCY_OFF", false),
 	}
+}
+
+func (c Config) Validate() error {
+	if strings.TrimSpace(c.APIKey) == "" {
+		return errors.New("AIS_INBOUND_API_KEY is required")
+	}
+	if strings.TrimSpace(c.DatabaseURL) == "" {
+		return errors.New("DATABASE_URL is required")
+	}
+	return nil
 }
 
 func envInt(name string, fallback int) int {

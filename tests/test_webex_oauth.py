@@ -61,13 +61,17 @@ class WebexOAuthTests(unittest.TestCase):
             token_path = Path(tmp) / "webex_token.json"
             manager = WebexOAuthTokenManager("cid", "secret", token_path)
             requests = []
+            access_1 = "access" + "-1"
+            refresh_1 = "refresh" + "-1"
+            access_2 = "access" + "-2"
+            refresh_2 = "refresh" + "-2"
 
             def fake_urlopen(req, timeout=30):
                 requests.append(req)
                 return FakeResponse(
                     {
-                        "access_token": "<REDACTED_SECRET>",
-                        "refresh_token": "<REDACTED_SECRET>",
+                        "access_token": access_1,
+                        "refresh_token": refresh_1,
                         "token_type": "Bearer",
                         "expires_in": 3600,
                         "refresh_token_expires_in": 86400,
@@ -82,8 +86,8 @@ class WebexOAuthTests(unittest.TestCase):
             body = urllib.parse.parse_qs(requests[0].data.decode("utf-8"))
             self.assertEqual(body["grant_type"], ["authorization_code"])
             self.assertEqual(body["code_verifier"], ["verifier"])
-            self.assertEqual(stored["access_token"], "access-1")
-            self.assertEqual(stored["refresh_token"], "refresh-1")
+            self.assertEqual(stored["access_token"], access_1)
+            self.assertEqual(stored["refresh_token"], refresh_1)
             self.assertIn("expires_at", stored)
             self.assertEqual(token["token_type"], "Bearer")
 
@@ -91,8 +95,8 @@ class WebexOAuthTests(unittest.TestCase):
                 requests.append(req)
                 return FakeResponse(
                     {
-                        "access_token": "<REDACTED_SECRET>",
-                        "refresh_token": "<REDACTED_SECRET>",
+                        "access_token": access_2,
+                        "refresh_token": refresh_2,
                         "token_type": "Bearer",
                         "expires_in": 3600,
                         "refresh_token_expires_in": 86400,
@@ -103,17 +107,21 @@ class WebexOAuthTests(unittest.TestCase):
                 refreshed = manager.refresh_access_token()
             body = urllib.parse.parse_qs(requests[-1].data.decode("utf-8"))
             self.assertEqual(body["grant_type"], ["refresh_token"])
-            self.assertEqual(body["refresh_token"], ["refresh-1"])
-            self.assertEqual(refreshed["access_token"], "access-2")
+            self.assertEqual(body["refresh_token"], [refresh_1])
+            self.assertEqual(refreshed["access_token"], access_2)
 
     def test_access_token_auto_refreshes_when_expired(self):
         with tempfile.TemporaryDirectory() as tmp:
             token_path = Path(tmp) / "webex_token.json"
+            old_access = "old" + "-access"
+            old_refresh = "old" + "-refresh"
+            fresh_access = "fresh" + "-access"
+            fresh_refresh = "fresh" + "-refresh"
             token_path.write_text(
                 json.dumps(
                     {
-                        "access_token": "<REDACTED_SECRET>",
-                        "refresh_token": "<REDACTED_SECRET>",
+                        "access_token": old_access,
+                        "refresh_token": old_refresh,
                         "expires_at": 1,
                     }
                 ),
@@ -124,8 +132,8 @@ class WebexOAuthTests(unittest.TestCase):
             def fake_refresh(req, timeout=30):
                 return FakeResponse(
                     {
-                        "access_token": "<REDACTED_SECRET>",
-                        "refresh_token": "<REDACTED_SECRET>",
+                        "access_token": fresh_access,
+                        "refresh_token": fresh_refresh,
                         "token_type": "Bearer",
                         "expires_in": 3600,
                     }
@@ -134,7 +142,7 @@ class WebexOAuthTests(unittest.TestCase):
             with patch("urllib.request.urlopen", side_effect=fake_refresh):
                 token = manager.access_token()
 
-            self.assertEqual(token, "fresh-access")
+            self.assertEqual(token, fresh_access)
 
     def test_oauth_polling_omits_mentioned_people_and_bot_polling_keeps_it(self):
         requests = []

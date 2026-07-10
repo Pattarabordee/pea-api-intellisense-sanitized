@@ -227,6 +227,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_quarantine_intervals": snapshot.TruthQuarantineIntervals,
 		"truth_accuracy_eligible_intervals": snapshot.TruthAccuracyEligibleIntervals,
 		"truth_strict_identity_intervals": snapshot.TruthStrictIdentityIntervals,
+		"truth_meter_state_intervals":     snapshot.TruthMeterStateIntervals,
 		"model_ready_clean_truth_rows": snapshot.ModelReadyCleanTruthRows,
 		"model_truth_review_rows": snapshot.ModelTruthReviewRows,
 		"truth_validation_counts": snapshot.TruthValidationCounts,
@@ -270,7 +271,8 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_REQUEST", err.Error(), firstText(payload, "request_id", "requestId")))
 		return
 	}
-	s.cfg.Logger.Info("ais inbound request received", "request_id", req.RequestID, "meter_last4", last4(req.MeterNo), "mode", Mode, "production_send", ProductionSend)
+	requestRef := hashReference("request", req.RequestID)
+	s.cfg.Logger.Info("ais inbound request received", "request_ref", requestRef, "mode", Mode, "production_send", ProductionSend)
 
 	receivedAt := time.Now().UTC()
 	callbackStatus := "CAPTURED_NO_CALLBACK_URL"
@@ -283,12 +285,12 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	duplicate, err := s.store.InsertInbound(r.Context(), records.request, records.truth, records.callback, records.evidence, records.etr, records.send, records.outbox)
 	if err != nil {
-		s.cfg.Logger.Error("insert inbound failed", "request_id", req.RequestID, "error", err)
+		s.cfg.Logger.Error("insert inbound failed", "request_ref", requestRef, "error", err)
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not persist request", req.RequestID))
 		return
 	}
 	if duplicate {
-		s.cfg.Logger.Info("ais inbound duplicate skipped", "request_id", req.RequestID, "mode", Mode, "production_send", ProductionSend)
+		s.cfg.Logger.Info("ais inbound duplicate skipped", "request_ref", requestRef, "mode", Mode, "production_send", ProductionSend)
 		callbackStatus = "SKIPPED_DUPLICATE"
 		accepted = acceptedResponse(req.RequestID, true, callbackStatus, time.Now().UTC())
 		duplicatePayload := duplicateCallbackPayload(req)
@@ -300,7 +302,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 			SentAt:      time.Now().UTC(),
 		}
 		if err := s.store.InsertCallback(r.Context(), callbackRecord); err != nil {
-			s.cfg.Logger.Warn("duplicate callback persist failed", "request_id", req.RequestID, "error", err)
+			s.cfg.Logger.Warn("duplicate callback persist failed", "request_ref", requestRef, "error", err)
 		}
 	}
 	w.Header().Set("X-Request-ID", req.RequestID)
@@ -335,7 +337,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) authorized(r *http.Request) bool {
 	if s.cfg.APIKey == "" {
-		return true
+		return false
 	}
 	if r.Header.Get("X-API-Key") == s.cfg.APIKey {
 		return true
@@ -371,6 +373,7 @@ type inboundRequest struct {
 	SiteID             string
 	SourceEventID      string
 	EventType          string
+	EventTypeSource    string
 	DetectedAt         time.Time
 	DetectedAtOriginal string
 	OutageAt           *time.Time
@@ -443,19 +446,26 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 	if err != nil {
 		return inboundRequest{}, err
 	}
-	eventType := normalizeTruthEventType(payload, alarmType, mainCause, subcause)
+	eventType, eventTypeSource := normalizeTruthEventType(payload)
+	if eventType == "OUTAGE" && outageAt == nil {
+		outageAt = &detectedAt
+	}
+	if eventType == "RESTORE" && restoreAt == nil {
+		restoreAt = &detectedAt
+	}
 	return inboundRequest{
 		RequestID:          requestID,
 		MeterNo:            meter,
 		SiteID:             siteID,
 		SourceEventID:      sourceEventID,
 		EventType:          eventType,
+		EventTypeSource:    eventTypeSource,
 		DetectedAt:         detectedAt,
 		DetectedAtOriginal: rawTime,
 		OutageAt:           outageAt,
 		RestoreAt:          restoreAt,
 		TimestampQuality:   quality,
-		TruthValidation:    truthValidationStatus(eventType, sourceEventID, outageAt, restoreAt),
+		TruthValidation:    truthValidationStatus(eventType, eventTypeSource, outageAt, restoreAt),
 		Province:           province,
 		District:           district,
 		Subdistrict:        subdistrict,
@@ -547,11 +557,12 @@ type storageRecords struct {
 
 func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any, callbackPayload map[string]any, callbackStatus string, receivedAt time.Time) (storageRecords, error) {
 	requestJSON := redactPayload(map[string]any{
-		"request_id":             req.RequestID,
+		"request_ref":            hashReference("request", req.RequestID),
 		"meter_no":               req.MeterNo,
 		"site_id":                req.SiteID,
-		"source_event_id":        req.SourceEventID,
+		"source_event_ref":       hashReference("source_event", req.SourceEventID),
 		"event_type":             req.EventType,
+		"event_type_source":      req.EventTypeSource,
 		"detected_at":            req.DetectedAt.Format(time.RFC3339),
 		"detected_at_original":   req.DetectedAtOriginal,
 		"outage_at":              formatTimePtr(req.OutageAt),
@@ -616,12 +627,13 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 		truth: storage.TruthObservation{
 			RequestID:           req.RequestID,
 			Source:              "AIS",
-			SourceEventID:       req.SourceEventID,
+			SourceEventHash:     hashReference("source_event", req.SourceEventID),
 			SiteHash:            hashOptional(req.SiteID),
 			SiteLast4:           last4(req.SiteID),
 			MeterHash:           hashMeter(req.MeterNo),
 			MeterLast4:          last4(req.MeterNo),
 			EventType:           req.EventType,
+			EventTypeSource:     req.EventTypeSource,
 			DetectedAt:          req.DetectedAt,
 			OutageAt:            req.OutageAt,
 			RestoreAt:           req.RestoreAt,
@@ -702,7 +714,7 @@ func shadowCallbackPayload(req inboundRequest, status string, confidence string,
 		"api_version": APIVersion,
 		"schema_version": SchemaVersion,
 		"mode": Mode,
-		"request_id": req.RequestID,
+		"request_ref": hashReference("request", req.RequestID),
 		"status": status,
 		"confidence": confidence,
 		"received": map[string]any{
@@ -715,8 +727,9 @@ func shadowCallbackPayload(req inboundRequest, status string, confidence string,
 		},
 		"truth_observation": map[string]any{
 			"source":             "AIS",
-			"source_event_id":    req.SourceEventID,
+			"source_event_ref":   hashReference("source_event", req.SourceEventID),
 			"event_type":         req.EventType,
+			"event_type_source":  req.EventTypeSource,
 			"outage_at":          formatTimePtr(req.OutageAt),
 			"restore_at":         formatTimePtr(req.RestoreAt),
 			"validation_status":  req.TruthValidation,
@@ -783,7 +796,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 		"api_version": APIVersion,
 		"schema_version": SchemaVersion,
 		"mode": Mode,
-		"request_id": row.RequestID,
+		"request_ref": hashReference("request", row.RequestID),
 		"status": map[bool]string{true: "COMPLETED", false: "RECEIVED"}[len(row.CallbackPayload) > 0],
 		"request_status": "RECEIVED",
 		"callback_status": row.RequestCallback,
@@ -797,8 +810,9 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 		"area": map[string]any{"province": row.Province, "district": row.District, "subdistrict": row.Subdistrict},
 		"truth_observation": map[string]any{
 			"source":            "AIS",
-			"source_event_id":   row.TruthSourceEventID,
+			"source_event_ref":  row.TruthSourceEventRef,
 			"event_type":        row.TruthEventType,
+			"event_type_source": row.TruthEventTypeSource,
 			"validation_status": row.TruthValidation,
 			"production_send":   ProductionSend,
 		},
@@ -833,8 +847,8 @@ func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
 		"source":             blankDefault(row.Source, "AIS"),
 		"pair_status":        row.PairStatus,
 		"bridge_status":      blankDefault(row.BridgeStatus, "LEGACY_UNVERIFIED"),
-		"outage_request_id":  row.OutageRequestID,
-		"restore_request_id": row.RestoreRequestID,
+		"outage_request_ref":  hashReference("request", row.OutageRequestID),
+		"restore_request_ref": hashReference("request", row.RestoreRequestID),
 		"outage_at":          row.OutageAt.Format(time.RFC3339),
 		"restore_at":         formatTimePtr(row.RestoreAt),
 		"duration_minutes":   row.DurationMinutes,
@@ -865,8 +879,8 @@ func truthIntervalReviewHint(status, bridgeStatus string) string {
 	case "OPEN":
 		return "quarantine_await_restore_or_owner_review"
 	case "CLOSED":
-		if bridgeStatus != "STRICT_MODEL_READY" {
-			return "closed_interval_audit_only_until_strict_identity_bridge"
+		if bridgeStatus != "METER_STATE_MODEL_READY" {
+			return "closed_interval_audit_only_until_meter_state_gate"
 		}
 		return "paired_outage_restore"
 	case "REVIEW":
@@ -877,9 +891,9 @@ func truthIntervalReviewHint(status, bridgeStatus string) string {
 }
 
 func truthIntervalReviewPolicy(row *storage.TruthInterval) map[string]any {
-	if row.PairStatus == "CLOSED" && row.BridgeStatus == "STRICT_MODEL_READY" && row.RestoreAt != nil && row.DurationMinutes != nil {
+	if row.PairStatus == "CLOSED" && row.BridgeStatus == "METER_STATE_MODEL_READY" && row.RestoreAt != nil && row.DurationMinutes != nil {
 		return map[string]any{
-			"disposition":                           "strict_model_ready_truth_interval",
+			"disposition":                           "meter_state_model_ready_truth_interval",
 			"model_accuracy_eligible":               true,
 			"production_readiness_evidence_eligible": true,
 			"customer_send_eligible":                false,
@@ -911,13 +925,13 @@ func truthIntervalMetricsPolicy() map[string]any {
 			"customer_send":     false,
 		},
 		"closed_legacy_or_review": map[string]any{
-			"disposition":       "audit_only_until_strict_identity_bridge",
+			"disposition":       "audit_only_until_meter_state_gate",
 			"accuracy_eligible": false,
 			"readiness_eligible": false,
 			"customer_send":     false,
 		},
-		"closed_strict_model_ready": map[string]any{
-			"disposition":       "strict_model_ready_truth_interval",
+		"closed_meter_state_model_ready": map[string]any{
+			"disposition":       "meter_state_model_ready_truth_interval",
 			"accuracy_eligible": true,
 			"readiness_eligible": true,
 			"customer_send":     false,
@@ -1023,22 +1037,24 @@ func formatTimePtr(value *time.Time) string {
 	return value.Format(time.RFC3339)
 }
 
-func normalizeTruthEventType(payload map[string]any, alarmType string, mainCause string, subcause string) string {
-	raw := strings.ToLower(strings.Join([]string{
-		firstText(payload, "event_type", "eventType", "power_status", "powerStatus", "event_status", "eventStatus", "status"),
-		alarmType,
-		mainCause,
-		subcause,
-	}, " "))
-	switch {
-	case containsAny(raw, "restore", "restored", "recover", "recovered", "power_on", "power on", "normal", "\u0e01\u0e25\u0e31\u0e1a\u0e04\u0e37\u0e19", "\u0e08\u0e48\u0e32\u0e22\u0e44\u0e1f"):
-		return "RESTORE"
-	case containsAny(raw, "outage", "power_off", "power off", "fail", "failure", "down", "ac main fail", "\u0e14\u0e31\u0e1a", "\u0e44\u0e1f\u0e14\u0e31\u0e1a"):
-		return "OUTAGE"
-	case strings.TrimSpace(raw) != "":
-		return "STATUS"
+func normalizeTruthEventType(payload map[string]any) (string, string) {
+	explicit := strings.ToUpper(strings.TrimSpace(firstText(payload, "event_type", "eventType")))
+	if explicit == "OUTAGE" || explicit == "RESTORE" {
+		return explicit, "explicit"
+	}
+	if explicit != "" {
+		return "UNKNOWN", "explicit_invalid"
+	}
+	mapped := strings.ToLower(strings.TrimSpace(firstText(payload, "power_status", "powerStatus", "event_status", "eventStatus", "status")))
+	switch mapped {
+	case "outage", "power_off", "power off", "off", "down", "ac_main_fail", "ac main fail", "fail", "failure":
+		return "OUTAGE", "mapped"
+	case "restore", "restored", "power_on", "power on", "on", "normal", "recover", "recovered":
+		return "RESTORE", "mapped"
+	case "":
+		return "UNKNOWN", "missing"
 	default:
-		return "UNKNOWN"
+		return "STATUS", "mapped_unknown"
 	}
 }
 
@@ -1051,12 +1067,12 @@ func containsAny(value string, needles ...string) bool {
 	return false
 }
 
-func truthValidationStatus(eventType, sourceEventID string, outageAt *time.Time, restoreAt *time.Time) string {
+func truthValidationStatus(eventType, eventTypeSource string, outageAt *time.Time, restoreAt *time.Time) string {
 	if eventType == "UNKNOWN" || eventType == "STATUS" {
 		return "REVIEW_EVENT_TYPE"
 	}
-	if strings.TrimSpace(sourceEventID) == "" {
-		return "REVIEW_IDENTITY_KEY_REQUIRED"
+	if eventTypeSource != "explicit" && eventTypeSource != "mapped" {
+		return "REVIEW_EVENT_TYPE"
 	}
 	if eventType == "OUTAGE" && outageAt == nil {
 		return "REVIEW_OUTAGE_TIMESTAMP"
@@ -1073,8 +1089,9 @@ func truthValidationStatus(eventType, sourceEventID string, outageAt *time.Time,
 func truthSummaryPayload(req inboundRequest) map[string]any {
 	return map[string]any{
 		"source":            "AIS",
-		"source_event_id":   req.SourceEventID,
+		"source_event_ref":  hashReference("source_event", req.SourceEventID),
 		"event_type":        req.EventType,
+		"event_type_source": req.EventTypeSource,
 		"detected_at":       req.DetectedAt.Format(time.RFC3339),
 		"outage_at":         formatTimePtr(req.OutageAt),
 		"restore_at":        formatTimePtr(req.RestoreAt),
@@ -1084,6 +1101,14 @@ func truthSummaryPayload(req inboundRequest) map[string]any {
 		"meter_ref":         map[string]any{"hash": hashMeter(req.MeterNo), "last4": last4(req.MeterNo)},
 		"site_ref":          map[string]any{"hash": hashOptional(req.SiteID), "last4": last4(req.SiteID)},
 	}
+}
+
+func hashReference(namespace, value string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(namespace + "|" + value))
+	return namespace + "_" + hex.EncodeToString(sum[:])[:16]
 }
 
 func mustJSON(value any) json.RawMessage {

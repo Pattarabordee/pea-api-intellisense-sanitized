@@ -40,11 +40,13 @@ type TruthObservation struct {
 	RequestID          string
 	Source            string
 	SourceEventID     string
+	SourceEventHash   string
 	SiteHash          string
 	SiteLast4         string
 	MeterHash         string
 	MeterLast4        string
 	EventType         string
+	EventTypeSource   string
 	DetectedAt        time.Time
 	OutageAt          *time.Time
 	RestoreAt         *time.Time
@@ -150,7 +152,8 @@ type RequestStatus struct {
 	CallbackAttempts  int
 	TruthEventType       string
 	TruthValidation      string
-	TruthSourceEventID   string
+	TruthSourceEventRef  string
+	TruthEventTypeSource string
 	TruthSiteHash        string
 	TruthSiteLast4       string
 }
@@ -193,6 +196,7 @@ type MetricsSnapshot struct {
 	TruthQuarantineIntervals      int64
 	TruthAccuracyEligibleIntervals int64
 	TruthStrictIdentityIntervals   int64
+	TruthMeterStateIntervals       int64
 	ModelReadyCleanTruthRows       int64
 	ModelTruthReviewRows           int64
 	CallbackCounts                map[string]int64

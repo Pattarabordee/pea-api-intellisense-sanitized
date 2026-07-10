@@ -320,10 +320,11 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 			count(*) FILTER (WHERE pair_status = 'OPEN'),
 			count(*) FILTER (WHERE pair_status = 'REVIEW'),
 			count(*) FILTER (WHERE pair_status = 'CLOSED'),
-			count(*) FILTER (WHERE pair_status IN ('OPEN', 'REVIEW') OR bridge_status IN ('LEGACY_UNVERIFIED', 'STRICT_DURATION_REVIEW', 'REVIEW_IDENTITY_CONFLICT')),
-			count(*) FILTER (WHERE pair_status = 'CLOSED' AND bridge_status = 'STRICT_MODEL_READY' AND restore_at IS NOT NULL AND duration_minutes IS NOT NULL),
+			count(*) FILTER (WHERE pair_status IN ('OPEN', 'REVIEW') OR bridge_status IN ('LEGACY_UNVERIFIED', 'STRICT_DURATION_REVIEW', 'REVIEW_IDENTITY_CONFLICT', 'METER_STATE_DURATION_REVIEW', 'REVIEW_MULTIPLE_OPEN_INTERVALS')),
+			count(*) FILTER (WHERE pair_status = 'CLOSED' AND bridge_status = 'METER_STATE_MODEL_READY' AND restore_at IS NOT NULL AND duration_minutes IS NOT NULL),
 			count(*) FILTER (WHERE bridge_status IN ('STRICT_MODEL_READY', 'STRICT_DURATION_REVIEW')),
-			count(*) FILTER (WHERE pair_status = 'CLOSED' AND bridge_status = 'STRICT_MODEL_READY' AND restore_at IS NOT NULL AND duration_minutes IS NOT NULL)
+			count(*) FILTER (WHERE bridge_status IN ('METER_STATE_MODEL_READY', 'METER_STATE_DURATION_REVIEW')),
+			count(*) FILTER (WHERE pair_status = 'CLOSED' AND bridge_status = 'METER_STATE_MODEL_READY' AND restore_at IS NOT NULL AND duration_minutes IS NOT NULL)
 		 FROM ais_truth_intervals`,
 	).Scan(
 		&snapshot.TruthOpenIntervals,
@@ -332,6 +333,7 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 		&snapshot.TruthQuarantineIntervals,
 		&snapshot.TruthAccuracyEligibleIntervals,
 		&snapshot.TruthStrictIdentityIntervals,
+		&snapshot.TruthMeterStateIntervals,
 		&snapshot.ModelReadyCleanTruthRows,
 	); err != nil {
 		return nil, err
@@ -405,7 +407,7 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 	),
 	latest_truth AS (
 		SELECT DISTINCT ON (request_id)
-			request_id, source_event_id, event_type, validation_status, site_hash, site_last4
+			request_id, source_event_hash, event_type, event_type_source, validation_status, site_hash, site_last4
 		FROM ais_truth_ledger
 		ORDER BY request_id, id DESC
 	)
@@ -418,7 +420,7 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 		coalesce(s.eligibility_status, 'red_blocked'), coalesce(s.decision, 'blocked'),
 		coalesce(s.reason, 'production_send_blocked_by_default'), coalesce(s.gate_version, 'blocked_green_gate'),
 		coalesce(o.status, ''), coalesce(o.transport, 'dry_run'), coalesce(o.attempt_count, 0),
-		coalesce(tl.event_type, ''), coalesce(tl.validation_status, ''), coalesce(tl.source_event_id, ''),
+		coalesce(tl.event_type, ''), coalesce(tl.event_type_source, ''), coalesce(tl.validation_status, ''), coalesce(tl.source_event_hash, ''),
 		coalesce(tl.site_hash, ''), coalesce(tl.site_last4, '')
 	FROM ais_inbound_requests r
 	LEFT JOIN latest_callbacks c ON c.request_id = r.request_id
@@ -470,8 +472,9 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			&item.CallbackTransport,
 			&item.CallbackAttempts,
 			&item.TruthEventType,
+			&item.TruthEventTypeSource,
 			&item.TruthValidation,
-			&item.TruthSourceEventID,
+			&item.TruthSourceEventRef,
 			&item.TruthSiteHash,
 			&item.TruthSiteLast4,
 		); err != nil {
@@ -486,19 +489,20 @@ func insertTruthObservation(ctx context.Context, tx pgx.Tx, truth TruthObservati
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO ais_truth_ledger (
-			request_id, source, source_event_id, site_hash, site_last4, meter_hash, meter_last4,
-			event_type, detected_at, outage_at, restore_at, timestamp_quality, payload_summary_json,
+			request_id, source, source_event_id, source_event_hash, site_hash, site_last4, meter_hash, meter_last4,
+			event_type, event_type_source, detected_at, outage_at, restore_at, timestamp_quality, payload_summary_json,
 			validation_status, production_send, created_at
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+		) VALUES ($1,$2,'',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
 		ON CONFLICT (request_id) DO NOTHING`,
 		truth.RequestID,
 		truth.Source,
-		truth.SourceEventID,
+		truth.SourceEventHash,
 		truth.SiteHash,
 		truth.SiteLast4,
 		truth.MeterHash,
 		truth.MeterLast4,
 		truth.EventType,
+		truth.EventTypeSource,
 		truth.DetectedAt,
 		truth.OutageAt,
 		truth.RestoreAt,
@@ -515,11 +519,10 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 	if truth.ValidationStatus != "READY_FOR_LEDGER" {
 		return nil
 	}
-	correlationHash := truthCorrelationHash(truth)
-	if correlationHash == "" {
-		return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_IDENTITY_KEY_REQUIRED")
+	if strings.TrimSpace(truth.MeterHash) == "" {
+		return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_METER_REQUIRED")
 	}
-	if err := lockStrictPair(ctx, tx, correlationHash, truth.MeterHash, truth.SiteHash); err != nil {
+	if err := lockMeterState(ctx, tx, truth.MeterHash); err != nil {
 		return err
 	}
 	switch truth.EventType {
@@ -528,19 +531,31 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_OUTAGE_TIMESTAMP")
 		}
 		outageAt := *truth.OutageAt
-		existing, err := strictOpenIntervals(ctx, tx, correlationHash, truth.MeterHash, truth.SiteHash)
+		existing, err := meterOpenIntervals(ctx, tx, truth.MeterHash)
 		if err != nil {
 			return err
 		}
-		if len(existing) > 0 {
-			if err := markIdentityConflict(ctx, tx, existing); err != nil {
+		if len(existing) > 1 {
+			if err := markMeterStateConflict(ctx, tx, existing); err != nil {
 				return err
 			}
-			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_IDENTITY_CONFLICT")
+			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_MULTIPLE_OPEN_INTERVALS")
+		}
+		if len(existing) == 1 {
+			evidenceJSON, err := json.Marshal(map[string]any{
+				"source":          "go_postgres_meter_state_pairing",
+				"reason":          "repeated_outage_observation_open_interval_unchanged",
+				"production_send": "blocked",
+			})
+			if err != nil {
+				return err
+			}
+			_, err = tx.Exec(ctx, `UPDATE ais_truth_intervals SET evidence_json=$2, updated_at=now() WHERE id=$1`, existing[0].id, evidenceJSON)
+			return err
 		}
 		evidenceJSON, err := json.Marshal(map[string]any{
-			"source":          "go_postgres_strict_identity_pairing",
-			"reason":          "strict_outage_waiting_for_restore",
+			"source":          "go_postgres_meter_state_pairing",
+			"reason":          "meter_state_outage_waiting_for_restore",
 			"production_send": "blocked",
 		})
 		if err != nil {
@@ -551,12 +566,12 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			`INSERT INTO ais_truth_intervals (
 				interval_id, source, outage_request_id, correlation_hash, meter_hash, meter_last4, site_hash, site_last4,
 				outage_at, pair_status, bridge_status, evidence_json, production_send
-			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'OPEN','STRICT_AWAITING_RESTORE',$10,'blocked')
+			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'OPEN','METER_STATE_AWAITING_RESTORE',$10,'blocked')
 			ON CONFLICT (interval_id) DO NOTHING`,
 			truthIntervalID(truth, outageAt),
 			blankDefault(truth.Source, "AIS"),
 			truth.RequestID,
-			correlationHash,
+			truth.SourceEventHash,
 			truth.MeterHash,
 			truth.MeterLast4,
 			truth.SiteHash,
@@ -570,7 +585,7 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_RESTORE_TIMESTAMP")
 		}
 		restoreAt := *truth.RestoreAt
-		matches, err := strictOpenIntervals(ctx, tx, correlationHash, truth.MeterHash, truth.SiteHash)
+		matches, err := meterOpenIntervals(ctx, tx, truth.MeterHash)
 		if err != nil {
 			return err
 		}
@@ -579,11 +594,11 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			outageAt = matches[0].outageAt
 		}
 		outcome := strictRestoreOutcome(len(matches), outageAt, restoreAt)
-		if outcome.validationStatus == "REVIEW_NO_MATCHING_OPEN_INTERVAL" {
+		if outcome.validationStatus == "REVIEW_NO_OPEN_INTERVAL" {
 			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 		}
-		if outcome.validationStatus == "REVIEW_IDENTITY_CONFLICT" {
-			if err := markIdentityConflict(ctx, tx, matches); err != nil {
+		if outcome.validationStatus == "REVIEW_MULTIPLE_OPEN_INTERVALS" {
+			if err := markMeterStateConflict(ctx, tx, matches); err != nil {
 				return err
 			}
 			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
@@ -593,7 +608,7 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 		}
 		evidenceJSON, err := json.Marshal(map[string]any{
-			"source":          "go_postgres_strict_identity_pairing",
+			"source":          "go_postgres_meter_state_pairing",
 			"reason":          outcome.reason,
 			"production_send": "blocked",
 		})
@@ -643,10 +658,10 @@ type strictRestoreResult struct {
 
 func strictRestoreOutcome(openCount int, outageAt, restoreAt time.Time) strictRestoreResult {
 	if openCount == 0 {
-		return strictRestoreResult{validationStatus: "REVIEW_NO_MATCHING_OPEN_INTERVAL"}
+		return strictRestoreResult{validationStatus: "REVIEW_NO_OPEN_INTERVAL"}
 	}
 	if openCount > 1 {
-		return strictRestoreResult{validationStatus: "REVIEW_IDENTITY_CONFLICT"}
+		return strictRestoreResult{validationStatus: "REVIEW_MULTIPLE_OPEN_INTERVALS"}
 	}
 	if !restoreAt.After(outageAt) {
 		return strictRestoreResult{validationStatus: "REVIEW_RESTORE_BEFORE_OUTAGE"}
@@ -656,32 +671,30 @@ func strictRestoreOutcome(openCount int, outageAt, restoreAt time.Time) strictRe
 		return strictRestoreResult{
 			durationMinutes:  durationMinutes,
 			pairStatus:       "REVIEW",
-			bridgeStatus:     "STRICT_DURATION_REVIEW",
+			bridgeStatus:     "METER_STATE_DURATION_REVIEW",
 			validationStatus: "REVIEW_DURATION_OUT_OF_RANGE",
-			reason:           "strict_identity_pair_duration_out_of_range",
+			reason:           "meter_state_pair_duration_out_of_range",
 		}
 	}
 	return strictRestoreResult{
 		durationMinutes:  durationMinutes,
 		pairStatus:       "CLOSED",
-		bridgeStatus:     "STRICT_MODEL_READY",
+		bridgeStatus:     "METER_STATE_MODEL_READY",
 		validationStatus: "READY_FOR_LEDGER",
-		reason:           "strict_identity_pair_model_ready",
+		reason:           "meter_state_pair_model_ready",
 	}
 }
 
-func strictOpenIntervals(ctx context.Context, tx pgx.Tx, correlationHash, meterHash, siteHash string) ([]openTruthInterval, error) {
+func meterOpenIntervals(ctx context.Context, tx pgx.Tx, meterHash string) ([]openTruthInterval, error) {
 	rows, err := tx.Query(ctx, `
 		SELECT id, outage_at
 		FROM ais_truth_intervals
 		WHERE pair_status = 'OPEN'
-		  AND bridge_status = 'STRICT_AWAITING_RESTORE'
+		  AND bridge_status = 'METER_STATE_AWAITING_RESTORE'
 		  AND production_send = 'blocked'
-		  AND correlation_hash = $1
-		  AND meter_hash = $2
-		  AND site_hash = $3
+		  AND meter_hash = $1
 		ORDER BY outage_at ASC, id ASC
-		FOR UPDATE`, correlationHash, meterHash, siteHash)
+		FOR UPDATE`, meterHash)
 	if err != nil {
 		return nil, err
 	}
@@ -697,20 +710,19 @@ func strictOpenIntervals(ctx context.Context, tx pgx.Tx, correlationHash, meterH
 	return result, rows.Err()
 }
 
-func lockStrictPair(ctx context.Context, tx pgx.Tx, correlationHash, meterHash, siteHash string) error {
-	key := correlationHash + "|" + meterHash + "|" + siteHash
-	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, key)
+func lockMeterState(ctx context.Context, tx pgx.Tx, meterHash string) error {
+	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, "meter-state|"+meterHash)
 	return err
 }
 
-func markIdentityConflict(ctx context.Context, tx pgx.Tx, intervals []openTruthInterval) error {
+func markMeterStateConflict(ctx context.Context, tx pgx.Tx, intervals []openTruthInterval) error {
 	ids := make([]int64, 0, len(intervals))
 	for _, interval := range intervals {
 		ids = append(ids, interval.id)
 	}
 	evidenceJSON, err := json.Marshal(map[string]any{
-		"source":          "go_postgres_strict_identity_pairing",
-		"reason":          "identity_conflict_multiple_open_intervals",
+		"source":          "go_postgres_meter_state_pairing",
+		"reason":          "meter_state_multiple_open_intervals",
 		"production_send": "blocked",
 	})
 	if err != nil {
@@ -718,7 +730,7 @@ func markIdentityConflict(ctx context.Context, tx pgx.Tx, intervals []openTruthI
 	}
 	_, err = tx.Exec(ctx, `
 		UPDATE ais_truth_intervals
-		SET pair_status = 'REVIEW', bridge_status = 'REVIEW_IDENTITY_CONFLICT', evidence_json = $2, updated_at = now()
+		SET pair_status = 'REVIEW', bridge_status = 'REVIEW_MULTIPLE_OPEN_INTERVALS', evidence_json = $2, updated_at = now()
 		WHERE id = ANY($1)`, ids, evidenceJSON)
 	return err
 }
@@ -729,17 +741,13 @@ func updateTruthValidation(ctx context.Context, tx pgx.Tx, requestID, validation
 }
 
 func truthIntervalID(truth TruthObservation, outageAt time.Time) string {
-	basis := truthCorrelationHash(truth) + "|" + truth.MeterHash + "|" + truth.SiteHash + "|" + truth.RequestID + "|" + outageAt.UTC().Format(time.RFC3339)
+	basis := truth.MeterHash + "|" + truth.RequestID + "|" + outageAt.UTC().Format(time.RFC3339)
 	sum := sha256.Sum256([]byte(basis))
 	return "ais-" + hex.EncodeToString(sum[:])[:20]
 }
 
 func truthCorrelationHash(truth TruthObservation) string {
-	if strings.TrimSpace(truth.SourceEventID) == "" {
-		return ""
-	}
-	sum := sha256.Sum256([]byte("ais-source-event-v1|" + truth.SourceEventID))
-	return hex.EncodeToString(sum[:])
+	return truth.SourceEventHash
 }
 
 func strictModelDuration(durationMinutes float64) bool {
@@ -747,9 +755,6 @@ func strictModelDuration(durationMinutes float64) bool {
 }
 
 func truthPairKey(truth TruthObservation) string {
-	if truth.SiteHash != "" {
-		return truth.SiteHash
-	}
 	return truth.MeterHash
 }
 

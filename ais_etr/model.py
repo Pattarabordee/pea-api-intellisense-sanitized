@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import shutil
 from typing import Any
 
 import pandas as pd
@@ -148,7 +149,8 @@ def train_and_save(
     metrics = evaluate_time_holdout(frame)
     model = fit_quantile_baseline(frame)
     model["metrics"] = metrics
-    path = Path(artifact_path)
+    runtime_path = Path(artifact_path)
+    path = runtime_path.parent / "model_candidates" / f"{model['model_version']}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(model, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     return TrainingResult(
@@ -158,6 +160,41 @@ def train_and_save(
         metrics=metrics,
         artifact_path=path,
     )
+
+
+def promote_model_candidate(
+    candidate_path: str | Path,
+    runtime_path: str | Path,
+    *,
+    approved_by: str,
+) -> dict[str, Any]:
+    candidate = Path(candidate_path)
+    destination = Path(runtime_path)
+    approver = str(approved_by or "").strip()
+    if not approver:
+        raise ValueError("approved_by is required")
+    model = json.loads(candidate.read_text(encoding="utf-8"))
+    metrics = model.get("metrics") or {}
+    if metrics.get("status") != "gate_pass":
+        raise ValueError("candidate model has not passed the evaluation gate")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    shutil.copyfile(candidate, temporary)
+    temporary.replace(destination)
+    registry = destination.parent / "model_registry.jsonl"
+    entry = {
+        "model_version": model.get("model_version"),
+        "candidate_path": str(candidate),
+        "runtime_path": str(destination),
+        "approved_by": approver,
+        "metrics": metrics,
+        "status": "promoted_shadow_candidate",
+        "production_send": "blocked",
+        "promoted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    with registry.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False, sort_keys=True) + "\n")
+    return entry
 
 
 class EtrPredictor:

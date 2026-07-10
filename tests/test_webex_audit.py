@@ -73,7 +73,7 @@ class WebexAuditTests(unittest.TestCase):
             self.assertNotIn("x" * 200, audit_csv.read_text(encoding="utf-8-sig"))
 
             sample = json.loads(samples.read_text(encoding="utf-8").splitlines()[0])
-            self.assertEqual(sample["roomId"], "WEBEX_ROOM_REDACTED")
+            self.assertEqual(sample["roomId"], "<REDACTED_ROOM_ID>")
             self.assertEqual(sample["roomDistrict"], "พังโคน")
             self.assertEqual(sample["expected"]["district"], "พังโคน")
 

@@ -57,10 +57,6 @@ services:
     envVars:
       - key: API_BASE_URL
         value: https://pea-api-intellisense-api.onrender.com
-      - key: AIS_INBOUND_API_KEY
-        sync: false
-      - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://pea-api-intellisense-api.onrender.com
 
 databases:
   - name: pea-api-intellisense-postgres

@@ -8,7 +8,6 @@ from typing import Any
 
 import pandas as pd
 
-from .model import load_training_frame
 from .parser import parse_webex_message
 
 
@@ -23,6 +22,8 @@ TRUTH_MAPPING_COLUMNS = (
     "truth_notes",
 )
 TRUTH_MAPPING_REQUIRED_COLUMNS = TRUTH_MAPPING_COLUMNS[:3]
+CANONICAL_TRUTH_SOURCE = "ais_meter_state"
+CANONICAL_TRUTH_TARGET = "ais_event_remaining_restoration_minutes"
 
 
 def evaluate_sample_messages(path: str | Path, districts: tuple[str, ...]) -> dict[str, Any]:
@@ -153,54 +154,25 @@ def build_shadow_report(
 
     preds["event_number"] = preds["parsed_json"].apply(_event_number_from_json)
     report = _apply_truth_mapping(preds, truth_mapping)
-    if report["event_number"].notna().any():
-        truth = load_training_frame(event_file, etr_files, distance_file)
-        truth = truth[["EventNumber", "target_etr_minutes", "Feeder", "OpDeviceGIStag", "OpDeviceID"]].copy()
-        truth["EventNumber"] = truth["EventNumber"].astype(str)
-        report = report.merge(truth, left_on="event_number", right_on="EventNumber", how="left")
-    else:
-        report["EventNumber"] = pd.NA
-        report["target_etr_minutes"] = pd.Series([pd.NA] * len(report), dtype="Float64")
-        report["Feeder"] = pd.NA
-        report["OpDeviceGIStag"] = pd.NA
-        report["OpDeviceID"] = pd.NA
-    manual_actual = pd.to_numeric(report["mapped_actual_restoration_minutes"], errors="coerce")
-    historical_actual = pd.to_numeric(report["target_etr_minutes"], errors="coerce")
-    target_actual = historical_actual.copy()
-    target_actual.loc[manual_actual.notna()] = manual_actual.loc[manual_actual.notna()]
-    report["target_etr_minutes"] = target_actual
-    report["truth_source"] = pd.NA
-    report["truth_target"] = pd.NA
-    report["truth_definition"] = pd.NA
-    report["truth_quality"] = pd.NA
-    report["truth_notes"] = pd.NA
-    historical_rows = historical_actual.notna()
-    report.loc[historical_rows, "truth_source"] = "event_number_join"
-    report.loc[historical_rows, "truth_target"] = "historical_first_restore_minutes"
-    report.loc[historical_rows, "truth_definition"] = "historical actual restoration minutes from EventNumber join"
-    manual_rows = manual_actual.notna()
-    if manual_rows.any():
-        report.loc[manual_rows, "truth_source"] = _mapped_or_default(
-            report,
-            "mapped_truth_source",
-            "manual_mapping",
-        )[manual_rows]
-        report.loc[manual_rows, "truth_target"] = _mapped_or_default(
-            report,
-            "mapped_truth_target",
-            "manual_actual_restoration_minutes",
-        )[manual_rows]
-        report.loc[manual_rows, "truth_definition"] = _mapped_or_default(
-            report,
-            "mapped_truth_definition",
-            "actual_restoration_minutes from truth mapping",
-        )[manual_rows]
-        report.loc[manual_rows, "truth_quality"] = _mapped_or_default(report, "mapped_truth_quality", "")[
-            manual_rows
-        ]
-        report.loc[manual_rows, "truth_notes"] = _mapped_or_default(report, "mapped_truth_notes", "")[
-            manual_rows
-        ]
+    mapped_actual = pd.to_numeric(report["mapped_actual_restoration_minutes"], errors="coerce")
+    mapped_source = _mapped_or_default(report, "mapped_truth_source", "")
+    mapped_target = _mapped_or_default(report, "mapped_truth_target", "")
+    mapped_quality = _mapped_or_default(report, "mapped_truth_quality", "").str.upper()
+    eligible = (
+        mapped_actual.notna()
+        & mapped_source.eq(CANONICAL_TRUTH_SOURCE)
+        & mapped_target.eq(CANONICAL_TRUTH_TARGET)
+        & mapped_quality.isin({"OK", "HIGH", "STRICT"})
+        & mapped_actual.gt(0)
+        & mapped_actual.le(1440)
+    )
+    report["target_etr_minutes"] = mapped_actual.where(eligible)
+    report["truth_source"] = mapped_source.where(eligible)
+    report["truth_target"] = mapped_target.where(eligible)
+    report["truth_definition"] = _mapped_or_default(report, "mapped_truth_definition", "").where(eligible)
+    report["truth_quality"] = mapped_quality.where(eligible)
+    report["truth_notes"] = _mapped_or_default(report, "mapped_truth_notes", "").where(eligible)
+    report["training_eligibility"] = eligible.map({True: "train_eligible", False: "context_only"})
     report["absolute_error_minutes"] = (
         pd.to_numeric(report["etr_minutes_p50"], errors="coerce")
         - pd.to_numeric(report["target_etr_minutes"], errors="coerce")
@@ -219,7 +191,9 @@ def build_shadow_report(
         "predictions": int(len(report)),
         "with_event_number": int(report["event_number"].notna().sum()),
         "with_truth": int(with_truth.sum()),
-        "mapped_truth_rows": int(manual_actual.notna().sum()),
+        "mapped_truth_rows": int(mapped_actual.notna().sum()),
+        "eligible_truth_rows": int(eligible.sum()),
+        "excluded_truth_rows": int((mapped_actual.notna() & ~eligible).sum()),
         "match_coverage": round(float((report["affected_count"] > 0).mean()), 3) if len(report) else None,
         "q50_mae_minutes": (
             round(float(report.loc[with_truth, "absolute_error_minutes"].mean()), 2)

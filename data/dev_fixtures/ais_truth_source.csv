@@ -1,0 +1,6 @@
+site_id,meter_no,outage_start_time,power_restore_time,event_number,device_id,feeder,source,notes
+DEV_SITE_A,DEV_METER_A,2026-06-15 05:29:00,2026-06-15 06:04:00,,PFA06R-02,PFA06,AIS_DEV_FIXTURE,sustained affected meter A
+DEV_SITE_B,DEV_METER_B,2026-06-15 05:29:00,2026-06-15 06:24:00,,PFA06R-02,PFA06,AIS_DEV_FIXTURE,sustained affected meter B
+DEV_SITE_C,DEV_METER_C,2026-06-02 08:28:30,2026-06-02 10:28:30,,WWA09VR-101,WWA09,AIS_DEV_FIXTURE,long sustained affected meter
+DEV_SITE_D,DEV_METER_D,2026-06-10 19:00:00,2026-06-10 19:03:30,,WWA01VR-101,WWA01,AIS_DEV_FIXTURE,short review only
+DEV_SITE_E,DEV_METER_X,2026-06-05 04:55:00,2026-06-05 05:40:00,,SEK05VR-999,SEK05,AIS_DEV_FIXTURE,feeder-only audit candidate

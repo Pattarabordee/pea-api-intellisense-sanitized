@@ -56,7 +56,8 @@ class EvaluationTests(unittest.TestCase):
             )
             mapping = root / "shadow_truth_mapping.csv"
             mapping.write_text(
-                "webex_message_id,event_number,actual_restoration_minutes\nmsg-1,,55\n",
+                "webex_message_id,event_number,actual_restoration_minutes,truth_source,truth_target,truth_definition,truth_quality,truth_notes\n"
+                "msg-1,,55,ais_meter_state,ais_event_remaining_restoration_minutes,AIS_RESTORE-prediction_created_at,HIGH,strict meter-state truth\n",
                 encoding="utf-8",
             )
             output = root / "shadow_report.csv"
@@ -76,8 +77,8 @@ class EvaluationTests(unittest.TestCase):
             self.assertEqual(result["q50_mae_minutes"], 15.0)
             self.assertEqual(result["q10_q90_coverage"], 1.0)
             report_text = output.read_text(encoding="utf-8-sig")
-            self.assertIn("manual_mapping", report_text)
-            self.assertIn("manual_actual_restoration_minutes", report_text)
+            self.assertIn("ais_meter_state", report_text)
+            self.assertIn("ais_event_remaining_restoration_minutes", report_text)
 
     def test_shadow_truth_template_exports_current_webex_message_ids(self):
         with tempfile.TemporaryDirectory() as tmp:

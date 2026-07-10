@@ -32,14 +32,15 @@ class StrictRelayContractTests(unittest.TestCase):
         self.assertTrue(result.valid)
         self.assertEqual(result.status, "STRICT_RELAY_READY")
 
-    def test_missing_source_event_id_is_review_required(self):
+    def test_source_and_site_are_optional_for_meter_state(self):
         result = validate_strict_payload({**outage_payload(), "source_event_id": ""})
-        self.assertFalse(result.valid)
-        self.assertIn("source_event_id_required", result.reason_codes)
+        self.assertTrue(result.valid)
+        without_site = {**outage_payload(), "site_id": "", "source_event_id": ""}
+        self.assertTrue(validate_strict_payload(without_site).valid)
 
     def test_identity_mismatch_and_invalid_duration_are_rejected(self):
-        mismatch = validate_strict_pair(outage_payload(), {**restore_payload(), "source_event_id": "other"})
-        self.assertIn("source_event_id_mismatch", mismatch.reason_codes)
+        mismatch = validate_strict_pair(outage_payload(), {**restore_payload(), "meter_no": "OTHER-METER"})
+        self.assertIn("meter_identity_mismatch", mismatch.reason_codes)
         short = validate_strict_pair(outage_payload(), {**restore_payload(), "restore_at": "2026-07-10T10:05:00+07:00"})
         self.assertIn("duration_out_of_range", short.reason_codes)
 
@@ -50,6 +51,12 @@ class StrictRelayContractTests(unittest.TestCase):
         accepted = validate_strict_payload(payload, assume_bangkok_if_naive=True)
         self.assertTrue(accepted.valid)
         self.assertEqual(accepted.timezone_assumed_fields, ("outage_at", "timestamp"))
+
+    def test_allowlisted_status_maps_but_cause_text_does_not(self):
+        mapped = {**outage_payload(), "event_type": "", "power_status": "OFF"}
+        self.assertTrue(validate_strict_payload(mapped).valid)
+        cause_only = {**outage_payload(), "event_type": "", "main_cause": "power failure"}
+        self.assertIn("event_type_required", validate_strict_payload(cause_only).reason_codes)
 
     def test_validation_output_never_contains_raw_identifiers(self):
         payload = outage_payload()
