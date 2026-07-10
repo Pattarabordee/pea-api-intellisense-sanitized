@@ -368,56 +368,6 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 	}
 }
 
-func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
-	store := newFakeStore()
-	outageAt := time.Date(2026, 7, 7, 3, 0, 0, 0, time.UTC)
-	store.intervals = []storage.TruthInterval{
-		{
-			IntervalID:      "ais-interval-1",
-			Source:          "AIS",
-			OutageRequestID: "AIS-OPEN-1",
-			MeterHash:       "meterhash",
-			MeterLast4:      "1234",
-			SiteHash:        "sitehash",
-			SiteLast4:       "T-99",
-			OutageAt:        outageAt,
-			PairStatus:      "OPEN",
-			EvidenceJSON:    json.RawMessage(`{"source":"go_postgres_truth_pairing","reason":"ready_outage_waiting_for_restore","outage_source_event_id":"SRC-SECRET-1","pair_key":"sitehash","production_send":"blocked"}`),
-			ProductionSend:  "blocked",
-			CreatedAt:       outageAt,
-			UpdatedAt:       outageAt,
-		},
-	}
-	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-
-	unauth := httptest.NewRequest(http.MethodGet, truthIntervalsPath, nil)
-	unauthRes := httptest.NewRecorder()
-	handler.ServeHTTP(unauthRes, unauth)
-	if unauthRes.Code != http.StatusUnauthorized {
-		t.Fatalf("expected auth on truth intervals, got %d", unauthRes.Code)
-	}
-
-	req := httptest.NewRequest(http.MethodGet, truthIntervalsPath+"?status=OPEN&limit=10", nil)
-	req.Header.Set("X-API-Key", "pilot-key")
-	res := httptest.NewRecorder()
-	handler.ServeHTTP(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String())
-	}
-	body := res.Body.String()
-	if strings.Contains(body, "SRC-SECRET-1") || strings.Contains(body, "pair_key") {
-		t.Fatalf("truth interval endpoint leaked raw pairing evidence: %s", body)
-	}
-	payload := decodeBody(t, res)
-	if payload["production_send"] != "blocked" || payload["status_filter"] != "OPEN" {
-		t.Fatalf("unsafe truth interval payload: %#v", payload)
-	}
-	if payload["count"].(float64) != 1 {
-		t.Fatalf("expected one open interval, got %#v", payload)
-	}
-}
-
 func TestProductionSendModeNeverEnablesRealSendWithoutGates(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{
