@@ -13,6 +13,7 @@ class EventSemanticAuditTests(unittest.TestCase):
         metrics = metrics or {
             "production_send": "blocked",
             "truth_open_intervals": 1,
+            "truth_meter_state_open_intervals": 1,
             "truth_stale_open_intervals": 0,
             "model_ready_clean_truth_rows": 0,
         }
@@ -76,6 +77,7 @@ class EventSemanticAuditTests(unittest.TestCase):
         metrics = {
             "production_send": "blocked",
             "truth_open_intervals": 0,
+            "truth_meter_state_open_intervals": 0,
             "truth_stale_open_intervals": 0,
             "model_ready_clean_truth_rows": 1,
         }

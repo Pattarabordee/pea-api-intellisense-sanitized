@@ -322,6 +322,7 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 		ctx,
 		`SELECT
 			count(*) FILTER (WHERE pair_status = 'OPEN'),
+			count(*) FILTER (WHERE pair_status = 'OPEN' AND bridge_status = 'METER_STATE_AWAITING_RESTORE'),
 			count(*) FILTER (WHERE pair_status = 'REVIEW'),
 			count(*) FILTER (WHERE pair_status = 'CLOSED'),
 			count(*) FILTER (WHERE pair_status IN ('OPEN', 'REVIEW') OR bridge_status IN ('LEGACY_UNVERIFIED', 'STRICT_DURATION_REVIEW', 'REVIEW_IDENTITY_CONFLICT', 'METER_STATE_DURATION_REVIEW', 'REVIEW_MULTIPLE_OPEN_INTERVALS')),
@@ -332,6 +333,7 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 		 FROM ais_truth_intervals`,
 	).Scan(
 		&snapshot.TruthOpenIntervals,
+		&snapshot.TruthMeterStateOpenIntervals,
 		&snapshot.TruthReviewIntervals,
 		&snapshot.TruthClosedIntervals,
 		&snapshot.TruthQuarantineIntervals,
