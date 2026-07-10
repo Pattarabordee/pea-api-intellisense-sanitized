@@ -25,6 +25,8 @@ Optional evidence: `source_event_id`, `site_id`, `location_id`, area fields, ala
 
 Cause text cannot create model truth. An unknown or non-allowlisted status/alarm is accepted for audit as `REVIEW_EVENT_TYPE`. No RESTORE mapping is inferred from `mainCause` or `subcause`.
 
+Observed `alarm_type=AC_MAIN_RESTORE` is recorded as a restore mapping candidate only. It remains `REVIEW_EVENT_TYPE` until the passive observation and contract gate are completed.
+
 The authenticated operator list includes `semantic_capture_version=v1` and a sanitized `semantic_signals` object for newly captured rows. The audit excludes rows without this version marker. Signals contain only fixed event/status/alarm fields; unsafe or long categorical values are represented by a hash reference only.
 
 ## Meter-State Rules
