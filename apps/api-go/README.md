@@ -84,3 +84,13 @@ The command writes redacted case, summary, operator report, and PEA-CON governan
 increase model-ready counts. Training and evaluation remain blocked until incident grouping confirms
 at least 30 independent prospective incidents and every evaluation row has a numeric shadow prediction
 snapshot created before RESTORE.
+
+Evaluate the fixed baseline without retrospective scoring:
+
+```powershell
+python -m ais_etr ais-v2-baseline-evaluate-once --base-url https://pea-api-intellisense-api.onrender.com
+```
+
+The evaluator groups meter rows within a five-minute outage anchor, retains clean high-error incidents,
+rejects prediction-time leakage, and reports interval coverage as unavailable until a pre-registered q10/q90
+baseline exists.
