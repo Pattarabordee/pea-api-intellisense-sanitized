@@ -25,7 +25,7 @@ import (
 
 const (
 	APIVersion           = "v1"
-	SchemaVersion        = "2026-07-10.1"
+	SchemaVersion        = "2026-07-10.2"
 	Mode                 = "shadow"
 	ProductionSend       = "blocked"
 	SemanticCaptureVersion = "v2"
