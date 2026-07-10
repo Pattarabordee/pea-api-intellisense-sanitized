@@ -56,6 +56,7 @@ from .ais_inbound_contract import (
 )
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
+from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
 from .ais_only_error_segmentation import build_ais_only_error_segmentation
@@ -284,6 +285,18 @@ def cmd_ais_v2_lifecycle_audit(args: argparse.Namespace) -> None:
         summary_json=args.summary_json,
         peacon_md=args.peacon,
         incident_csv=args.incident_output,
+        limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_baseline_evaluation(args: argparse.Namespace) -> None:
+    result = run_v2_baseline_evaluation(
+        base_url=args.base_url,
+        output_csv=args.output,
+        summary_json=args.summary_json,
+        report_md=args.report,
+        peacon_md=args.peacon,
         limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
@@ -2842,6 +2855,18 @@ def build_parser() -> argparse.ArgumentParser:
     v2_lifecycle.add_argument("--incident-output", default="runtime/private/ais_v2_incident_groups.csv")
     v2_lifecycle.add_argument("--limit", type=int, default=200)
     v2_lifecycle.set_defaults(func=cmd_ais_v2_lifecycle_audit)
+
+    v2_evaluation = sub.add_parser(
+        "ais-v2-baseline-evaluate-once",
+        help="Evaluate prospective fixed baseline on clean group-aware incidents using GET-only evidence",
+    )
+    v2_evaluation.add_argument("--base-url", required=True)
+    v2_evaluation.add_argument("--output", default="runtime/private/ais_v2_baseline_incidents.csv")
+    v2_evaluation.add_argument("--summary-json", default="runtime/private/ais_v2_baseline_summary.json")
+    v2_evaluation.add_argument("--report", default="runtime/private/ais_v2_baseline_report.md")
+    v2_evaluation.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_update.md")
+    v2_evaluation.add_argument("--limit", type=int, default=200)
+    v2_evaluation.set_defaults(func=cmd_ais_v2_baseline_evaluation)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)
