@@ -13,7 +13,7 @@ from .ais_v2_lifecycle_audit import MAPPING_VERSION, _float_or_none, _get_json, 
 
 
 MODEL_VERSION = "fixed_naive_60m_v1"
-EVALUATOR_VERSION = "v2_baseline_eval_v1"
+EVALUATOR_VERSION = "v2_baseline_eval_v2"
 GROUP_COLUMNS = (
     "incident_group_ref",
     "outage_anchor_time",
@@ -155,6 +155,8 @@ def build_v2_baseline_evaluation(
         gate_status = "research_baseline_accumulating"
     else:
         gate_status = "baseline_interval_coverage_unavailable"
+    sample_size_status = _sample_size_status(len(groups))
+    research_metric_claim_allowed = len(groups) >= 30
 
     output = Path(output_csv)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -202,6 +204,9 @@ def build_v2_baseline_evaluation(
         "group_artifact_sha256": group_artifact_sha256,
         "rejection_counts": rejection_counts,
         "minimum_independent_incidents": 30,
+        "sample_size_status": sample_size_status,
+        "research_metric_claim_allowed": research_metric_claim_allowed,
+        "production_accuracy_claim_allowed": False,
         "production_gate_passed": False,
         "training_allowed": False,
         "production_send": "blocked",
@@ -219,6 +224,9 @@ def build_v2_baseline_evaluation(
         "data_window_start": groups[0]["outage_anchor_time"] if groups else "",
         "data_window_end": groups[-1]["outage_anchor_time"] if groups else "",
         "scorable_independent_incidents": len(groups),
+        "sample_size_status": sample_size_status,
+        "research_metric_claim_allowed": research_metric_claim_allowed,
+        "production_accuracy_claim_allowed": False,
         "mae_minutes": summary["mae_minutes"],
         "median_absolute_error_minutes": summary["median_absolute_error_minutes"],
         "p90_absolute_error_minutes": summary["p90_absolute_error_minutes"],
@@ -241,6 +249,7 @@ def build_v2_baseline_evaluation(
     report.write_text(
         "# Prospective v2 Fixed Baseline Evaluation\n\n"
         f"- สถานะ: `{gate_status}`\n"
+        f"- sample size status: `{sample_size_status}`\n"
         f"- scorable meter rows: `{len(candidates)}`\n"
         f"- scorable independent incidents: `{len(groups)}`\n"
         f"- MAE: `{summary['mae_minutes']}` นาที\n"
@@ -250,6 +259,8 @@ def build_v2_baseline_evaluation(
         f"- high-error incidents (worst meter AE >= 60): `{high_error}`\n"
         f"- mean worst-meter AE: `{summary['mean_worst_meter_absolute_error_minutes']}` นาที\n"
         "- coverage: `unavailable_no_q10_q90_baseline`\n"
+        f"- research metric claim allowed: `{str(research_metric_claim_allowed).lower()}`\n"
+        "- production accuracy claim allowed: `false`\n"
         "- high-error clean incidents: retained\n"
         "- production_send: `blocked`\n",
         encoding="utf-8",
@@ -261,7 +272,9 @@ def build_v2_baseline_evaluation(
         "ระบบสำหรับลูกค้าสื่อสารรายสำคัญประเมิน benchmark เฉพาะเหตุการณ์ที่มี prediction snapshot ก่อน RESTORE "
         "และรวม meter rows ที่เริ่มใกล้กันภายใน 5 นาทีเป็นเหตุการณ์อิสระเดียว ข้อมูลที่ไม่มี prediction หรือมีความเสี่ยง "
         "ด้าน time leakage จะไม่ถูกคำนวณย้อนหลัง เหตุการณ์ที่ error สูงแต่ truth สะอาดยังคงอยู่ในผลประเมิน "
-        "โดย coverage ยังไม่รายงานจนกว่าจะมี q10/q90 baseline และ `production_send=blocked`\n",
+        f"ปัจจุบันมีเหตุการณ์ที่ประเมินได้ {len(groups)} เหตุการณ์ จัดเป็น `{sample_size_status}` "
+        "จึงยังไม่อนุญาตให้อ้างความแม่นยำของโมเดล โดย coverage ยังไม่รายงานจนกว่าจะมี q10/q90 baseline "
+        "และ `production_send=blocked`\n",
         encoding="utf-8",
     )
     return summary
@@ -329,3 +342,13 @@ def _nearest_rank(values: list[float], quantile: float) -> float:
     ordered = sorted(values)
     rank = max(1, int(len(ordered) * quantile + 0.999999))
     return ordered[min(rank - 1, len(ordered) - 1)]
+
+
+def _sample_size_status(incident_count: int) -> str:
+    if incident_count <= 0:
+        return "awaiting_first_scorable_incident"
+    if incident_count < 5:
+        return "pilot_smoke_only"
+    if incident_count < 30:
+        return "research_low_n"
+    return "evaluation_sample_ready"
