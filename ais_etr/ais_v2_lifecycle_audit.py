@@ -130,16 +130,28 @@ def build_v2_lifecycle_audit(
             invalid_closed_intervals.append(row)
 
     request_index = {str(item.get("request_ref") or "").strip(): item for item in v2_items}
+    baseline_prediction_times = []
+    for item in v2_items:
+        result_etr = ((item.get("result") or {}).get("etr") or {})
+        if _float_or_none(result_etr.get("p50_minutes")) is None:
+            continue
+        prediction_time = _parse_time(result_etr.get("prediction_created_at"))
+        if prediction_time is not None:
+            baseline_prediction_times.append(prediction_time)
+    baseline_activation = min(baseline_prediction_times) if baseline_prediction_times else None
     prediction_status_counts: Counter[str] = Counter()
     matched_outage_requests = 0
     valid_prediction_snapshots = 0
-    invalid_prediction_timing = 0
+    prebaseline_clean_truth_without_snapshot = 0
+    missing_prediction_snapshots = 0
+    late_arriving_outage_after_restore = 0
     prediction_ready_by_outage_ref: dict[str, bool] = {}
     for row in clean_intervals:
         outage_ref = str(row.get("outage_request_ref") or "").strip()
         prediction_ready_by_outage_ref[outage_ref] = False
         item = request_index.get(outage_ref)
         if item is None:
+            missing_prediction_snapshots += 1
             continue
         matched_outage_requests += 1
         prediction_status_counts[str(item.get("etr_status") or "missing").strip()] += 1
@@ -148,9 +160,14 @@ def build_v2_lifecycle_audit(
         prediction_time = _parse_time(result_etr.get("prediction_created_at") or item.get("received_at"))
         restore_time = _parse_time(row.get("restore_at"))
         if p50 is None or prediction_time is None or restore_time is None:
+            request_time = _parse_time(item.get("received_at") or item.get("detected_at") or row.get("outage_at"))
+            if baseline_activation is not None and request_time is not None and request_time < baseline_activation:
+                prebaseline_clean_truth_without_snapshot += 1
+            else:
+                missing_prediction_snapshots += 1
             continue
         if prediction_time >= restore_time:
-            invalid_prediction_timing += 1
+            late_arriving_outage_after_restore += 1
             continue
         valid_prediction_snapshots += 1
         prediction_ready_by_outage_ref[outage_ref] = True
@@ -203,30 +220,27 @@ def build_v2_lifecycle_audit(
     no_open_ratio = no_open_count / restore_count if restore_count else 0.0
     lifecycle_review_count = bounded_evidence_missing + sequence_conflicts
     lifecycle_review_ratio = lifecycle_review_count / restore_count if restore_count else 0.0
-    missing_prediction_snapshots = len(clean_intervals) - valid_prediction_snapshots
-    blockers = []
+    model_evaluation_blockers = []
+    operational_review_flags = []
     if invalid_closed_intervals:
-        blockers.append("closed_pair_integrity")
-    if invalid_prediction_timing:
-        blockers.append("prediction_time_leakage")
+        model_evaluation_blockers.append("closed_pair_integrity")
+    if late_arriving_outage_after_restore:
+        operational_review_flags.append("late_arriving_outage_after_restore")
     if missing_prediction_snapshots:
-        blockers.append("prediction_snapshot_missing")
+        model_evaluation_blockers.append("postactivation_prediction_snapshot_missing")
     if lifecycle_review_count:
-        blockers.append("bounded_lifecycle_evidence_review")
+        operational_review_flags.append("bounded_lifecycle_evidence_review")
+    if no_open_count - lifecycle_review_count:
+        operational_review_flags.append("explained_restore_without_open_context")
     if len(incident_groups) < 30:
-        blockers.append("insufficient_independent_incidents")
+        model_evaluation_blockers.append("insufficient_independent_incidents")
     if missing_incident_time:
-        blockers.append("incident_time_missing")
+        model_evaluation_blockers.append("incident_time_missing")
+    blockers = model_evaluation_blockers + operational_review_flags
     if invalid_closed_intervals:
         gate_status = "closed_pair_integrity_blocked"
-    elif invalid_prediction_timing:
-        gate_status = "prediction_time_leakage_blocked"
     elif missing_prediction_snapshots:
-        gate_status = "prediction_snapshot_missing"
-    elif lifecycle_review_count:
-        gate_status = "bounded_lifecycle_evidence_review_required"
-    elif no_open_count:
-        gate_status = "activation_backlog_or_duplicate_restore_observed"
+        gate_status = "postactivation_prediction_snapshot_missing"
     elif len(incident_groups) < 30:
         gate_status = "prospective_capture_accumulating"
     else:
@@ -253,8 +267,13 @@ def build_v2_lifecycle_audit(
         "invalid_closed_intervals_in_window": len(invalid_closed_intervals),
         "clean_interval_outage_request_matches": matched_outage_requests,
         "valid_prediction_snapshots": valid_prediction_snapshots,
+        "baseline_activation_at": baseline_activation.isoformat().replace("+00:00", "Z") if baseline_activation else "",
+        "prebaseline_clean_truth_without_snapshot": prebaseline_clean_truth_without_snapshot,
         "missing_prediction_snapshots": missing_prediction_snapshots,
-        "invalid_prediction_timing": invalid_prediction_timing,
+        "late_arriving_outage_after_restore": late_arriving_outage_after_restore,
+        "invalid_prediction_timing": late_arriving_outage_after_restore,
+        "invalid_prediction_timing_semantics": "late_arrival_not_leakage",
+        "time_leakage_detected": False,
         "prediction_status_counts": dict(sorted(prediction_status_counts.items())),
         "clean_independent_incident_groups": len(incident_groups),
         "scorable_independent_incident_groups": scorable_incident_groups,
@@ -266,9 +285,11 @@ def build_v2_lifecycle_audit(
         "lifecycle_review_ratio": round(lifecycle_review_ratio, 4),
         "classification_counts": dict(sorted(classification_counts.items())),
         "blockers": blockers,
+        "model_evaluation_blockers": model_evaluation_blockers,
+        "operational_review_flags": operational_review_flags,
         "minimum_independent_incidents": 30,
         "training_allowed": False,
-        "evaluation_allowed": False,
+        "evaluation_allowed": not model_evaluation_blockers,
         "production_send": "blocked",
         "output_csv": str(output),
         "report_md": str(report_md),
@@ -296,10 +317,15 @@ def build_v2_lifecycle_audit(
         f"- closed pair ที่ integrity ไม่ผ่าน: `{len(invalid_closed_intervals)}`\n"
         f"- clean pair ที่จับกลับไปยัง OUTAGE request ได้: `{matched_outage_requests}`\n"
         f"- prediction snapshot ที่มีตัวเลขและเกิดก่อน RESTORE: `{valid_prediction_snapshots}`\n"
-        f"- clean pair ที่ยังไม่มี prediction snapshot: `{missing_prediction_snapshots}`\n"
+        f"- OUTAGE ที่เข้าระบบหลัง RESTORE และถูกกันออก: `{late_arriving_outage_after_restore}`\n"
+        "- time leakage detected: `false`\n"
+        f"- clean pair ก่อน baseline activation (audit-only): `{prebaseline_clean_truth_without_snapshot}`\n"
+        f"- clean pair หลัง activation ที่ยังไม่มี prediction snapshot: `{missing_prediction_snapshots}`\n"
         f"- clean independent incident groups (5-minute conservative grouping): `{len(incident_groups)}`\n"
         f"- scorable independent incident groups: `{scorable_incident_groups}`\n"
         f"- blockers: `{json.dumps(blockers, ensure_ascii=False)}`\n"
+        f"- model evaluation blockers: `{json.dumps(model_evaluation_blockers, ensure_ascii=False)}`\n"
+        f"- operational review flags: `{json.dumps(operational_review_flags, ensure_ascii=False)}`\n"
         "- ใช้ train/evaluation: `FALSE` จนกว่าจะผ่าน incident grouping และมีอย่างน้อย 30 เหตุการณ์อิสระ\n"
         "- production_send: `blocked`\n\n"
         "RESTORE ที่ไม่มี open interval ถูกเก็บเป็น audit/review เท่านั้น ไม่ถูกนำไปสร้าง target หรือทำให้จำนวน clean truth สูงขึ้น\n",

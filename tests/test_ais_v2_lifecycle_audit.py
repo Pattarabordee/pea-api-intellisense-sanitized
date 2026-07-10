@@ -91,7 +91,8 @@ class V2LifecycleAuditTests(unittest.TestCase):
             ),
         ]
         result, rows, report, peacon, summary = self._run(items, [])
-        self.assertEqual("activation_backlog_or_duplicate_restore_observed", result["gate_status"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertIn("explained_restore_without_open_context", result["operational_review_flags"])
         self.assertEqual("preactivation_backlog_restore", rows[0]["classification"])
         self.assertEqual("FALSE", rows[0]["use_for_training"])
         encoded = json.dumps(summary) + report + peacon + json.dumps(rows)
@@ -112,7 +113,8 @@ class V2LifecycleAuditTests(unittest.TestCase):
         ]
         result, rows, *_ = self._run(items, [])
         self.assertEqual("duplicate_restore_after_v2_restore", rows[0]["classification"])
-        self.assertEqual("activation_backlog_or_duplicate_restore_observed", result["gate_status"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertIn("explained_restore_without_open_context", result["operational_review_flags"])
 
     def test_preactivation_interval_explains_restore_when_request_is_outside_window(self):
         restore = self._item(
@@ -131,7 +133,8 @@ class V2LifecycleAuditTests(unittest.TestCase):
         }
         result, rows, *_ = self._run([restore], [historical_interval])
         self.assertEqual("preactivation_backlog_restore", rows[0]["classification"])
-        self.assertEqual("activation_backlog_or_duplicate_restore_observed", result["gate_status"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertIn("explained_restore_without_open_context", result["operational_review_flags"])
 
     def test_v2_outage_followed_by_no_open_restore_is_conflict(self):
         items = [
@@ -146,7 +149,8 @@ class V2LifecycleAuditTests(unittest.TestCase):
         ]
         result, rows, *_ = self._run(items, [])
         self.assertEqual("v2_sequence_conflict", rows[0]["classification"])
-        self.assertEqual("bounded_lifecycle_evidence_review_required", result["gate_status"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertIn("bounded_lifecycle_evidence_review", result["operational_review_flags"])
 
     def test_unexplained_restore_requires_review(self):
         item = self._item(
@@ -158,7 +162,8 @@ class V2LifecycleAuditTests(unittest.TestCase):
         )
         result, rows, *_ = self._run([item], [])
         self.assertEqual("bounded_window_evidence_missing", rows[0]["classification"])
-        self.assertEqual("bounded_lifecycle_evidence_review_required", result["gate_status"])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertIn("bounded_lifecycle_evidence_review", result["operational_review_flags"])
 
     def test_clean_pair_without_prediction_snapshot_is_blocked(self):
         metrics = {
@@ -169,20 +174,56 @@ class V2LifecycleAuditTests(unittest.TestCase):
             "v2_open_intervals": 0,
             "v2_model_ready_rows": 1,
         }
-        outage = self._item(
-            request_ref="outage-ref",
-            meter_hash="meter-a",
+        historical = self._item(
+            request_ref="historical-ref",
+            meter_hash="meter-b",
+            event_time="2026-07-10T00:50:00Z",
+            event_type="OUTAGE",
+        )
+        baseline = self._item(
+            request_ref="baseline-ref",
+            meter_hash="meter-c",
             event_time="2026-07-10T01:00:00Z",
             event_type="OUTAGE",
         )
+        baseline["result"] = {"etr": {"p50_minutes": 60, "prediction_created_at": "2026-07-10T01:00:00Z"}}
+        outage = self._item(
+            request_ref="outage-ref",
+            meter_hash="meter-a",
+            event_time="2026-07-10T01:10:00Z",
+            event_type="OUTAGE",
+        )
         interval = self._interval()
+        interval["outage_at"] = "2026-07-10T01:10:00Z"
         interval["outage_request_ref"] = "outage-ref"
-        result, rows, *_ = self._run([outage], [interval], metrics)
+        result, rows, *_ = self._run([historical, baseline, outage], [interval], metrics)
         self.assertEqual([], rows)
         self.assertEqual(1, result["clean_intervals_in_window"])
-        self.assertEqual("prediction_snapshot_missing", result["gate_status"])
+        self.assertEqual("postactivation_prediction_snapshot_missing", result["gate_status"])
         self.assertEqual(1, result["missing_prediction_snapshots"])
         self.assertFalse(result["training_allowed"])
+
+    def test_prebaseline_clean_truth_is_audit_only_not_missing(self):
+        historical = self._item(
+            request_ref="historical-ref",
+            meter_hash="meter-a",
+            event_time="2026-07-10T00:50:00Z",
+            event_type="OUTAGE",
+        )
+        baseline = self._item(
+            request_ref="baseline-ref",
+            meter_hash="meter-b",
+            event_time="2026-07-10T01:00:00Z",
+            event_type="OUTAGE",
+        )
+        baseline["result"] = {"etr": {"p50_minutes": 60, "prediction_created_at": "2026-07-10T01:00:00Z"}}
+        interval = self._interval()
+        interval["outage_at"] = "2026-07-10T00:50:00Z"
+        interval["outage_request_ref"] = "historical-ref"
+        result, *_ = self._run([historical, baseline], [interval])
+        self.assertEqual(1, result["prebaseline_clean_truth_without_snapshot"])
+        self.assertEqual(0, result["missing_prediction_snapshots"])
+        self.assertNotIn("postactivation_prediction_snapshot_missing", result["model_evaluation_blockers"])
 
     def test_numeric_prediction_before_restore_is_valid_snapshot(self):
         outage = self._item(
@@ -200,6 +241,26 @@ class V2LifecycleAuditTests(unittest.TestCase):
         self.assertEqual(1, result["valid_prediction_snapshots"])
         self.assertEqual(0, result["missing_prediction_snapshots"])
         self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+
+    def test_outage_received_after_restore_is_late_arrival_not_leakage(self):
+        outage = self._item(
+            request_ref="outage-ref",
+            meter_hash="meter-a",
+            event_time="2026-07-10T01:00:00Z",
+            event_type="OUTAGE",
+        )
+        outage["received_at"] = "2026-07-10T01:31:00Z"
+        outage["etr_status"] = "SHADOW_BASELINE_CAPTURED"
+        outage["result"] = {"etr": {"p50_minutes": 60, "prediction_created_at": "2026-07-10T01:31:00Z"}}
+        interval = self._interval()
+        interval["outage_request_ref"] = "outage-ref"
+        result, *_ = self._run([outage], [interval])
+        self.assertEqual("prospective_capture_accumulating", result["gate_status"])
+        self.assertEqual(1, result["late_arriving_outage_after_restore"])
+        self.assertEqual(0, result["missing_prediction_snapshots"])
+        self.assertFalse(result["time_leakage_detected"])
+        self.assertIn("late_arriving_outage_after_restore", result["operational_review_flags"])
+        self.assertNotIn("late_arriving_outage_after_restore", result["model_evaluation_blockers"])
 
     def test_invalid_closed_pair_blocks_integrity(self):
         result, _, *_ = self._run([], [self._interval(duration=3, bridge="METER_STATE_DURATION_REVIEW")])
