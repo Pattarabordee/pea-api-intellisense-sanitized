@@ -257,7 +257,11 @@ func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, l
 }
 
 func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
-	snapshot := &MetricsSnapshot{CallbackCounts: map[string]int64{}, TruthValidationCounts: map[string]int64{}}
+	snapshot := &MetricsSnapshot{
+		CallbackCounts:           map[string]int64{},
+		TruthValidationCounts:    map[string]int64{},
+		TruthEventSemanticCounts: map[string]int64{},
+	}
 	var latestReceivedAt time.Time
 	if err := s.pool.QueryRow(
 		ctx,
@@ -355,6 +359,33 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 		snapshot.TruthValidationCounts[status] = count
 	}
 	if err := validationRows.Err(); err != nil {
+		return nil, err
+	}
+	semanticRows, err := s.pool.Query(ctx, `
+		SELECT event_type_source || ':' || event_type, count(*)
+		FROM ais_truth_ledger
+		GROUP BY event_type_source, event_type
+		ORDER BY event_type_source, event_type`)
+	if err != nil {
+		return nil, err
+	}
+	defer semanticRows.Close()
+	for semanticRows.Next() {
+		var key string
+		var count int64
+		if err := semanticRows.Scan(&key, &count); err != nil {
+			return nil, err
+		}
+		snapshot.TruthEventSemanticCounts[key] = count
+	}
+	if err := semanticRows.Err(); err != nil {
+		return nil, err
+	}
+	if err := s.pool.QueryRow(ctx, `
+		SELECT count(*) FROM ais_truth_intervals
+		WHERE pair_status = 'OPEN'
+		  AND bridge_status = 'METER_STATE_AWAITING_RESTORE'
+		  AND outage_at < now() - interval '24 hours'`).Scan(&snapshot.TruthStaleOpenIntervals); err != nil {
 		return nil, err
 	}
 	rows, err := s.pool.Query(ctx, `SELECT status, count(*) FROM ais_inbound_callbacks GROUP BY status ORDER BY status`)

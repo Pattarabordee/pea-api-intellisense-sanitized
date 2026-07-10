@@ -108,15 +108,30 @@ func TestPostUsesRequestTimestampAsEventTimestamp(t *testing.T) {
 func TestCauseTextDoesNotCreateModelTruth(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-CAUSE-ONLY","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","alarm_type":"AC_MAIN_FAIL","main_cause":"power failure"}`
+	body := `{"request_id":"AIS-CAUSE-ONLY","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","alarm_type":"UNCLASSIFIED_ALARM","main_cause":"power failure"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
 	res := httptest.NewRecorder()
 	handler.ServeHTTP(res, req)
 	row := store.rows["AIS-CAUSE-ONLY"]
-	if row.TruthEventType != "UNKNOWN" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
+	if row.TruthEventType != "STATUS" || row.TruthEventTypeSource != "mapped_unknown" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
 		t.Fatalf("cause text must not create model truth: %#v", row)
+	}
+}
+
+func TestACMainFailAlarmCreatesMappedOutage(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-ALARM-OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","alarm_type":"AC_MAIN_FAIL"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	row := store.rows["AIS-ALARM-OUTAGE"]
+	if row.TruthEventType != "OUTAGE" || row.TruthEventTypeSource != "mapped_alarm_type" || row.TruthValidation != "READY_FOR_LEDGER" {
+		t.Fatalf("AC_MAIN_FAIL must create an allowlisted mapped outage: %#v", row)
 	}
 }
 
@@ -130,8 +145,57 @@ func TestMappedPowerStatusCreatesMeterStateTruth(t *testing.T) {
 	res := httptest.NewRecorder()
 	handler.ServeHTTP(res, req)
 	row := store.rows["AIS-MAPPED-OUTAGE"]
-	if row.TruthEventType != "OUTAGE" || row.TruthEventTypeSource != "mapped" || row.TruthValidation != "READY_FOR_LEDGER" {
+	if row.TruthEventType != "OUTAGE" || row.TruthEventTypeSource != "mapped_status" || row.TruthValidation != "READY_FOR_LEDGER" {
 		t.Fatalf("allowlisted power status should create meter-state truth: %#v", row)
+	}
+}
+
+func TestSemanticSignalSummaryRedactsUnsafeValue(t *testing.T) {
+	signals := buildSemanticSignals(map[string]any{
+		"alarm_type":   "AC_MAIN_FAIL",
+		"alarm_status": "secret@example.com",
+		"mainCause":    "must not be captured",
+	})
+	alarm := signals["alarm_type"].(map[string]any)
+	if alarm["value"] != "AC_MAIN_FAIL" || alarm["value_ref"] == "" {
+		t.Fatalf("safe alarm signal was not preserved: %#v", alarm)
+	}
+	unsafe := signals["alarm_status"].(map[string]any)
+	if unsafe["value"] != "" || unsafe["redacted"] != true || unsafe["value_ref"] == "" {
+		t.Fatalf("unsafe semantic signal was not redacted: %#v", unsafe)
+	}
+	if _, exists := signals["main_cause"]; exists {
+		t.Fatalf("cause text must not enter semantic signals: %#v", signals)
+	}
+}
+
+func TestInvalidExplicitEventStaysReviewOnly(t *testing.T) {
+	eventType, source := normalizeTruthEventType(map[string]any{"event_type": "POWER_EVENT"})
+	if eventType != "UNKNOWN" || source != "mapped_unknown" {
+		t.Fatalf("invalid explicit event must remain review-only: %s %s", eventType, source)
+	}
+}
+
+func TestStatusPayloadReturnsOnlySanitizedSemanticSignals(t *testing.T) {
+	receivedAt := time.Date(2026, 7, 10, 3, 0, 0, 0, time.UTC)
+	row := &storage.RequestStatus{
+		RequestID:        "RAW-REQUEST-ID",
+		ReceivedAt:       receivedAt,
+		DetectedAt:       receivedAt,
+		RequestJSON:      json.RawMessage(`{"semantic_signals":{"alarm_type":{"present":true,"value":"AC_MAIN_FAIL","value_ref":"semantic_ref"}}}`),
+		TruthEventType:   "OUTAGE",
+		TruthValidation:  "READY_FOR_LEDGER",
+		ProductionSend:   "blocked",
+	}
+	payload := statusPayload(row)
+	signals := payload["semantic_signals"].(map[string]any)
+	alarm := signals["alarm_type"].(map[string]any)
+	if alarm["value"] != "AC_MAIN_FAIL" || alarm["value_ref"] != "semantic_ref" {
+		t.Fatalf("operator payload lost sanitized semantic evidence: %#v", payload)
+	}
+	encoded, _ := json.Marshal(payload)
+	if strings.Contains(string(encoded), "RAW-REQUEST-ID") {
+		t.Fatalf("operator payload leaked raw request id: %s", encoded)
 	}
 }
 
@@ -340,6 +404,10 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	validationCounts := payload["truth_validation_counts"].(map[string]any)
 	if validationCounts["REVIEW_EVENT_TYPE"].(float64) != 1 {
 		t.Fatalf("metrics must expose only aggregate validation reasons: %#v", payload)
+	}
+	semanticCounts := payload["truth_event_semantic_counts"].(map[string]any)
+	if semanticCounts["missing:UNKNOWN"].(float64) != 1 || payload["truth_stale_open_intervals"].(float64) != 0 {
+		t.Fatalf("semantic metrics are incomplete: %#v", payload)
 	}
 	if strings.Contains(res.Body.String(), "AIS-METRICS") || strings.Contains(res.Body.String(), "REDACTED-METER-0000") {
 		t.Fatalf("metrics leaked a request or meter identifier: %s", res.Body.String())
@@ -553,7 +621,11 @@ func (f *fakeStore) GetStatus(ctx context.Context, requestID string) (*storage.R
 func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	snapshot := &storage.MetricsSnapshot{CallbackCounts: map[string]int64{}, TruthValidationCounts: map[string]int64{}}
+	snapshot := &storage.MetricsSnapshot{
+		CallbackCounts:           map[string]int64{},
+		TruthValidationCounts:    map[string]int64{},
+		TruthEventSemanticCounts: map[string]int64{},
+	}
 	for status, count := range f.callbackStatusCount {
 		snapshot.CallbackCounts[status] = count
 		if status == "SKIPPED_DUPLICATE" {
@@ -590,6 +662,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		}
 		if row.TruthEventType == "RESTORE" {
 			snapshot.TruthRestoreEvents++
+		}
+		if row.TruthEventTypeSource != "" && row.TruthEventType != "" {
+			snapshot.TruthEventSemanticCounts[row.TruthEventTypeSource+":"+row.TruthEventType]++
 		}
 	}
 	for _, interval := range f.intervals {

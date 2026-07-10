@@ -54,6 +54,7 @@ from .ais_inbound_contract import (
     write_ais_inbound_production_migration_pack,
     write_ais_inbound_test_kit,
 )
+from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
 from .ais_only_error_segmentation import build_ais_only_error_segmentation
@@ -257,6 +258,18 @@ def cmd_local_evidence(args: argparse.Namespace) -> None:
         output_csv=args.output,
         report_md=args.report,
         limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_event_semantic_audit(args: argparse.Namespace) -> None:
+    result = run_event_semantic_audit(
+        base_url=args.base_url,
+        output_csv=args.output,
+        report_md=args.report,
+        limit=args.limit,
+        minimum_requests=args.minimum_requests,
+        minimum_days=args.minimum_days,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2788,6 +2801,18 @@ def build_parser() -> argparse.ArgumentParser:
     local_evidence.add_argument("--report", default="runtime/private/local_evidence_lane.md")
     local_evidence.add_argument("--limit", type=int, default=50)
     local_evidence.set_defaults(func=cmd_local_evidence)
+
+    semantic_audit = sub.add_parser(
+        "ais-event-semantic-audit-once",
+        help="Audit redacted AIS event signals using authenticated read-only cloud GETs",
+    )
+    semantic_audit.add_argument("--base-url", required=True)
+    semantic_audit.add_argument("--output", default="runtime/private/ais_event_semantic_audit.csv")
+    semantic_audit.add_argument("--report", default="runtime/private/ais_event_semantic_audit.md")
+    semantic_audit.add_argument("--limit", type=int, default=200)
+    semantic_audit.add_argument("--minimum-requests", type=int, default=100)
+    semantic_audit.add_argument("--minimum-days", type=int, default=7)
+    semantic_audit.set_defaults(func=cmd_ais_event_semantic_audit)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)

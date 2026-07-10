@@ -45,10 +45,15 @@ POST /api/v1/ais/outage-verifications
 GET  /api/v1/ais/outage-verifications/{request_id}
 ```
 
-Every endpoint except `/health` is operator/integration-only and requires `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate validation and meter-state counts; no raw identifiers are returned.
+Every endpoint except `/health` is operator/integration-only and requires `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate validation, event-semantic source, stale-open, and meter-state counts; no raw identifiers are returned.
 
 `/metrics` returns aggregate counts only: total requests, duplicate callbacks, pending worker traces,
-`NOT_READY_FOR_AUTO_SEND` count, and `production_send=blocked`.
+event-semantic mapping counts, meter-state intervals, stale open intervals, `NOT_READY_FOR_AUTO_SEND`,
+and `production_send=blocked`.
+
+Event semantics use strict precedence: explicit `event_type`, exact allowlisted status, then exact
+`alarm_type=AC_MAIN_FAIL` as OUTAGE. Cause text never creates truth. The authenticated operator list
+returns only sanitized fixed-field `semantic_signals`; unsafe values are hash-reference only.
 
 `/api/v1/ais/truth-intervals` returns redacted outage/restore pairing rows for production gate review.
 Supported `status` values are `OPEN`, `CLOSED`, `REVIEW`, and `ALL`; the default is `OPEN`.

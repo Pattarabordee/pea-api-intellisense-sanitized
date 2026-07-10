@@ -19,11 +19,13 @@ X-API-Key: <shared pilot key>
 | `request_id` | Unique per request; reuse only when retrying the same request. |
 | `meter_no` | Meter/service-point identity used by PEA's meter-state lifecycle. |
 | `timestamp` | ISO 8601 event time. A missing offset is interpreted as Asia/Bangkok and flagged. |
-| `event_type` or allowlisted status | Explicit `OUTAGE`/`RESTORE` is preferred. Allowlisted `power_status`, `event_status`, or `status` values may be mapped. |
+| `event_type` or allowlisted structured signal | Explicit `OUTAGE`/`RESTORE` is preferred. Allowlisted `power_status`, `event_status`, or `status` values may be mapped. The exact structured code `alarm_type=AC_MAIN_FAIL` maps to `OUTAGE`. |
 
 Optional evidence: `source_event_id`, `site_id`, `location_id`, area fields, alarm type, and cause fields. Optional identifiers are hashed before persistence and are not pairing keys.
 
-Cause text cannot create model truth. An unknown or non-allowlisted status is accepted for audit as `REVIEW_EVENT_TYPE`.
+Cause text cannot create model truth. An unknown or non-allowlisted status/alarm is accepted for audit as `REVIEW_EVENT_TYPE`. No RESTORE mapping is inferred from `mainCause` or `subcause`.
+
+The authenticated operator list includes a sanitized `semantic_signals` object. It contains only fixed event/status/alarm fields. Unsafe or long categorical values are represented by a hash reference only.
 
 ## Meter-State Rules
 
@@ -57,6 +59,16 @@ Cause text cannot create model truth. An unknown or non-allowlisted status is ac
 ```
 
 The response confirms capture only. It does not confirm an ETR, callback, or customer send.
+
+## Passive Semantic Audit
+
+Run the one-shot, GET-only audit after at least 100 requests or 7 observation days:
+
+```powershell
+python -m ais_etr.cli ais-event-semantic-audit-once --base-url https://pea-api-intellisense-api.onrender.com
+```
+
+The audit writes aggregate evidence under `runtime/private/`. It never trains a model or sends a callback.
 
 ## Model Truth
 
