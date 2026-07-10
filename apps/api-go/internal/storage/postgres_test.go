@@ -140,6 +140,29 @@ func TestRestoreV2MigrationQuarantinesV1WithoutRewritingHistoricalEvents(t *test
 	}
 }
 
+func TestResearchBaselineRequiresNewInterval(t *testing.T) {
+	p50 := 60.0
+	candidate := ETRCandidate{
+		Status:         "SHADOW_BASELINE_CAPTURED",
+		P50Minutes:     &p50,
+		RiskLevel:      "RESEARCH_BASELINE_ONLY",
+		ModelVersion:   "fixed_naive_60m_v1",
+		ProductionGate: "blocked_research_baseline",
+		ProductionSend: "blocked",
+	}
+	kept := gateETRCandidateForNewInterval(candidate, true)
+	if kept.P50Minutes == nil || kept.Status != "SHADOW_BASELINE_CAPTURED" {
+		t.Fatalf("new interval must retain prospective baseline: %#v", kept)
+	}
+	demoted := gateETRCandidateForNewInterval(candidate, false)
+	if demoted.P50Minutes != nil || demoted.Status != "NOT_READY_FOR_AUTO_SEND" || demoted.ModelVersion != "shadow" || demoted.ProductionGate != "blocked_green_gate" {
+		t.Fatalf("repeated outage must not retain a prediction snapshot: %#v", demoted)
+	}
+	if demoted.ProductionSend != "blocked" {
+		t.Fatalf("prediction demotion changed production guardrail: %#v", demoted)
+	}
+}
+
 func TestMeterOpenIntervalQueryRequiresSameMappingVersion(t *testing.T) {
 	sourceBytes, err := migrationFS.ReadFile("migrations/007_restore_semantic_v2_activation.sql")
 	if err != nil || len(sourceBytes) == 0 {

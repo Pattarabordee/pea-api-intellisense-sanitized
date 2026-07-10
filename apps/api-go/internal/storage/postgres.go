@@ -141,9 +141,11 @@ func (s *PostgresStore) InsertInbound(ctx context.Context, request InboundReques
 	if err := insertTruthObservation(ctx, tx, truth); err != nil {
 		return false, err
 	}
-	if err := upsertTruthInterval(ctx, tx, truth); err != nil {
+	openedNewInterval, err := upsertTruthInterval(ctx, tx, truth)
+	if err != nil {
 		return false, err
 	}
+	etr = gateETRCandidateForNewInterval(etr, openedNewInterval)
 	if err := insertCallback(ctx, tx, callback); err != nil {
 		return false, err
 	}
@@ -589,31 +591,31 @@ func insertTruthObservation(ctx context.Context, tx pgx.Tx, truth TruthObservati
 	return err
 }
 
-func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation) error {
+func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation) (bool, error) {
 	if truth.ValidationStatus != "READY_FOR_LEDGER" {
-		return nil
+		return false, nil
 	}
 	if strings.TrimSpace(truth.MeterHash) == "" {
-		return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_METER_REQUIRED")
+		return false, updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_METER_REQUIRED")
 	}
 	if err := lockMeterState(ctx, tx, truth.MeterHash); err != nil {
-		return err
+		return false, err
 	}
 	switch truth.EventType {
 	case "OUTAGE":
 		if truth.OutageAt == nil {
-			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_OUTAGE_TIMESTAMP")
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_OUTAGE_TIMESTAMP")
 		}
 		outageAt := *truth.OutageAt
 		existing, err := meterOpenIntervals(ctx, tx, truth.MeterHash, truth.SemanticMappingVersion)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if len(existing) > 1 {
 			if err := markMeterStateConflict(ctx, tx, existing); err != nil {
-				return err
+				return false, err
 			}
-			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_MULTIPLE_OPEN_INTERVALS")
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_MULTIPLE_OPEN_INTERVALS")
 		}
 		if len(existing) == 1 {
 			evidenceJSON, err := json.Marshal(map[string]any{
@@ -623,10 +625,10 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 				"production_send":          "blocked",
 			})
 			if err != nil {
-				return err
+				return false, err
 			}
 			_, err = tx.Exec(ctx, `UPDATE ais_truth_intervals SET evidence_json=$2, updated_at=now() WHERE id=$1`, existing[0].id, evidenceJSON)
-			return err
+			return false, err
 		}
 		evidenceJSON, err := json.Marshal(map[string]any{
 			"source":                   "go_postgres_meter_state_pairing",
@@ -635,9 +637,9 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			"production_send":          "blocked",
 		})
 		if err != nil {
-			return err
+			return false, err
 		}
-		_, err = tx.Exec(
+		tag, err := tx.Exec(
 			ctx,
 			`INSERT INTO ais_truth_intervals (
 				interval_id, source, outage_request_id, correlation_hash, meter_hash, meter_last4, site_hash, site_last4,
@@ -656,15 +658,15 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			truth.SemanticMappingVersion,
 			evidenceJSON,
 		)
-		return err
+		return err == nil && tag.RowsAffected() > 0, err
 	case "RESTORE":
 		if truth.RestoreAt == nil {
-			return updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_RESTORE_TIMESTAMP")
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, "REVIEW_RESTORE_TIMESTAMP")
 		}
 		restoreAt := *truth.RestoreAt
 		matches, err := meterOpenIntervals(ctx, tx, truth.MeterHash, truth.SemanticMappingVersion)
 		if err != nil {
-			return err
+			return false, err
 		}
 		outageAt := time.Time{}
 		if len(matches) > 0 {
@@ -672,17 +674,17 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 		}
 		outcome := strictRestoreOutcome(len(matches), outageAt, restoreAt)
 		if outcome.validationStatus == "REVIEW_NO_OPEN_INTERVAL" {
-			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 		}
 		if outcome.validationStatus == "REVIEW_MULTIPLE_OPEN_INTERVALS" {
 			if err := markMeterStateConflict(ctx, tx, matches); err != nil {
-				return err
+				return false, err
 			}
-			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 		}
 		match := matches[0]
 		if outcome.validationStatus == "REVIEW_RESTORE_BEFORE_OUTAGE" {
-			return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
+			return false, updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 		}
 		evidenceJSON, err := json.Marshal(map[string]any{
 			"source":                   "go_postgres_meter_state_pairing",
@@ -691,7 +693,7 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			"production_send":          "blocked",
 		})
 		if err != nil {
-			return err
+			return false, err
 		}
 		_, err = tx.Exec(
 			ctx,
@@ -713,12 +715,26 @@ func upsertTruthInterval(ctx context.Context, tx pgx.Tx, truth TruthObservation)
 			evidenceJSON,
 		)
 		if err != nil {
-			return err
+			return false, err
 		}
-		return updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
+		return false, updateTruthValidation(ctx, tx, truth.RequestID, outcome.validationStatus)
 	default:
-		return nil
+		return false, nil
 	}
+}
+
+func gateETRCandidateForNewInterval(candidate ETRCandidate, openedNewInterval bool) ETRCandidate {
+	if candidate.Status != "SHADOW_BASELINE_CAPTURED" || openedNewInterval {
+		return candidate
+	}
+	candidate.Status = "NOT_READY_FOR_AUTO_SEND"
+	candidate.P50Minutes = nil
+	candidate.Q10Minutes = nil
+	candidate.Q90Minutes = nil
+	candidate.RiskLevel = ""
+	candidate.ModelVersion = "shadow"
+	candidate.ProductionGate = "blocked_green_gate"
+	return candidate
 }
 
 type openTruthInterval struct {

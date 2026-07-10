@@ -34,6 +34,10 @@ For each new v2 OUTAGE that passes ledger validation, the cloud records a privat
 not a trained or promoted model. It is visible only through the authenticated operator response, is excluded
 from callback/outbox payloads, and always remains `production_send=blocked`.
 
+The baseline is retained only when the OUTAGE transaction opens a new meter-state interval. Repeated OUTAGE
+updates, pairing conflicts, RESTORE rows, and review rows are demoted to `NOT_READY_FOR_AUTO_SEND` and cannot
+increase the prediction-snapshot count.
+
 ## Meter-State Rules
 
 - First OUTAGE opens one interval for the meter.
