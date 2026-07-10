@@ -297,6 +297,7 @@ def cmd_ais_v2_baseline_evaluation(args: argparse.Namespace) -> None:
         summary_json=args.summary_json,
         report_md=args.report,
         peacon_md=args.peacon,
+        registry_jsonl=args.registry,
         limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
@@ -2865,6 +2866,7 @@ def build_parser() -> argparse.ArgumentParser:
     v2_evaluation.add_argument("--summary-json", default="runtime/private/ais_v2_baseline_summary.json")
     v2_evaluation.add_argument("--report", default="runtime/private/ais_v2_baseline_report.md")
     v2_evaluation.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_update.md")
+    v2_evaluation.add_argument("--registry", default="runtime/private/ais_v2_baseline_registry.jsonl")
     v2_evaluation.add_argument("--limit", type=int, default=200)
     v2_evaluation.set_defaults(func=cmd_ais_v2_baseline_evaluation)
 

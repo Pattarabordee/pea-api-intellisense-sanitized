@@ -93,4 +93,5 @@ python -m ais_etr ais-v2-baseline-evaluate-once --base-url https://pea-api-intel
 
 The evaluator groups meter rows within a five-minute outage anchor, retains clean high-error incidents,
 rejects prediction-time leakage, and reports interval coverage as unavailable until a pre-registered q10/q90
-baseline exists.
+baseline exists. Each distinct redacted group artifact and metric-semantics combination is recorded once in
+an append-only private JSONL registry using a deterministic evaluation ID and SHA-256 artifact hash.

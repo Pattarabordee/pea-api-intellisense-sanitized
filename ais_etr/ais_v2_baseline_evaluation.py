@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -13,6 +13,7 @@ from .ais_v2_lifecycle_audit import MAPPING_VERSION, _float_or_none, _get_json, 
 
 
 MODEL_VERSION = "fixed_naive_60m_v1"
+EVALUATOR_VERSION = "v2_baseline_eval_v1"
 GROUP_COLUMNS = (
     "incident_group_ref",
     "outage_anchor_time",
@@ -35,6 +36,7 @@ def run_v2_baseline_evaluation(
     summary_json: str | Path,
     report_md: str | Path,
     peacon_md: str | Path,
+    registry_jsonl: str | Path,
     api_key: str | None = None,
     limit: int = 200,
 ) -> dict[str, Any]:
@@ -60,6 +62,7 @@ def run_v2_baseline_evaluation(
         summary_json=summary_json,
         report_md=report_md,
         peacon_md=peacon_md,
+        registry_jsonl=registry_jsonl,
     )
 
 
@@ -72,6 +75,8 @@ def build_v2_baseline_evaluation(
     summary_json: str | Path,
     report_md: str | Path,
     peacon_md: str | Path,
+    registry_jsonl: str | Path,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     if metrics.get("production_send") != "blocked":
         raise ValueError("production_send must remain blocked")
@@ -158,8 +163,23 @@ def build_v2_baseline_evaluation(
         writer.writeheader()
         writer.writerows(groups)
 
+    group_artifact_sha256 = _sha256_file(output)
+    metric_semantics = {
+        "target": "restore_at_minus_prediction_created_at",
+        "incident_grouping": "fixed_anchor_5_minutes",
+        "incident_point_metric": "median_actual_vs_median_p50_absolute_error",
+        "worst_meter_guardrail": "max_member_absolute_error",
+        "green_threshold_minutes": 16,
+        "high_error_threshold_minutes": 60,
+        "coverage": "unavailable_no_q10_q90_baseline",
+    }
+    evaluation_seed = MODEL_VERSION + "|" + EVALUATOR_VERSION + "|" + group_artifact_sha256 + "|" + json.dumps(metric_semantics, sort_keys=True)
+    evaluation_id = "eval_" + hashlib.sha256(evaluation_seed.encode("utf-8")).hexdigest()[:20]
+
     summary = {
         "gate_status": gate_status,
+        "evaluation_id": evaluation_id,
+        "evaluator_version": EVALUATOR_VERSION,
         "model_version": MODEL_VERSION,
         "clean_interval_candidates": sum(
             1
@@ -178,6 +198,8 @@ def build_v2_baseline_evaluation(
         "high_error_incidents": high_error,
         "coverage": None,
         "coverage_status": "unavailable_no_q10_q90_baseline",
+        "metric_semantics": metric_semantics,
+        "group_artifact_sha256": group_artifact_sha256,
         "rejection_counts": rejection_counts,
         "minimum_independent_incidents": 30,
         "production_gate_passed": False,
@@ -186,7 +208,30 @@ def build_v2_baseline_evaluation(
         "output_csv": str(output),
         "report_md": str(report_md),
         "peacon_md": str(peacon_md),
+        "registry_jsonl": str(registry_jsonl),
     }
+    registry_entry = {
+        "evaluation_id": evaluation_id,
+        "registered_at": (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "evaluator_version": EVALUATOR_VERSION,
+        "model_version": MODEL_VERSION,
+        "group_artifact_sha256": group_artifact_sha256,
+        "data_window_start": groups[0]["outage_anchor_time"] if groups else "",
+        "data_window_end": groups[-1]["outage_anchor_time"] if groups else "",
+        "scorable_independent_incidents": len(groups),
+        "mae_minutes": summary["mae_minutes"],
+        "median_absolute_error_minutes": summary["median_absolute_error_minutes"],
+        "p90_absolute_error_minutes": summary["p90_absolute_error_minutes"],
+        "mean_worst_meter_absolute_error_minutes": summary["mean_worst_meter_absolute_error_minutes"],
+        "green_incidents": green,
+        "high_error_incidents": high_error,
+        "coverage_status": summary["coverage_status"],
+        "gate_status": gate_status,
+        "metric_semantics": metric_semantics,
+        "production_send": "blocked",
+    }
+    registry_added = _append_registry_once(Path(registry_jsonl), registry_entry)
+    summary["registry_entry_added"] = registry_added
     summary_path = Path(summary_json)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -220,6 +265,31 @@ def build_v2_baseline_evaluation(
         encoding="utf-8",
     )
     return summary
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _append_registry_once(path: Path, entry: dict[str, Any]) -> bool:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing_ids = set()
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            existing_ids.add(str(payload.get("evaluation_id") or ""))
+    if entry["evaluation_id"] in existing_ids:
+        return False
+    with path.open("a", encoding="utf-8", newline="") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False, sort_keys=True) + "\n")
+    return True
 
 
 def _group_predictions(candidates: list[dict[str, Any]], window_minutes: float = 5.0) -> list[dict[str, Any]]:
