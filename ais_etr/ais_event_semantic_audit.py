@@ -32,6 +32,7 @@ RESTORE_CANDIDATE_VALUES = {
     "restore",
     "restored",
 }
+RESTORE_ALARM_TYPE_CANDIDATES = {"AC_MAIN_RESTORE"}
 
 
 def run_event_semantic_audit(
@@ -104,6 +105,8 @@ def build_event_semantic_audit(
             value_ref = str(raw_signal.get("value_ref") or "").strip()
             aggregates[(field, value, value_ref, event_type, event_source, validation)] += 1
             if field in {"alarm_status", "event_status", "power_status", "status"} and value.lower() in RESTORE_CANDIDATE_VALUES:
+                restore_candidates += 1
+            if field == "alarm_type" and value.upper() in RESTORE_ALARM_TYPE_CANDIDATES:
                 restore_candidates += 1
 
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)

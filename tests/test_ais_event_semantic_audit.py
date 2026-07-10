@@ -73,6 +73,12 @@ class EventSemanticAuditTests(unittest.TestCase):
         result, _, _ = self._run(items)
         self.assertEqual("restore_candidate_review_required", result["gate_status"])
 
+    def test_structured_restore_alarm_is_candidate_not_truth(self):
+        item = self._item("STATUS", "mapped_unknown", value="AC_MAIN_RESTORE", field="alarm_type")
+        result, _, _ = self._run([item])
+        self.assertEqual(1, result["restore_candidate_count"])
+        self.assertEqual("insufficient_semantic_observations", result["gate_status"])
+
     def test_valid_pair_with_model_ready_can_pass_semantic_gate(self):
         metrics = {
             "production_send": "blocked",
