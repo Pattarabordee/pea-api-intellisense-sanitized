@@ -65,7 +65,7 @@ The response confirms capture only. It does not confirm an ETR, callback, or cus
 Run the one-shot, GET-only audit after at least 100 requests or 7 observation days:
 
 ```powershell
-python -m ais_etr.cli ais-event-semantic-audit-once --base-url https://pea-api-intellisense-api.onrender.com
+python -m ais_etr ais-event-semantic-audit-once --base-url https://pea-api-intellisense-api.onrender.com
 ```
 
 The audit writes aggregate evidence under `runtime/private/`. It never trains a model or sends a callback.
