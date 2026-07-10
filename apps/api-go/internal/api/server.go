@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"pea-api-intellisense/apps/api-go/internal/sendcontrol"
@@ -230,7 +231,9 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_meter_state_intervals":     snapshot.TruthMeterStateIntervals,
 		"model_ready_clean_truth_rows": snapshot.ModelReadyCleanTruthRows,
 		"model_truth_review_rows": snapshot.ModelTruthReviewRows,
-		"truth_validation_counts": snapshot.TruthValidationCounts,
+		"truth_validation_counts":     snapshot.TruthValidationCounts,
+		"truth_event_semantic_counts": snapshot.TruthEventSemanticCounts,
+		"truth_stale_open_intervals":   snapshot.TruthStaleOpenIntervals,
 		"truth_interval_policy": truthIntervalMetricsPolicy(),
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
@@ -386,6 +389,7 @@ type inboundRequest struct {
 	AlarmType          string
 	MainCause          string
 	Subcause           string
+	SemanticSignals    map[string]any
 	Raw                map[string]any
 }
 
@@ -447,6 +451,7 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 		return inboundRequest{}, err
 	}
 	eventType, eventTypeSource := normalizeTruthEventType(payload)
+	semanticSignals := buildSemanticSignals(payload)
 	if eventType == "OUTAGE" && outageAt == nil {
 		outageAt = &detectedAt
 	}
@@ -472,6 +477,7 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 		AlarmType:          alarmType,
 		MainCause:          mainCause,
 		Subcause:           subcause,
+		SemanticSignals:    semanticSignals,
 		Raw:                payload,
 	}, nil
 }
@@ -575,6 +581,7 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 		"alarm_type":             req.AlarmType,
 		"main_cause":             req.MainCause,
 		"subcause":               req.Subcause,
+		"semantic_signals":       req.SemanticSignals,
 		"production_send":        ProductionSend,
 		"trust_boundary_source":  "AIS",
 		"raw_field_names_stored": false,
@@ -790,6 +797,12 @@ func classifyCause(req inboundRequest) string {
 func statusPayload(row *storage.RequestStatus) map[string]any {
 	result := map[string]any{}
 	_ = json.Unmarshal(row.CallbackPayload, &result)
+	requestSummary := map[string]any{}
+	_ = json.Unmarshal(row.RequestJSON, &requestSummary)
+	semanticSignals, _ := requestSummary["semantic_signals"].(map[string]any)
+	if semanticSignals == nil {
+		semanticSignals = map[string]any{}
+	}
 	timestampQuality := map[string]any{}
 	_ = json.Unmarshal(row.TimestampQuality, &timestampQuality)
 	return map[string]any{
@@ -816,6 +829,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 			"validation_status": row.TruthValidation,
 			"production_send":   ProductionSend,
 		},
+		"semantic_signals": semanticSignals,
 		"result": result,
 		"last_callback": map[string]any{
 			"status": row.LatestCallback,
@@ -1043,19 +1057,27 @@ func normalizeTruthEventType(payload map[string]any) (string, string) {
 		return explicit, "explicit"
 	}
 	if explicit != "" {
-		return "UNKNOWN", "explicit_invalid"
+		return "UNKNOWN", "mapped_unknown"
 	}
 	mapped := strings.ToLower(strings.TrimSpace(firstText(payload, "power_status", "powerStatus", "event_status", "eventStatus", "status")))
 	switch mapped {
 	case "outage", "power_off", "power off", "off", "down", "ac_main_fail", "ac main fail", "fail", "failure":
-		return "OUTAGE", "mapped"
+		return "OUTAGE", "mapped_status"
 	case "restore", "restored", "power_on", "power on", "on", "normal", "recover", "recovered":
-		return "RESTORE", "mapped"
+		return "RESTORE", "mapped_status"
 	case "":
-		return "UNKNOWN", "missing"
+		// Continue to the structured alarm allowlist below.
 	default:
 		return "STATUS", "mapped_unknown"
 	}
+	alarmType := strings.ToUpper(strings.TrimSpace(firstText(payload, "alarm_type", "alarmType", "alarm")))
+	if alarmType == "AC_MAIN_FAIL" {
+		return "OUTAGE", "mapped_alarm_type"
+	}
+	if alarmType != "" {
+		return "STATUS", "mapped_unknown"
+	}
+	return "UNKNOWN", "missing"
 }
 
 func containsAny(value string, needles ...string) bool {
@@ -1071,7 +1093,7 @@ func truthValidationStatus(eventType, eventTypeSource string, outageAt *time.Tim
 	if eventType == "UNKNOWN" || eventType == "STATUS" {
 		return "REVIEW_EVENT_TYPE"
 	}
-	if eventTypeSource != "explicit" && eventTypeSource != "mapped" {
+	if eventTypeSource != "explicit" && eventTypeSource != "mapped_status" && eventTypeSource != "mapped_alarm_type" {
 		return "REVIEW_EVENT_TYPE"
 	}
 	if eventType == "OUTAGE" && outageAt == nil {
@@ -1092,6 +1114,7 @@ func truthSummaryPayload(req inboundRequest) map[string]any {
 		"source_event_ref":  hashReference("source_event", req.SourceEventID),
 		"event_type":        req.EventType,
 		"event_type_source": req.EventTypeSource,
+		"semantic_signals":  req.SemanticSignals,
 		"detected_at":       req.DetectedAt.Format(time.RFC3339),
 		"outage_at":         formatTimePtr(req.OutageAt),
 		"restore_at":        formatTimePtr(req.RestoreAt),
@@ -1101,6 +1124,66 @@ func truthSummaryPayload(req inboundRequest) map[string]any {
 		"meter_ref":         map[string]any{"hash": hashMeter(req.MeterNo), "last4": last4(req.MeterNo)},
 		"site_ref":          map[string]any{"hash": hashOptional(req.SiteID), "last4": last4(req.SiteID)},
 	}
+}
+
+var semanticSignalAliases = []struct {
+	name string
+	keys []string
+}{
+	{name: "event_type", keys: []string{"event_type", "eventType"}},
+	{name: "power_status", keys: []string{"power_status", "powerStatus"}},
+	{name: "event_status", keys: []string{"event_status", "eventStatus"}},
+	{name: "status", keys: []string{"status"}},
+	{name: "alarm_type", keys: []string{"alarm_type", "alarmType", "alarm"}},
+	{name: "alarm_status", keys: []string{"alarm_status", "alarmStatus", "alarm_state", "alarmState"}},
+}
+
+func buildSemanticSignals(payload map[string]any) map[string]any {
+	result := map[string]any{}
+	for _, candidate := range semanticSignalAliases {
+		value := strings.TrimSpace(firstText(payload, candidate.keys...))
+		if value == "" {
+			continue
+		}
+		entry := map[string]any{
+			"present":   true,
+			"value_ref": hashReference("semantic_"+candidate.name, value),
+		}
+		if safeSemanticValue(value) {
+			entry["value"] = value
+		} else {
+			entry["value"] = ""
+			entry["redacted"] = true
+		}
+		result[candidate.name] = entry
+	}
+	return result
+}
+
+func safeSemanticValue(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" || utf8.RuneCountInString(value) > 64 {
+		return false
+	}
+	lower := strings.ToLower(value)
+	if strings.Contains(lower, "http://") || strings.Contains(lower, "https://") || strings.Contains(value, "@") {
+		return false
+	}
+	digitRun := 0
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return false
+		}
+		if unicode.IsDigit(r) {
+			digitRun++
+			if digitRun >= 5 {
+				return false
+			}
+		} else {
+			digitRun = 0
+		}
+	}
+	return true
 }
 
 func hashReference(namespace, value string) string {

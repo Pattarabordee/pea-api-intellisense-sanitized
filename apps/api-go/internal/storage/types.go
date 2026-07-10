@@ -199,7 +199,9 @@ type MetricsSnapshot struct {
 	TruthMeterStateIntervals       int64
 	ModelReadyCleanTruthRows       int64
 	ModelTruthReviewRows           int64
+	TruthStaleOpenIntervals        int64
 	CallbackCounts                map[string]int64
 	TruthValidationCounts         map[string]int64
+	TruthEventSemanticCounts      map[string]int64
 	LatestReceivedAt              *time.Time
 }
