@@ -128,7 +128,7 @@ func TestPostWithoutEventTypeStoresTruthObservationForReview(t *testing.T) {
 func TestPostRestoreBeforeOutageIsReviewOnly(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-BAD-TRUTH-1","event_type":"RESTORE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T18:00:00+07:00","restore_at":"2026-06-19T17:30:00+07:00"}`
+	body := `{"request_id":"AIS-BAD-TRUTH-1","source_event_id":"SRC-BAD-TRUTH-1","event_type":"RESTORE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T18:00:00+07:00","restore_at":"2026-06-19T17:30:00+07:00"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
