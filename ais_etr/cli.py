@@ -55,6 +55,7 @@ from .ais_inbound_contract import (
     write_ais_inbound_test_kit,
 )
 from .ais_event_semantic_audit import run_event_semantic_audit
+from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
 from .ais_only_error_segmentation import build_ais_only_error_segmentation
@@ -271,6 +272,18 @@ def cmd_ais_event_semantic_audit(args: argparse.Namespace) -> None:
         limit=args.limit,
         minimum_requests=args.minimum_requests,
         minimum_days=args.minimum_days,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_lifecycle_audit(args: argparse.Namespace) -> None:
+    result = run_v2_lifecycle_audit(
+        base_url=args.base_url,
+        output_csv=args.output,
+        report_md=args.report,
+        summary_json=args.summary_json,
+        peacon_md=args.peacon,
+        limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2815,6 +2828,18 @@ def build_parser() -> argparse.ArgumentParser:
     semantic_audit.add_argument("--minimum-requests", type=int, default=100)
     semantic_audit.add_argument("--minimum-days", type=int, default=7)
     semantic_audit.set_defaults(func=cmd_ais_event_semantic_audit)
+
+    v2_lifecycle = sub.add_parser(
+        "ais-v2-lifecycle-audit-once",
+        help="Audit prospective v2 meter-state lifecycle using authenticated read-only cloud GETs",
+    )
+    v2_lifecycle.add_argument("--base-url", required=True)
+    v2_lifecycle.add_argument("--output", default="runtime/private/ais_v2_lifecycle_cases.csv")
+    v2_lifecycle.add_argument("--report", default="runtime/private/ais_v2_lifecycle_report.md")
+    v2_lifecycle.add_argument("--summary-json", default="runtime/private/ais_v2_lifecycle_summary.json")
+    v2_lifecycle.add_argument("--peacon", default="runtime/private/peacon_v2_lifecycle_update.md")
+    v2_lifecycle.add_argument("--limit", type=int, default=200)
+    v2_lifecycle.set_defaults(func=cmd_ais_v2_lifecycle_audit)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)

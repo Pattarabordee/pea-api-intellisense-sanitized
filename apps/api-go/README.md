@@ -66,3 +66,16 @@ and `production_send=blocked`. They must not contain raw meter numbers, PEANO li
 room IDs, tokens, or raw WebEx/Line text.
 
 The public Next.js application is synthetic demo data only. It has no live operator proxy route.
+
+## Prospective v2 lifecycle audit
+
+Run the bounded, authenticated GET-only audit from the repository root:
+
+```powershell
+python -m ais_etr ais-v2-lifecycle-audit-once --base-url https://pea-api-intellisense-api.onrender.com
+```
+
+The command writes redacted case, summary, operator report, and PEA-CON governance evidence under
+`runtime/private/`. RESTORE rows without an open v2 interval remain review/context-only and never
+increase model-ready counts. Training and evaluation remain blocked until incident grouping confirms
+at least 30 independent prospective incidents.
