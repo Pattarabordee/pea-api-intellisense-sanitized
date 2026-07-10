@@ -1,6 +1,7 @@
 import csv
 import gc
 import json
+import shutil
 import re
 import sqlite3
 import subprocess
@@ -191,6 +192,7 @@ class AisInboundTests(unittest.TestCase):
                 conn.close()
             self.assertEqual(request_count, 0)
 
+    @unittest.skipUnless(shutil.which("powershell"), "Windows PowerShell integration test")
     def test_local_hit_checker_excludes_shadow_demo_from_real_hits(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

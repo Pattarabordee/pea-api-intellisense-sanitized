@@ -240,7 +240,8 @@ func TestStatusLookupWorks(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String())
 	}
 	payload := decodeBody(t, res)
-	if payload["request_id"] != "AIS-LOOKUP" || payload["production_send"] != "blocked" {
+	requestRef, _ := payload["request_ref"].(string)
+	if !strings.HasPrefix(requestRef, "request_") || payload["production_send"] != "blocked" || strings.Contains(res.Body.String(), "AIS-LOOKUP") {
 		t.Fatalf("bad lookup payload: %#v", payload)
 	}
 }
