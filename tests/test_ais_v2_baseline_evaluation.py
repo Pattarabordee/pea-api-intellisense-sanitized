@@ -104,6 +104,25 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         result, rows, _ = self._run(items, intervals)
         self.assertEqual(140.0, result["mae_minutes"])
         self.assertEqual("FALSE", rows[0]["green_incident"])
+        self.assertEqual("TRUE", rows[0]["high_error_incident"])
+        self.assertEqual(140.0, result["mean_worst_meter_absolute_error_minutes"])
+
+    def test_worst_meter_guardrail_survives_incident_median(self):
+        items = [
+            self._item("r1", "2026-07-10T01:00:00Z"),
+            self._item("r2", "2026-07-10T01:02:00Z"),
+            self._item("r3", "2026-07-10T01:03:00Z"),
+        ]
+        intervals = [
+            self._interval("r1", "2026-07-10T01:00:00Z", "2026-07-10T02:00:00Z", 60),
+            self._interval("r2", "2026-07-10T01:02:00Z", "2026-07-10T02:02:00Z", 60),
+            self._interval("r3", "2026-07-10T01:03:00Z", "2026-07-10T03:03:00Z", 120),
+        ]
+        result, rows, _ = self._run(items, intervals)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(0.0, result["mae_minutes"])
+        self.assertEqual(60.0, result["mean_worst_meter_absolute_error_minutes"])
+        self.assertEqual("TRUE", rows[0]["high_error_incident"])
 
     def test_nonblocked_metrics_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "production_send"):
