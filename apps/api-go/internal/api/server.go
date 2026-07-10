@@ -222,7 +222,14 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_outage_events":   snapshot.TruthOutageEvents,
 		"truth_restore_events":  snapshot.TruthRestoreEvents,
 		"truth_open_intervals":  snapshot.TruthOpenIntervals,
+		"truth_review_intervals": snapshot.TruthReviewIntervals,
 		"truth_closed_intervals": snapshot.TruthClosedIntervals,
+		"truth_quarantine_intervals": snapshot.TruthQuarantineIntervals,
+		"truth_accuracy_eligible_intervals": snapshot.TruthAccuracyEligibleIntervals,
+		"truth_strict_identity_intervals": snapshot.TruthStrictIdentityIntervals,
+		"model_ready_clean_truth_rows": snapshot.ModelReadyCleanTruthRows,
+		"model_truth_review_rows": snapshot.ModelTruthReviewRows,
+		"truth_interval_policy": truthIntervalMetricsPolicy(),
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
 	}
@@ -447,7 +454,7 @@ func normalizePayload(payload map[string]any) (inboundRequest, error) {
 		OutageAt:           outageAt,
 		RestoreAt:          restoreAt,
 		TimestampQuality:   quality,
-		TruthValidation:    truthValidationStatus(eventType, outageAt, restoreAt),
+		TruthValidation:    truthValidationStatus(eventType, sourceEventID, outageAt, restoreAt),
 		Province:           province,
 		District:           district,
 		Subdistrict:        subdistrict,
@@ -729,11 +736,11 @@ func shadowCallbackPayload(req inboundRequest, status string, confidence string,
 			"production_gate": "blocked_green_gate",
 		},
 		"decision": map[string]any{
-			"answer": "REVIEW_REQUIRED",
-			"reason": "cloud_api_captured_request_but_auto_etr_gate_blocked",
+			"answer":                    "REVIEW_REQUIRED",
+			"reason":                    "cloud_api_captured_request_but_model_accuracy_gate_not_passed",
 			"auto_customer_etr_allowed": false,
-			"production_send": ProductionSend,
-			"next_action": "review_evidence_before_any_customer_facing_etr",
+			"production_send":           ProductionSend,
+			"next_action":               "hold_ais_outbound_and_customer_etr_until_model_accuracy_gate_passes",
 		},
 		"generated_at": nowISO(),
 	}
@@ -819,10 +826,12 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 }
 
 func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
+	policy := truthIntervalReviewPolicy(row)
 	return map[string]any{
 		"interval_id":        row.IntervalID,
 		"source":             blankDefault(row.Source, "AIS"),
 		"pair_status":        row.PairStatus,
+		"bridge_status":      blankDefault(row.BridgeStatus, "LEGACY_UNVERIFIED"),
 		"outage_request_id":  row.OutageRequestID,
 		"restore_request_id": row.RestoreRequestID,
 		"outage_at":          row.OutageAt.Format(time.RFC3339),
@@ -831,7 +840,8 @@ func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
 		"meter":              map[string]any{"hash": row.MeterHash, "last4": row.MeterLast4},
 		"site":               map[string]any{"hash": row.SiteHash, "last4": row.SiteLast4},
 		"evidence":           safeIntervalEvidence(row.EvidenceJSON),
-		"review_hint":        truthIntervalReviewHint(row.PairStatus),
+		"review_hint":        truthIntervalReviewHint(row.PairStatus, row.BridgeStatus),
+		"review_policy":      policy,
 		"production_send":    ProductionSend,
 		"updated_at":         row.UpdatedAt.Format(time.RFC3339),
 	}
@@ -849,16 +859,69 @@ func safeIntervalEvidence(raw json.RawMessage) map[string]any {
 	}
 }
 
-func truthIntervalReviewHint(status string) string {
+func truthIntervalReviewHint(status, bridgeStatus string) string {
 	switch status {
 	case "OPEN":
-		return "await_restore_or_owner_review"
+		return "quarantine_await_restore_or_owner_review"
 	case "CLOSED":
+		if bridgeStatus != "STRICT_MODEL_READY" {
+			return "closed_interval_audit_only_until_strict_identity_bridge"
+		}
 		return "paired_outage_restore"
 	case "REVIEW":
-		return "manual_review_required"
+		return "quarantine_manual_review_required"
 	default:
 		return "check_pair_status"
+	}
+}
+
+func truthIntervalReviewPolicy(row *storage.TruthInterval) map[string]any {
+	if row.PairStatus == "CLOSED" && row.BridgeStatus == "STRICT_MODEL_READY" && row.RestoreAt != nil && row.DurationMinutes != nil {
+		return map[string]any{
+			"disposition":                           "strict_model_ready_truth_interval",
+			"model_accuracy_eligible":               true,
+			"production_readiness_evidence_eligible": true,
+			"customer_send_eligible":                false,
+			"ais_outbound_message":                  "hold_until_model_accuracy_gate_passes",
+			"excluded_from":                         []string{},
+		}
+	}
+	return map[string]any{
+		"disposition":                           "quarantine_review_queue",
+		"model_accuracy_eligible":               false,
+		"production_readiness_evidence_eligible": false,
+		"customer_send_eligible":                false,
+		"ais_outbound_message":                  "hold_until_model_accuracy_gate_passes",
+		"excluded_from": []string{
+			"model_accuracy",
+			"production_readiness_pass_count",
+			"customer_facing_etr",
+			"ais_outbound_partner_message",
+		},
+	}
+}
+
+func truthIntervalMetricsPolicy() map[string]any {
+	return map[string]any{
+		"open_or_review": map[string]any{
+			"disposition":       "quarantine_review_queue",
+			"accuracy_eligible": false,
+			"readiness_eligible": false,
+			"customer_send":     false,
+		},
+		"closed_legacy_or_review": map[string]any{
+			"disposition":       "audit_only_until_strict_identity_bridge",
+			"accuracy_eligible": false,
+			"readiness_eligible": false,
+			"customer_send":     false,
+		},
+		"closed_strict_model_ready": map[string]any{
+			"disposition":       "strict_model_ready_truth_interval",
+			"accuracy_eligible": true,
+			"readiness_eligible": true,
+			"customer_send":     false,
+		},
+		"ais_outbound_message": "hold_until_model_accuracy_gate_passes",
 	}
 }
 
@@ -987,9 +1050,18 @@ func containsAny(value string, needles ...string) bool {
 	return false
 }
 
-func truthValidationStatus(eventType string, outageAt *time.Time, restoreAt *time.Time) string {
+func truthValidationStatus(eventType, sourceEventID string, outageAt *time.Time, restoreAt *time.Time) string {
 	if eventType == "UNKNOWN" || eventType == "STATUS" {
 		return "REVIEW_EVENT_TYPE"
+	}
+	if strings.TrimSpace(sourceEventID) == "" {
+		return "REVIEW_IDENTITY_KEY_REQUIRED"
+	}
+	if eventType == "OUTAGE" && outageAt == nil {
+		return "REVIEW_OUTAGE_TIMESTAMP"
+	}
+	if eventType == "RESTORE" && restoreAt == nil {
+		return "REVIEW_RESTORE_TIMESTAMP"
 	}
 	if outageAt != nil && restoreAt != nil && restoreAt.Before(*outageAt) {
 		return "REVIEW_RESTORE_BEFORE_OUTAGE"

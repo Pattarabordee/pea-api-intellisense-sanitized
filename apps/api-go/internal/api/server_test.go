@@ -67,6 +67,44 @@ func TestPostCapturesAISTruthObservationWithoutLeakingSiteOrMeter(t *testing.T) 
 	}
 }
 
+func TestPostLegacyTruthPayloadIsReviewOnly(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-LEGACY-1","event_type":"OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T17:04:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	if got := store.rows["AIS-LEGACY-1"].TruthValidation; got != "REVIEW_IDENTITY_KEY_REQUIRED" {
+		t.Fatalf("legacy truth must remain review-only, got %q", got)
+	}
+}
+
+func TestPostStrictTruthRequiresEventSpecificTimestamp(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-MISSING-OUTAGE-TIME","source_event_id":"SRC-2001","event_type":"OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
+	}
+	if got := store.rows["AIS-MISSING-OUTAGE-TIME"].TruthValidation; got != "REVIEW_OUTAGE_TIMESTAMP" {
+		t.Fatalf("outage without outage_at must remain review-only, got %q", got)
+	}
+}
+
 func TestPostWithoutEventTypeStoresTruthObservationForReview(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
@@ -90,7 +128,7 @@ func TestPostWithoutEventTypeStoresTruthObservationForReview(t *testing.T) {
 func TestPostRestoreBeforeOutageIsReviewOnly(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
-	body := `{"request_id":"AIS-BAD-TRUTH-1","event_type":"RESTORE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T18:00:00+07:00","restore_at":"2026-06-19T17:30:00+07:00"}`
+	body := `{"request_id":"AIS-BAD-TRUTH-1","source_event_id":"SRC-BAD-TRUTH-1","event_type":"RESTORE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T18:00:00+07:00","restore_at":"2026-06-19T17:30:00+07:00"}`
 	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", "pilot-key")
@@ -207,6 +245,11 @@ func TestLongOptionalFieldReturns400(t *testing.T) {
 
 func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	store := newFakeStore()
+	store.intervals = []storage.TruthInterval{
+		{PairStatus: "OPEN"},
+		{PairStatus: "REVIEW"},
+		{PairStatus: "CLOSED", BridgeStatus: "STRICT_MODEL_READY", RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
+	}
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-METRICS","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
 	for idx := 0; idx < 2; idx++ {
@@ -244,6 +287,19 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	if payload["outbox_dry_run_held"].(float64) != 1 || payload["dead_letters"].(float64) != 0 {
 		t.Fatalf("outbox metrics missing: %#v", payload)
 	}
+	if payload["truth_quarantine_intervals"].(float64) != 2 || payload["truth_accuracy_eligible_intervals"].(float64) != 1 {
+		t.Fatalf("truth interval quarantine metrics missing: %#v", payload)
+	}
+	if payload["truth_strict_identity_intervals"].(float64) != 1 || payload["model_ready_clean_truth_rows"].(float64) != 1 {
+		t.Fatalf("strict identity metrics missing: %#v", payload)
+	}
+	if payload["model_truth_review_rows"].(float64) != 1 {
+		t.Fatalf("review-only legacy request must remain visible in metrics: %#v", payload)
+	}
+	policy := payload["truth_interval_policy"].(map[string]any)
+	if policy["ais_outbound_message"] != "hold_until_model_accuracy_gate_passes" {
+		t.Fatalf("metrics must hold AIS outbound until model gate passes: %#v", policy)
+	}
 }
 
 func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
@@ -260,6 +316,7 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 			SiteLast4:       "T-99",
 			OutageAt:        outageAt,
 			PairStatus:      "OPEN",
+			BridgeStatus:    "STRICT_AWAITING_RESTORE",
 			EvidenceJSON:    json.RawMessage(`{"source":"go_postgres_truth_pairing","reason":"ready_outage_waiting_for_restore","outage_source_event_id":"SRC-SECRET-1","pair_key":"sitehash","production_send":"blocked"}`),
 			ProductionSend:  "blocked",
 			CreatedAt:       outageAt,
@@ -288,11 +345,26 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 		t.Fatalf("truth interval endpoint leaked raw pairing evidence: %s", body)
 	}
 	payload := decodeBody(t, res)
+	items := payload["items"].([]any)
+	if items[0].(map[string]any)["bridge_status"] != "STRICT_AWAITING_RESTORE" {
+		t.Fatalf("truth interval response omitted safe bridge status: %#v", payload)
+	}
 	if payload["production_send"] != "blocked" || payload["status_filter"] != "OPEN" {
 		t.Fatalf("unsafe truth interval payload: %#v", payload)
 	}
 	if payload["count"].(float64) != 1 {
 		t.Fatalf("expected one open interval, got %#v", payload)
+	}
+	item := items[0].(map[string]any)
+	policy := item["review_policy"].(map[string]any)
+	if policy["disposition"] != "quarantine_review_queue" {
+		t.Fatalf("open interval must stay in quarantine review queue: %#v", policy)
+	}
+	if policy["model_accuracy_eligible"] != false || policy["production_readiness_evidence_eligible"] != false || policy["customer_send_eligible"] != false {
+		t.Fatalf("open interval must be excluded from accuracy/readiness/send: %#v", policy)
+	}
+	if policy["ais_outbound_message"] != "hold_until_model_accuracy_gate_passes" {
+		t.Fatalf("AIS outbound must stay held until model gate passes: %#v", policy)
 	}
 }
 
@@ -441,6 +513,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 	}
 	for _, row := range f.rows {
 		snapshot.TotalRequests++
+		if row.TruthValidation != "" && row.TruthValidation != "READY_FOR_LEDGER" {
+			snapshot.ModelTruthReviewRows++
+		}
 		if row.LatestCallback != "" && snapshot.LatestReceivedAt == nil {
 			receivedAt := row.ReceivedAt
 			snapshot.LatestReceivedAt = &receivedAt
@@ -465,5 +540,34 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 			snapshot.TruthRestoreEvents++
 		}
 	}
+	for _, interval := range f.intervals {
+		if interval.BridgeStatus == "STRICT_MODEL_READY" || interval.BridgeStatus == "STRICT_DURATION_REVIEW" {
+			snapshot.TruthStrictIdentityIntervals++
+		}
+		switch interval.PairStatus {
+		case "OPEN":
+			snapshot.TruthOpenIntervals++
+			snapshot.TruthQuarantineIntervals++
+		case "REVIEW":
+			snapshot.TruthReviewIntervals++
+			snapshot.TruthQuarantineIntervals++
+		case "CLOSED":
+			snapshot.TruthClosedIntervals++
+			if interval.BridgeStatus == "STRICT_MODEL_READY" && interval.RestoreAt != nil && interval.DurationMinutes != nil {
+				snapshot.TruthAccuracyEligibleIntervals++
+				snapshot.ModelReadyCleanTruthRows++
+			} else {
+				snapshot.TruthQuarantineIntervals++
+			}
+		}
+	}
 	return snapshot, nil
+}
+
+func ptrTime(value time.Time) *time.Time {
+	return &value
+}
+
+func ptrFloat(value float64) *float64 {
+	return &value
 }

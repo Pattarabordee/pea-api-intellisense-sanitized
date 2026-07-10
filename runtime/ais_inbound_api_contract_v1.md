@@ -35,15 +35,22 @@ Required:
 | `meter_no` | PEA meter number / PEANO for the AIS site. Max 64 characters. Do not include slash, space, or newline. |
 | `timestamp` | AIS detected outage time. Include timezone when possible, for example `+07:00`. |
 
-Recommended:
+Required for prospective clean truth (the API still accepts legacy payloads for audit):
 
 | Field | Meaning |
 | --- | --- |
-| `event_type` | AIS event type. Preferred values: `OUTAGE` or `RESTORE`. If omitted, the API infers from `power_status`, `status`, `alarm_type`, `main_cause`, or `subcause`; unclear events are stored for review. |
-| `source_event_id` | AIS source alarm/event id when different from `request_id`. |
+| `event_type` | Send explicit `OUTAGE` or `RESTORE`. Inferred or unclear values are review-only. |
+| `source_event_id` | One stable AIS outage correlation id. OUTAGE and RESTORE for the same incident must send the same value. |
 | `site_id` or `location_id` | AIS site/location reference. The API stores hash/last4 only. |
-| `outage_at` | AIS site power outage timestamp, ISO 8601 with timezone. |
-| `restore_at` | AIS site power restore timestamp, ISO 8601 with timezone. |
+| `outage_at` | Required when `event_type=OUTAGE`; AIS site power outage timestamp, ISO 8601 with timezone. |
+| `restore_at` | Required when `event_type=RESTORE`; AIS site power restore timestamp, ISO 8601 with timezone. |
+
+Legacy payloads without this evidence are accepted with HTTP `202` for audit, but stored as `REVIEW` and cannot create a model-ready outage/restore interval.
+
+Recommended context:
+
+| Field | Meaning |
+| --- | --- |
 | `province`, `district`, `subdistrict` | AIS site area. |
 | `alarm_type` | For example `AC_MAIN_FAIL`. |
 | `main_cause`, `subcause` | Used to separate PEA no-backup, PEA activity, and AIS equipment/backup cases. |
@@ -119,7 +126,7 @@ The lookup now also returns `truth_observation` with:
 | Field | Meaning |
 | --- | --- |
 | `event_type` | Normalized `OUTAGE`, `RESTORE`, `STATUS`, or `UNKNOWN`. |
-| `validation_status` | `READY_FOR_LEDGER`, `REVIEW_EVENT_TYPE`, `REVIEW_TIMESTAMP`, or `REVIEW_RESTORE_BEFORE_OUTAGE`. |
+| `validation_status` | `READY_FOR_LEDGER` only when the strict prospective fields are valid. Missing correlation key/timestamp, time-order, unmatched restore, conflict, and out-of-range duration are `REVIEW` statuses. |
 | `source_event_id` | AIS source id supplied by AIS. |
 | `production_send` | Always `blocked` in this release. |
 
@@ -173,6 +180,8 @@ Common HTTP status:
 - WebEx is used as trigger/device evidence, not restoration truth.
 - AIS outage/restore timestamps remain the primary customer-facing truth source for ETR evaluation.
 - AIS outage/restore events are stored in `ais_truth_ledger` as redacted truth observations.
+- A model-ready interval requires the same `source_event_id`, matching hashed site/meter references, exactly one open interval, valid time order, and duration `>5` and `<=1440` minutes.
+- Historical closed intervals without a strict identity bridge remain audit-only and do not count toward model accuracy, green rows, or training.
 - Feeder-only matches are review/audit-only.
 - Automatic customer ETR is blocked until the green subset passes the production gate.
 
