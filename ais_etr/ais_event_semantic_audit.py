@@ -40,6 +40,7 @@ def run_event_semantic_audit(
     base_url: str,
     output_csv: str | Path,
     report_md: str | Path,
+    summary_json: str | Path | None = None,
     api_key: str | None = None,
     limit: int = 200,
     minimum_requests: int = 100,
@@ -59,6 +60,7 @@ def run_event_semantic_audit(
         requests.get("items") or [],
         output_csv=output_csv,
         report_md=report_md,
+        summary_json=summary_json,
         minimum_requests=minimum_requests,
         minimum_days=minimum_days,
     )
@@ -70,6 +72,7 @@ def build_event_semantic_audit(
     *,
     output_csv: str | Path,
     report_md: str | Path,
+    summary_json: str | Path | None = None,
     minimum_requests: int = 100,
     minimum_days: int = 7,
     now: datetime | None = None,
@@ -117,6 +120,7 @@ def build_event_semantic_audit(
     mapped_outages = event_counts["OUTAGE"]
     mapped_restores = event_counts["RESTORE"]
     model_ready = int(metrics.get("model_ready_clean_truth_rows") or 0)
+    pair_audit = _audit_candidate_pairs(captured_items)
 
     if mapped_outages > 0 and mapped_restores > 0 and model_ready > 0:
         gate_status = "semantic_mapping_ready"
@@ -126,6 +130,19 @@ def build_event_semantic_audit(
         gate_status = "restore_signal_missing"
     else:
         gate_status = "insufficient_semantic_observations"
+
+    if mapped_restores > 0 and model_ready > 0:
+        contract_gate_status = "semantic_mapping_active"
+    elif not observation_complete:
+        contract_gate_status = "observation_incomplete"
+    elif pair_audit["semantic_conflicts"] > 0:
+        contract_gate_status = "contract_blocked_semantic_conflict"
+    elif pair_audit["valid_pairs"] < 20 or pair_audit["invalid_pairs"] > 0 or pair_audit["missing_identity_or_time"] > 0:
+        contract_gate_status = "contract_blocked_pair_quality"
+    else:
+        contract_gate_status = "contract_ready_for_activation"
+
+    activation_candidate_ready = contract_gate_status == "contract_ready_for_activation"
 
     rows = [
         {
@@ -159,6 +176,12 @@ def build_event_semantic_audit(
         f"- OUTAGE ที่ map ได้: `{mapped_outages}`\n"
         f"- RESTORE ที่ map ได้: `{mapped_restores}`\n"
         f"- restore candidate ที่ยังต้อง review: `{restore_candidates}`\n"
+        f"- contract gate: `{contract_gate_status}`\n"
+        f"- same-meter candidate pairs: `{pair_audit['paired_candidates']}`\n"
+        f"- valid candidate pairs: `{pair_audit['valid_pairs']}`\n"
+        f"- invalid candidate pairs: `{pair_audit['invalid_pairs']}`\n"
+        f"- restore candidate without captured outage: `{pair_audit['restore_without_prior_outage']}`\n"
+        "- preactivation pair policy: `audit_only`\n"
         f"- open meter-state interval: `{int(metrics.get('truth_meter_state_open_intervals') or 0)}`\n"
         f"- stale open interval (>24h): `{int(metrics.get('truth_stale_open_intervals') or 0)}`\n"
         f"- model-ready interval: `{model_ready}`\n"
@@ -167,18 +190,89 @@ def build_event_semantic_audit(
         "ข้อมูลในรายงานนี้เป็น aggregate semantic evidence เท่านั้น ไม่มีเลขมิเตอร์หรือรหัสเหตุการณ์ดิบ\n",
         encoding="utf-8",
     )
-    return {
+    result = {
         "gate_status": gate_status,
+        "contract_gate_status": contract_gate_status,
+        "activation_candidate_ready": activation_candidate_ready,
+        "semantic_mapping_version_candidate": "alarm_mapping_v2",
+        "semantic_mapping_activation_timestamp": "",
+        "preactivation_pair_policy": "audit_only",
         "observed_requests": len(captured_items),
         "observation_days": round(observation_days, 3),
         "event_type_counts": dict(sorted(event_counts.items())),
         "event_type_source_counts": dict(sorted(source_counts.items())),
         "validation_counts": dict(sorted(validation_counts.items())),
         "restore_candidate_count": restore_candidates,
+        "candidate_pair_audit": pair_audit,
         "model_ready_clean_truth_rows": model_ready,
         "output_csv": str(output),
         "report_md": str(report),
         "production_send": "blocked",
+    }
+    if summary_json:
+        summary = Path(summary_json)
+        summary.parent.mkdir(parents=True, exist_ok=True)
+        summary.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        result["summary_json"] = str(summary)
+    return result
+
+
+def _audit_candidate_pairs(items: list[dict[str, Any]]) -> dict[str, Any]:
+    observations: list[tuple[datetime, str, str, str, str]] = []
+    missing_identity_or_time = 0
+    for item in items:
+        meter_hash = str((item.get("meter") or {}).get("hash") or "").strip()
+        event_time = _parse_time(item.get("detected_at") or item.get("received_at"))
+        truth = item.get("truth_observation") or {}
+        event_type = str(truth.get("event_type") or "UNKNOWN").strip().upper()
+        event_source = str(truth.get("event_type_source") or "missing").strip()
+        alarm = str((((item.get("semantic_signals") or {}).get("alarm_type") or {}).get("value")) or "").strip().upper()
+        if alarm not in {"AC_MAIN_FAIL", "AC_MAIN_RESTORE"}:
+            continue
+        if not meter_hash or event_time is None:
+            missing_identity_or_time += 1
+            continue
+        observations.append((event_time, meter_hash, alarm, event_type, event_source))
+
+    open_outages: dict[str, datetime] = {}
+    paired = valid = invalid = no_prior = duplicate_outages = semantic_conflicts = 0
+    durations: list[float] = []
+    for event_time, meter_hash, alarm, event_type, event_source in sorted(observations):
+        if alarm == "AC_MAIN_FAIL":
+            if event_type != "OUTAGE" or event_source != "mapped_alarm_type":
+                semantic_conflicts += 1
+            if meter_hash in open_outages:
+                duplicate_outages += 1
+            else:
+                open_outages[meter_hash] = event_time
+            continue
+
+        if event_type != "STATUS" or event_source != "mapped_unknown":
+            semantic_conflicts += 1
+        outage_time = open_outages.get(meter_hash)
+        if outage_time is None:
+            no_prior += 1
+            continue
+        duration = (event_time - outage_time).total_seconds() / 60.0
+        paired += 1
+        durations.append(duration)
+        if 5 < duration <= 1440:
+            valid += 1
+        else:
+            invalid += 1
+        del open_outages[meter_hash]
+
+    return {
+        "paired_candidates": paired,
+        "valid_pairs": valid,
+        "invalid_pairs": invalid,
+        "restore_without_prior_outage": no_prior,
+        "duplicate_outages": duplicate_outages,
+        "still_open_after_candidate_replay": len(open_outages),
+        "semantic_conflicts": semantic_conflicts,
+        "missing_identity_or_time": missing_identity_or_time,
+        "duration_min_minutes": round(min(durations), 3) if durations else None,
+        "duration_max_minutes": round(max(durations), 3) if durations else None,
     }
 
 

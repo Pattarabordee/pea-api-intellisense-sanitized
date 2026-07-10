@@ -135,6 +135,21 @@ func TestACMainFailAlarmCreatesMappedOutage(t *testing.T) {
 	}
 }
 
+func TestACMainRestoreRemainsReviewBeforeContractGate(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-ALARM-RESTORE-CANDIDATE","meter_no":"METER-1234","timestamp":"2026-07-10T17:30:00+07:00","alarm_type":"AC_MAIN_RESTORE"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	row := store.rows["AIS-ALARM-RESTORE-CANDIDATE"]
+	if row.TruthEventType != "STATUS" || row.TruthEventTypeSource != "mapped_unknown" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
+		t.Fatalf("restore alarm must remain review-only before contract activation: %#v", row)
+	}
+}
+
 func TestMappedPowerStatusCreatesMeterStateTruth(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
