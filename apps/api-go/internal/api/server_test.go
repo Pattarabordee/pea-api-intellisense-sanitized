@@ -296,6 +296,13 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	if payload["model_truth_review_rows"].(float64) != 1 {
 		t.Fatalf("review-only legacy request must remain visible in metrics: %#v", payload)
 	}
+	validationCounts := payload["truth_validation_counts"].(map[string]any)
+	if validationCounts["REVIEW_EVENT_TYPE"].(float64) != 1 {
+		t.Fatalf("metrics must expose only aggregate validation reasons: %#v", payload)
+	}
+	if strings.Contains(res.Body.String(), "AIS-METRICS") || strings.Contains(res.Body.String(), "REDACTED-METER-0000") {
+		t.Fatalf("metrics leaked a request or meter identifier: %s", res.Body.String())
+	}
 	policy := payload["truth_interval_policy"].(map[string]any)
 	if policy["ais_outbound_message"] != "hold_until_model_accuracy_gate_passes" {
 		t.Fatalf("metrics must hold AIS outbound until model gate passes: %#v", policy)
@@ -504,7 +511,7 @@ func (f *fakeStore) GetStatus(ctx context.Context, requestID string) (*storage.R
 func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	snapshot := &storage.MetricsSnapshot{CallbackCounts: map[string]int64{}}
+	snapshot := &storage.MetricsSnapshot{CallbackCounts: map[string]int64{}, TruthValidationCounts: map[string]int64{}}
 	for status, count := range f.callbackStatusCount {
 		snapshot.CallbackCounts[status] = count
 		if status == "SKIPPED_DUPLICATE" {
@@ -532,6 +539,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		}
 		if row.TruthValidation != "READY_FOR_LEDGER" {
 			snapshot.TruthReviewNeeded++
+		}
+		if row.TruthValidation != "" {
+			snapshot.TruthValidationCounts[row.TruthValidation]++
 		}
 		if row.TruthEventType == "OUTAGE" {
 			snapshot.TruthOutageEvents++

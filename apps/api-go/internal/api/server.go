@@ -229,6 +229,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_strict_identity_intervals": snapshot.TruthStrictIdentityIntervals,
 		"model_ready_clean_truth_rows": snapshot.ModelReadyCleanTruthRows,
 		"model_truth_review_rows": snapshot.ModelTruthReviewRows,
+		"truth_validation_counts": snapshot.TruthValidationCounts,
 		"truth_interval_policy": truthIntervalMetricsPolicy(),
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
