@@ -57,6 +57,7 @@ from .ais_inbound_contract import (
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
+from .ais_v2_baseline_stability import build_v2_baseline_stability_gate
 from .ais_v2_baseline_trend import build_v2_baseline_trend
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
@@ -310,6 +311,18 @@ def cmd_ais_v2_baseline_trend(args: argparse.Namespace) -> None:
     result = build_v2_baseline_trend(
         settings.resolve(args.registry),
         output_csv=settings.resolve(args.output),
+        report_md=settings.resolve(args.report),
+        peacon_md=settings.resolve(args.peacon),
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_baseline_stability(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_v2_baseline_stability_gate(
+        settings.resolve(args.incidents),
+        output_csv=settings.resolve(args.output),
+        summary_json=settings.resolve(args.summary_json),
         report_md=settings.resolve(args.report),
         peacon_md=settings.resolve(args.peacon),
     )
@@ -2896,6 +2909,17 @@ def build_parser() -> argparse.ArgumentParser:
     v2_trend.add_argument("--report", default="runtime/private/ais_v2_baseline_trend.md")
     v2_trend.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_trend.md")
     v2_trend.set_defaults(func=cmd_ais_v2_baseline_trend)
+
+    v2_stability = sub.add_parser(
+        "ais-v2-baseline-stability",
+        help="Run pre-registered chronological stability folds after sufficient prospective incidents",
+    )
+    v2_stability.add_argument("--incidents", default="runtime/private/ais_v2_baseline_incidents.csv")
+    v2_stability.add_argument("--output", default="runtime/private/ais_v2_baseline_stability_folds.csv")
+    v2_stability.add_argument("--summary-json", default="runtime/private/ais_v2_baseline_stability_summary.json")
+    v2_stability.add_argument("--report", default="runtime/private/ais_v2_baseline_stability_report.md")
+    v2_stability.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_stability.md")
+    v2_stability.set_defaults(func=cmd_ais_v2_baseline_stability)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)
