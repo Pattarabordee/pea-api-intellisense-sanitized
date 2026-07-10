@@ -71,6 +71,9 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         self.assertEqual("TRUE", rows[0]["green_incident"])
         self.assertNotIn("secret-ref", bundle)
         self.assertEqual("research_baseline_accumulating", result["gate_status"])
+        self.assertEqual("pilot_smoke_only", result["sample_size_status"])
+        self.assertFalse(result["research_metric_claim_allowed"])
+        self.assertFalse(result["production_accuracy_claim_allowed"])
 
     def test_meter_rows_within_five_minutes_form_one_incident(self):
         items = [
@@ -152,6 +155,30 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         self.assertTrue(first["registry_entry_added"])
         self.assertFalse(second["registry_entry_added"])
         self.assertEqual(1, len(lines))
+
+    def test_sample_size_reaches_research_claim_threshold_at_thirty_incidents(self):
+        items = []
+        intervals = []
+        for index in range(30):
+            hour = index // 2
+            minute = (index % 2) * 10
+            outage = datetime(2026, 7, 8, hour, minute, tzinfo=timezone.utc)
+            restore = outage.replace(minute=minute + 6)
+            ref = f"r{index}"
+            items.append(self._item(ref, outage.isoformat().replace("+00:00", "Z")))
+            intervals.append(
+                self._interval(
+                    ref,
+                    outage.isoformat().replace("+00:00", "Z"),
+                    restore.isoformat().replace("+00:00", "Z"),
+                    6,
+                )
+            )
+        result, rows, _ = self._run(items, intervals)
+        self.assertEqual(30, len(rows))
+        self.assertEqual("evaluation_sample_ready", result["sample_size_status"])
+        self.assertTrue(result["research_metric_claim_allowed"])
+        self.assertFalse(result["production_accuracy_claim_allowed"])
 
 
 if __name__ == "__main__":

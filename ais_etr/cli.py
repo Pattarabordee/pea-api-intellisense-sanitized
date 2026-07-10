@@ -57,6 +57,7 @@ from .ais_inbound_contract import (
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
+from .ais_v2_baseline_trend import build_v2_baseline_trend
 from .ais_momentary_long_diagnostics import build_ais_momentary_long_diagnostics
 from .ais_new_files_profile import build_ais_new_files_profile
 from .ais_only_error_segmentation import build_ais_only_error_segmentation
@@ -299,6 +300,17 @@ def cmd_ais_v2_baseline_evaluation(args: argparse.Namespace) -> None:
         peacon_md=args.peacon,
         registry_jsonl=args.registry,
         limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_baseline_trend(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_v2_baseline_trend(
+        settings.resolve(args.registry),
+        output_csv=settings.resolve(args.output),
+        report_md=settings.resolve(args.report),
+        peacon_md=settings.resolve(args.peacon),
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2869,6 +2881,16 @@ def build_parser() -> argparse.ArgumentParser:
     v2_evaluation.add_argument("--registry", default="runtime/private/ais_v2_baseline_registry.jsonl")
     v2_evaluation.add_argument("--limit", type=int, default=200)
     v2_evaluation.set_defaults(func=cmd_ais_v2_baseline_evaluation)
+
+    v2_trend = sub.add_parser(
+        "ais-v2-baseline-trend",
+        help="Build a private low-sample guarded trend report from the append-only v2 baseline registry",
+    )
+    v2_trend.add_argument("--registry", default="runtime/private/ais_v2_baseline_registry.jsonl")
+    v2_trend.add_argument("--output", default="runtime/private/ais_v2_baseline_trend.csv")
+    v2_trend.add_argument("--report", default="runtime/private/ais_v2_baseline_trend.md")
+    v2_trend.add_argument("--peacon", default="runtime/private/peacon_v2_baseline_trend.md")
+    v2_trend.set_defaults(func=cmd_ais_v2_baseline_trend)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)
