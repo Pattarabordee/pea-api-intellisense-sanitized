@@ -267,6 +267,7 @@ def cmd_ais_event_semantic_audit(args: argparse.Namespace) -> None:
         base_url=args.base_url,
         output_csv=args.output,
         report_md=args.report,
+        summary_json=args.summary_json,
         limit=args.limit,
         minimum_requests=args.minimum_requests,
         minimum_days=args.minimum_days,
@@ -2809,6 +2810,7 @@ def build_parser() -> argparse.ArgumentParser:
     semantic_audit.add_argument("--base-url", required=True)
     semantic_audit.add_argument("--output", default="runtime/private/ais_event_semantic_audit.csv")
     semantic_audit.add_argument("--report", default="runtime/private/ais_event_semantic_audit.md")
+    semantic_audit.add_argument("--summary-json", default="runtime/private/ais_event_semantic_activation_gate.json")
     semantic_audit.add_argument("--limit", type=int, default=200)
     semantic_audit.add_argument("--minimum-requests", type=int, default=100)
     semantic_audit.add_argument("--minimum-days", type=int, default=7)

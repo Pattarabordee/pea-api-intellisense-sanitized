@@ -72,6 +72,15 @@ python -m ais_etr ais-event-semantic-audit-once --base-url https://pea-api-intel
 
 The audit writes aggregate evidence under `runtime/private/`. It never trains a model or sends a callback.
 
+The restore contract becomes an activation candidate only when all conditions pass:
+
+- at least 100 `semantic_capture_version=v1` requests, or a 7-day observation window;
+- at least 20 valid same-meter `AC_MAIN_FAIL -> AC_MAIN_RESTORE` pairs;
+- every candidate pair has duration `>5` and `<=1440` minutes;
+- no semantic conflict or missing meter/time evidence.
+
+Before this gate passes, `AC_MAIN_RESTORE` remains `STATUS` with `REVIEW_EVENT_TYPE`. Historical candidate pairs use `preactivation_pair_policy=audit_only`; they are never replayed into model-ready truth. A later activation must use `semantic_mapping_version=alarm_mapping_v2` and applies prospectively only.
+
 ## Model Truth
 
 The only customer-facing evaluation target is:
