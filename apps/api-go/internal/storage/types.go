@@ -47,6 +47,7 @@ type TruthObservation struct {
 	MeterLast4        string
 	EventType         string
 	EventTypeSource   string
+	SemanticMappingVersion string
 	DetectedAt        time.Time
 	OutageAt          *time.Time
 	RestoreAt         *time.Time
@@ -154,6 +155,7 @@ type RequestStatus struct {
 	TruthValidation      string
 	TruthSourceEventRef  string
 	TruthEventTypeSource string
+	TruthSemanticMappingVersion string
 	TruthSiteHash        string
 	TruthSiteLast4       string
 }
@@ -173,6 +175,7 @@ type TruthInterval struct {
 	DurationMinutes  *float64
 	PairStatus       string
 	BridgeStatus     string
+	SemanticMappingVersion string
 	EvidenceJSON     json.RawMessage
 	ProductionSend   string
 	CreatedAt        time.Time
@@ -201,6 +204,16 @@ type MetricsSnapshot struct {
 	ModelReadyCleanTruthRows       int64
 	ModelTruthReviewRows           int64
 	TruthStaleOpenIntervals        int64
+	V2OutageEvents                 int64
+	V2RestoreEvents                int64
+	V2OpenIntervals                int64
+	V2ModelReadyRows               int64
+	PreactivationPairReview        int64
+	PreactivationOpenReview        int64
+	PreactivationStaleOpenReview   int64
+	V2RestoreWithoutOpen           int64
+	V2DurationReview               int64
+	V2ActivationFirstSeenAt        *time.Time
 	CallbackCounts                map[string]int64
 	TruthValidationCounts         map[string]int64
 	TruthEventSemanticCounts      map[string]int64

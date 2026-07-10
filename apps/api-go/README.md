@@ -52,8 +52,12 @@ event-semantic mapping counts, meter-state open/closed intervals, stale open int
 and `production_send=blocked`.
 
 Event semantics use strict precedence: explicit `event_type`, exact allowlisted status, then exact
-`alarm_type=AC_MAIN_FAIL` as OUTAGE. Cause text never creates truth. The authenticated operator list
+`alarm_type=AC_MAIN_FAIL` as OUTAGE or exact `alarm_type=AC_MAIN_RESTORE` as RESTORE. Cause text never creates truth. The authenticated operator list
 returns only sanitized fixed-field `semantic_signals`; unsafe values are hash-reference only.
+
+Prospective alarm mapping uses `semantic_capture_version=v2` and
+`semantic_mapping_version=alarm_mapping_v2`. Migration 007 quarantines every open v1 interval before
+v2 capture begins, and pairing queries require the same mapping version. Historical/v1 rows are audit-only.
 
 `/api/v1/ais/truth-intervals` returns redacted outage/restore pairing rows for production gate review.
 Supported `status` values are `OPEN`, `CLOSED`, `REVIEW`, and `ALL`; the default is `OPEN`.
