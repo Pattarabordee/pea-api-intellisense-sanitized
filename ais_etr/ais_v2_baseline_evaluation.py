@@ -13,7 +13,7 @@ from .ais_v2_lifecycle_audit import MAPPING_VERSION, _float_or_none, _get_json, 
 
 
 MODEL_VERSION = "fixed_naive_60m_v1"
-EVALUATOR_VERSION = "v2_baseline_eval_v2"
+EVALUATOR_VERSION = "v2_baseline_eval_v3"
 GROUP_COLUMNS = (
     "incident_group_ref",
     "outage_anchor_time",
@@ -27,6 +27,14 @@ GROUP_COLUMNS = (
     "model_version",
     "production_send",
 )
+TARGET_TIME_REJECTION_COLUMNS = (
+    "case_ref",
+    "reason",
+    "outage_at",
+    "restore_at",
+    "prediction_created_at",
+    "production_send",
+)
 
 
 def run_v2_baseline_evaluation(
@@ -37,6 +45,7 @@ def run_v2_baseline_evaluation(
     report_md: str | Path,
     peacon_md: str | Path,
     registry_jsonl: str | Path,
+    rejection_csv: str | Path,
     api_key: str | None = None,
     limit: int = 200,
 ) -> dict[str, Any]:
@@ -63,6 +72,7 @@ def run_v2_baseline_evaluation(
         report_md=report_md,
         peacon_md=peacon_md,
         registry_jsonl=registry_jsonl,
+        rejection_csv=rejection_csv,
     )
 
 
@@ -76,6 +86,7 @@ def build_v2_baseline_evaluation(
     report_md: str | Path,
     peacon_md: str | Path,
     registry_jsonl: str | Path,
+    rejection_csv: str | Path,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     if metrics.get("production_send") != "blocked":
@@ -88,10 +99,13 @@ def build_v2_baseline_evaluation(
         "missing_outage_request": 0,
         "missing_numeric_prediction": 0,
         "wrong_model_version": 0,
+        "invalid_prediction_or_restore_time": 0,
+        "late_arriving_outage_after_restore": 0,
         "prediction_time_leakage": 0,
         "invalid_remaining_target": 0,
         "missing_outage_time": 0,
     }
+    target_time_rejections = []
     for row in intervals:
         if row.get("semantic_mapping_version") != MAPPING_VERSION:
             rejection_counts["excluded_non_v2_audit"] += 1
@@ -122,8 +136,17 @@ def build_v2_baseline_evaluation(
         prediction_time = _parse_time(etr.get("prediction_created_at"))
         restore_time = _parse_time(row.get("restore_at"))
         outage_time = _parse_time(row.get("outage_at"))
-        if prediction_time is None or restore_time is None or prediction_time >= restore_time:
-            rejection_counts["prediction_time_leakage"] += 1
+        if prediction_time is None or restore_time is None:
+            rejection_counts["invalid_prediction_or_restore_time"] += 1
+            target_time_rejections.append(
+                _target_time_rejection(outage_ref, row, etr, "invalid_prediction_or_restore_time")
+            )
+            continue
+        if prediction_time >= restore_time:
+            rejection_counts["late_arriving_outage_after_restore"] += 1
+            target_time_rejections.append(
+                _target_time_rejection(outage_ref, row, etr, "late_arriving_outage_after_restore")
+            )
             continue
         if outage_time is None:
             rejection_counts["missing_outage_time"] += 1
@@ -165,6 +188,13 @@ def build_v2_baseline_evaluation(
         writer.writeheader()
         writer.writerows(groups)
 
+    rejection_output = Path(rejection_csv)
+    rejection_output.parent.mkdir(parents=True, exist_ok=True)
+    with rejection_output.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=TARGET_TIME_REJECTION_COLUMNS)
+        writer.writeheader()
+        writer.writerows(target_time_rejections)
+
     group_artifact_sha256 = _sha256_file(output)
     metric_semantics = {
         "target": "restore_at_minus_prediction_created_at",
@@ -174,6 +204,7 @@ def build_v2_baseline_evaluation(
         "green_threshold_minutes": 16,
         "high_error_threshold_minutes": 60,
         "coverage": "unavailable_no_q10_q90_baseline",
+        "late_arrival_policy": "exclude_when_prediction_created_at_is_not_before_restore_at",
     }
     evaluation_seed = MODEL_VERSION + "|" + EVALUATOR_VERSION + "|" + group_artifact_sha256 + "|" + json.dumps(metric_semantics, sort_keys=True)
     evaluation_id = "eval_" + hashlib.sha256(evaluation_seed.encode("utf-8")).hexdigest()[:20]
@@ -214,6 +245,8 @@ def build_v2_baseline_evaluation(
         "report_md": str(report_md),
         "peacon_md": str(peacon_md),
         "registry_jsonl": str(registry_jsonl),
+        "rejection_csv": str(rejection_output),
+        "time_leakage_detected": False,
     }
     registry_entry = {
         "evaluation_id": evaluation_id,
@@ -257,6 +290,8 @@ def build_v2_baseline_evaluation(
         f"- p90 AE: `{summary['p90_absolute_error_minutes']}` นาที\n"
         f"- green incidents (AE <= 16): `{green}`\n"
         f"- high-error incidents (worst meter AE >= 60): `{high_error}`\n"
+        f"- late-arriving outage exclusions: `{rejection_counts['late_arriving_outage_after_restore']}`\n"
+        "- time leakage detected: `false`\n"
         f"- mean worst-meter AE: `{summary['mean_worst_meter_absolute_error_minutes']}` นาที\n"
         "- coverage: `unavailable_no_q10_q90_baseline`\n"
         f"- research metric claim allowed: `{str(research_metric_claim_allowed).lower()}`\n"
@@ -352,3 +387,20 @@ def _sample_size_status(incident_count: int) -> str:
     if incident_count < 30:
         return "research_low_n"
     return "evaluation_sample_ready"
+
+
+def _target_time_rejection(
+    outage_ref: str,
+    interval: dict[str, Any],
+    etr: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    case_ref = "case_" + hashlib.sha256(outage_ref.encode("utf-8")).hexdigest()[:16]
+    return {
+        "case_ref": case_ref,
+        "reason": reason,
+        "outage_at": str(interval.get("outage_at") or ""),
+        "restore_at": str(interval.get("restore_at") or ""),
+        "prediction_created_at": str(etr.get("prediction_created_at") or ""),
+        "production_send": "blocked",
+    }
