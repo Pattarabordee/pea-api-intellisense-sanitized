@@ -160,6 +160,7 @@ type TruthInterval struct {
 	Source           string
 	OutageRequestID  string
 	RestoreRequestID string
+	CorrelationHash  string
 	MeterHash        string
 	MeterLast4       string
 	SiteHash         string
@@ -168,6 +169,7 @@ type TruthInterval struct {
 	RestoreAt        *time.Time
 	DurationMinutes  *float64
 	PairStatus       string
+	BridgeStatus     string
 	EvidenceJSON     json.RawMessage
 	ProductionSend   string
 	CreatedAt        time.Time
@@ -175,18 +177,24 @@ type TruthInterval struct {
 }
 
 type MetricsSnapshot struct {
-	TotalRequests       int64
-	DuplicateCallbacks  int64
-	PendingWorkerTraces int64
-	NotReadyETR         int64
-	OutboxDryRunHeld    int64
-	DeadLetters         int64
-	TruthObservations   int64
-	TruthReviewNeeded   int64
-	TruthOutageEvents   int64
-	TruthRestoreEvents  int64
-	TruthOpenIntervals  int64
-	TruthClosedIntervals int64
-	CallbackCounts      map[string]int64
-	LatestReceivedAt    *time.Time
+	TotalRequests                 int64
+	DuplicateCallbacks            int64
+	PendingWorkerTraces           int64
+	NotReadyETR                   int64
+	OutboxDryRunHeld              int64
+	DeadLetters                   int64
+	TruthObservations             int64
+	TruthReviewNeeded             int64
+	TruthOutageEvents             int64
+	TruthRestoreEvents            int64
+	TruthOpenIntervals            int64
+	TruthReviewIntervals          int64
+	TruthClosedIntervals          int64
+	TruthQuarantineIntervals      int64
+	TruthAccuracyEligibleIntervals int64
+	TruthStrictIdentityIntervals   int64
+	ModelReadyCleanTruthRows       int64
+	ModelTruthReviewRows           int64
+	CallbackCounts                map[string]int64
+	LatestReceivedAt              *time.Time
 }
