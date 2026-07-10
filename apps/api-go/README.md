@@ -43,7 +43,7 @@ POST /api/v1/ais/outage-verifications
 GET  /api/v1/ais/outage-verifications/{request_id}
 ```
 
-`/metrics` and `/api/v1/ais/truth-intervals` are operator-only and require `X-API-Key` or `Authorization: Bearer <key>`.
+`/metrics` and `/api/v1/ais/truth-intervals` are operator-only and require `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate `truth_validation_counts` for relay field-quality review; no raw identifiers are returned.
 
 `/metrics` returns aggregate counts only: total requests, duplicate callbacks, pending worker traces,
 `NOT_READY_FOR_AUTO_SEND` count, and `production_send=blocked`.

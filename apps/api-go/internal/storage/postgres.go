@@ -257,7 +257,7 @@ func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, l
 }
 
 func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
-	snapshot := &MetricsSnapshot{CallbackCounts: map[string]int64{}}
+	snapshot := &MetricsSnapshot{CallbackCounts: map[string]int64{}, TruthValidationCounts: map[string]int64{}}
 	var latestReceivedAt time.Time
 	if err := s.pool.QueryRow(
 		ctx,
@@ -337,6 +337,22 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 		return nil, err
 	}
 	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM ais_truth_ledger WHERE validation_status <> 'READY_FOR_LEDGER'`).Scan(&snapshot.ModelTruthReviewRows); err != nil {
+		return nil, err
+	}
+	validationRows, err := s.pool.Query(ctx, `SELECT validation_status, count(*) FROM ais_truth_ledger GROUP BY validation_status ORDER BY validation_status`)
+	if err != nil {
+		return nil, err
+	}
+	defer validationRows.Close()
+	for validationRows.Next() {
+		var status string
+		var count int64
+		if err := validationRows.Scan(&status, &count); err != nil {
+			return nil, err
+		}
+		snapshot.TruthValidationCounts[status] = count
+	}
+	if err := validationRows.Err(); err != nil {
 		return nil, err
 	}
 	rows, err := s.pool.Query(ctx, `SELECT status, count(*) FROM ais_inbound_callbacks GROUP BY status ORDER BY status`)
