@@ -25,9 +25,11 @@ import (
 
 const (
 	APIVersion           = "v1"
-	SchemaVersion        = "2026-06-20"
+	SchemaVersion        = "2026-07-10"
 	Mode                 = "shadow"
 	ProductionSend       = "blocked"
+	SemanticCaptureVersion = "v2"
+	SemanticMappingVersion = "alarm_mapping_v2"
 	inboundPath          = "/api/v1/ais/outage-verifications"
 	truthIntervalsPath   = "/api/v1/ais/truth-intervals"
 	maxBodyBytes   int64 = 1_000_000
@@ -235,12 +237,25 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"truth_validation_counts":     snapshot.TruthValidationCounts,
 		"truth_event_semantic_counts": snapshot.TruthEventSemanticCounts,
 		"truth_stale_open_intervals":   snapshot.TruthStaleOpenIntervals,
+		"v2_outage_events":             snapshot.V2OutageEvents,
+		"v2_restore_events":            snapshot.V2RestoreEvents,
+		"v2_open_intervals":            snapshot.V2OpenIntervals,
+		"v2_model_ready_rows":          snapshot.V2ModelReadyRows,
+		"preactivation_pair_review":    snapshot.PreactivationPairReview,
+		"preactivation_open_review":    snapshot.PreactivationOpenReview,
+		"preactivation_stale_open_review": snapshot.PreactivationStaleOpenReview,
+		"v2_restore_without_open":      snapshot.V2RestoreWithoutOpen,
+		"v2_duration_review":           snapshot.V2DurationReview,
+		"semantic_mapping_version":     SemanticMappingVersion,
 		"truth_interval_policy": truthIntervalMetricsPolicy(),
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
 	}
 	if snapshot.LatestReceivedAt != nil {
 		payload["latest_received_at"] = snapshot.LatestReceivedAt.Format(time.RFC3339)
+	}
+	if snapshot.V2ActivationFirstSeenAt != nil {
+		payload["v2_activation_first_seen_at"] = snapshot.V2ActivationFirstSeenAt.Format(time.RFC3339)
 	}
 	writeJSON(w, http.StatusOK, payload)
 }
@@ -583,7 +598,8 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 		"main_cause":             req.MainCause,
 		"subcause":               req.Subcause,
 		"semantic_signals":       req.SemanticSignals,
-		"semantic_capture_version": "v1",
+		"semantic_capture_version": SemanticCaptureVersion,
+		"semantic_mapping_version": SemanticMappingVersion,
 		"production_send":        ProductionSend,
 		"trust_boundary_source":  "AIS",
 		"raw_field_names_stored": false,
@@ -643,6 +659,7 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 			MeterLast4:          last4(req.MeterNo),
 			EventType:           req.EventType,
 			EventTypeSource:     req.EventTypeSource,
+			SemanticMappingVersion: SemanticMappingVersion,
 			DetectedAt:          req.DetectedAt,
 			OutageAt:            req.OutageAt,
 			RestoreAt:           req.RestoreAt,
@@ -712,6 +729,8 @@ func acceptedResponse(requestID string, duplicate bool, callbackStatus string, r
 		"request_id":      requestID,
 		"duplicate":       duplicate,
 		"callback_status": callbackStatus,
+		"semantic_capture_version": SemanticCaptureVersion,
+		"semantic_mapping_version": SemanticMappingVersion,
 		"result_path":     inboundPath + "/" + url.PathEscape(requestID),
 		"production_send": ProductionSend,
 		"received_at":     receivedAt.Format(time.RFC3339),
@@ -742,6 +761,8 @@ func shadowCallbackPayload(req inboundRequest, status string, confidence string,
 			"outage_at":          formatTimePtr(req.OutageAt),
 			"restore_at":         formatTimePtr(req.RestoreAt),
 			"validation_status":  req.TruthValidation,
+			"semantic_capture_version": SemanticCaptureVersion,
+			"semantic_mapping_version": SemanticMappingVersion,
 			"truth_target":       "ais_site_actual_restoration_minutes",
 			"production_send":    ProductionSend,
 		},
@@ -806,6 +827,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 		semanticSignals = map[string]any{}
 	}
 	semanticCaptureVersion, _ := requestSummary["semantic_capture_version"].(string)
+	semanticMappingVersion, _ := requestSummary["semantic_mapping_version"].(string)
 	timestampQuality := map[string]any{}
 	_ = json.Unmarshal(row.TimestampQuality, &timestampQuality)
 	return map[string]any{
@@ -834,6 +856,7 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 		},
 		"semantic_signals": semanticSignals,
 		"semantic_capture_version": semanticCaptureVersion,
+		"semantic_mapping_version": blankDefault(semanticMappingVersion, row.TruthSemanticMappingVersion),
 		"result": result,
 		"last_callback": map[string]any{
 			"status": row.LatestCallback,
@@ -865,6 +888,7 @@ func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
 		"source":             blankDefault(row.Source, "AIS"),
 		"pair_status":        row.PairStatus,
 		"bridge_status":      blankDefault(row.BridgeStatus, "LEGACY_UNVERIFIED"),
+		"semantic_mapping_version": blankDefault(row.SemanticMappingVersion, "legacy"),
 		"outage_request_ref":  hashReference("request", row.OutageRequestID),
 		"restore_request_ref": hashReference("request", row.RestoreRequestID),
 		"outage_at":          row.OutageAt.Format(time.RFC3339),
@@ -873,7 +897,7 @@ func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
 		"meter":              map[string]any{"hash": row.MeterHash, "last4": row.MeterLast4},
 		"site":               map[string]any{"hash": row.SiteHash, "last4": row.SiteLast4},
 		"evidence":           safeIntervalEvidence(row.EvidenceJSON),
-		"review_hint":        truthIntervalReviewHint(row.PairStatus, row.BridgeStatus),
+		"review_hint":        truthIntervalReviewHint(row.PairStatus, row.BridgeStatus, row.SemanticMappingVersion),
 		"review_policy":      policy,
 		"production_send":    ProductionSend,
 		"updated_at":         row.UpdatedAt.Format(time.RFC3339),
@@ -892,12 +916,12 @@ func safeIntervalEvidence(raw json.RawMessage) map[string]any {
 	}
 }
 
-func truthIntervalReviewHint(status, bridgeStatus string) string {
+func truthIntervalReviewHint(status, bridgeStatus, semanticMappingVersion string) string {
 	switch status {
 	case "OPEN":
 		return "quarantine_await_restore_or_owner_review"
 	case "CLOSED":
-		if bridgeStatus != "METER_STATE_MODEL_READY" {
+		if bridgeStatus != "METER_STATE_MODEL_READY" || semanticMappingVersion != SemanticMappingVersion {
 			return "closed_interval_audit_only_until_meter_state_gate"
 		}
 		return "paired_outage_restore"
@@ -909,7 +933,7 @@ func truthIntervalReviewHint(status, bridgeStatus string) string {
 }
 
 func truthIntervalReviewPolicy(row *storage.TruthInterval) map[string]any {
-	if row.PairStatus == "CLOSED" && row.BridgeStatus == "METER_STATE_MODEL_READY" && row.RestoreAt != nil && row.DurationMinutes != nil {
+	if row.PairStatus == "CLOSED" && row.BridgeStatus == "METER_STATE_MODEL_READY" && row.SemanticMappingVersion == SemanticMappingVersion && row.RestoreAt != nil && row.DurationMinutes != nil {
 		return map[string]any{
 			"disposition":                           "meter_state_model_ready_truth_interval",
 			"model_accuracy_eligible":               true,
@@ -948,7 +972,7 @@ func truthIntervalMetricsPolicy() map[string]any {
 			"readiness_eligible": false,
 			"customer_send":     false,
 		},
-		"closed_meter_state_model_ready": map[string]any{
+		"closed_v2_meter_state_model_ready": map[string]any{
 			"disposition":       "meter_state_model_ready_truth_interval",
 			"accuracy_eligible": true,
 			"readiness_eligible": true,
@@ -1077,6 +1101,9 @@ func normalizeTruthEventType(payload map[string]any) (string, string) {
 	alarmType := strings.ToUpper(strings.TrimSpace(firstText(payload, "alarm_type", "alarmType", "alarm")))
 	if alarmType == "AC_MAIN_FAIL" {
 		return "OUTAGE", "mapped_alarm_type"
+	}
+	if alarmType == "AC_MAIN_RESTORE" {
+		return "RESTORE", "mapped_alarm_type"
 	}
 	if alarmType != "" {
 		return "STATUS", "mapped_unknown"

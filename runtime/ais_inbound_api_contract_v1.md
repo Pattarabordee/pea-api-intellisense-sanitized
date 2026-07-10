@@ -19,15 +19,15 @@ X-API-Key: <shared pilot key>
 | `request_id` | Unique per request; reuse only when retrying the same request. |
 | `meter_no` | Meter/service-point identity used by PEA's meter-state lifecycle. |
 | `timestamp` | ISO 8601 event time. A missing offset is interpreted as Asia/Bangkok and flagged. |
-| `event_type` or allowlisted structured signal | Explicit `OUTAGE`/`RESTORE` is preferred. Allowlisted `power_status`, `event_status`, or `status` values may be mapped. The exact structured code `alarm_type=AC_MAIN_FAIL` maps to `OUTAGE`. |
+| `event_type` or allowlisted structured signal | Explicit `OUTAGE`/`RESTORE` is preferred. Allowlisted `power_status`, `event_status`, or `status` values may be mapped. Exact `alarm_type=AC_MAIN_FAIL` maps to `OUTAGE`; exact `alarm_type=AC_MAIN_RESTORE` maps to `RESTORE` for prospective v2 requests. |
 
 Optional evidence: `source_event_id`, `site_id`, `location_id`, area fields, alarm type, and cause fields. Optional identifiers are hashed before persistence and are not pairing keys.
 
 Cause text cannot create model truth. An unknown or non-allowlisted status/alarm is accepted for audit as `REVIEW_EVENT_TYPE`. No RESTORE mapping is inferred from `mainCause` or `subcause`.
 
-Observed `alarm_type=AC_MAIN_RESTORE` is recorded as a restore mapping candidate only. It remains `REVIEW_EVENT_TYPE` until the passive observation and contract gate are completed.
+The authenticated operator list includes `semantic_capture_version=v2`, `semantic_mapping_version=alarm_mapping_v2`, and a sanitized `semantic_signals` object for newly captured rows. Signals contain only fixed event/status/alarm fields; unsafe or long categorical values are represented by a hash reference only.
 
-The authenticated operator list includes `semantic_capture_version=v1` and a sanitized `semantic_signals` object for newly captured rows. The audit excludes rows without this version marker. Signals contain only fixed event/status/alarm fields; unsafe or long categorical values are represented by a hash reference only.
+Rows captured before v2 activation remain audit-only. They are never replayed or relabeled into model-ready truth.
 
 ## Meter-State Rules
 
@@ -38,7 +38,8 @@ The authenticated operator list includes `semantic_capture_version=v1` and a san
 - Multiple open intervals are quarantined as `REVIEW_MULTIPLE_OPEN_INTERVALS`.
 - RESTORE must follow OUTAGE.
 - Duration must be `>5` and `<=1440` minutes for `METER_STATE_MODEL_READY`.
-- Legacy and strict-source-event intervals remain audit-only.
+- Legacy, strict-source-event, and preactivation v1 intervals remain audit-only.
+- A v2 RESTORE can close only a v2 open interval with the same semantic mapping version.
 
 ## Examples
 
@@ -79,7 +80,7 @@ The restore contract becomes an activation candidate only when all conditions pa
 - every candidate pair has duration `>5` and `<=1440` minutes;
 - no semantic conflict or missing meter/time evidence.
 
-Before this gate passes, `AC_MAIN_RESTORE` remains `STATUS` with `REVIEW_EVENT_TYPE`. Historical candidate pairs use `preactivation_pair_policy=audit_only`; they are never replayed into model-ready truth. A later activation must use `semantic_mapping_version=alarm_mapping_v2` and applies prospectively only.
+The gate passed on sanitized aggregate evidence: 109 capture rows, 35 valid same-meter chronological pairs, no invalid pair, no missing identity/time, and no semantic conflict. Historical candidates remain `preactivation_pair_policy=audit_only`. Prospective requests use `semantic_capture_version=v2` and `semantic_mapping_version=alarm_mapping_v2`.
 
 ## Model Truth
 

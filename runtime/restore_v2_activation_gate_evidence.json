@@ -1,0 +1,15 @@
+{
+  "evidence_class": "sanitized_aggregate_contract_gate",
+  "capture_rows": 109,
+  "valid_same_meter_pairs": 35,
+  "invalid_pairs": 0,
+  "missing_identity_or_time": 0,
+  "semantic_conflicts": 0,
+  "duration_minutes_min": 8.233,
+  "duration_minutes_max": 100.517,
+  "activation_candidate_ready": true,
+  "historical_pair_policy": "audit_only",
+  "prospective_semantic_capture_version": "v2",
+  "prospective_semantic_mapping_version": "alarm_mapping_v2",
+  "production_send": "blocked"
+}

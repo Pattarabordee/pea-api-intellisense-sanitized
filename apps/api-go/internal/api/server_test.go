@@ -135,7 +135,7 @@ func TestACMainFailAlarmCreatesMappedOutage(t *testing.T) {
 	}
 }
 
-func TestACMainRestoreRemainsReviewBeforeContractGate(t *testing.T) {
+func TestACMainRestoreCreatesProspectiveV2Restore(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-ALARM-RESTORE-CANDIDATE","meter_no":"METER-1234","timestamp":"2026-07-10T17:30:00+07:00","alarm_type":"AC_MAIN_RESTORE"}`
@@ -145,8 +145,22 @@ func TestACMainRestoreRemainsReviewBeforeContractGate(t *testing.T) {
 	res := httptest.NewRecorder()
 	handler.ServeHTTP(res, req)
 	row := store.rows["AIS-ALARM-RESTORE-CANDIDATE"]
-	if row.TruthEventType != "STATUS" || row.TruthEventTypeSource != "mapped_unknown" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
-		t.Fatalf("restore alarm must remain review-only before contract activation: %#v", row)
+	if row.TruthEventType != "RESTORE" || row.TruthEventTypeSource != "mapped_alarm_type" || row.TruthValidation != "READY_FOR_LEDGER" {
+		t.Fatalf("AC_MAIN_RESTORE must create an allowlisted prospective restore: %#v", row)
+	}
+	if row.TruthSemanticMappingVersion != SemanticMappingVersion {
+		t.Fatalf("restore must be tagged with v2 mapping version: %#v", row)
+	}
+}
+
+func TestAlarmMappingIsExactAfterNormalization(t *testing.T) {
+	eventType, source := normalizeTruthEventType(map[string]any{"alarm_type": " ac_main_restore "})
+	if eventType != "RESTORE" || source != "mapped_alarm_type" {
+		t.Fatalf("normalized exact restore code should map: %s %s", eventType, source)
+	}
+	eventType, source = normalizeTruthEventType(map[string]any{"alarm_type": "AC_MAIN_RESTORE_EXTRA"})
+	if eventType != "STATUS" || source != "mapped_unknown" {
+		t.Fatalf("substring alarm must remain review-only: %s %s", eventType, source)
 	}
 }
 
@@ -369,9 +383,9 @@ func TestLongOptionalFieldReturns400(t *testing.T) {
 func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	store := newFakeStore()
 	store.intervals = []storage.TruthInterval{
-		{PairStatus: "OPEN", BridgeStatus: "METER_STATE_AWAITING_RESTORE"},
+		{PairStatus: "OPEN", BridgeStatus: "METER_STATE_AWAITING_RESTORE", SemanticMappingVersion: SemanticMappingVersion},
 		{PairStatus: "REVIEW"},
-		{PairStatus: "CLOSED", BridgeStatus: "METER_STATE_MODEL_READY", RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
+		{PairStatus: "CLOSED", BridgeStatus: "METER_STATE_MODEL_READY", SemanticMappingVersion: SemanticMappingVersion, RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
 	}
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-METRICS","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
@@ -419,6 +433,9 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	if payload["truth_strict_identity_intervals"].(float64) != 0 || payload["truth_meter_state_intervals"].(float64) != 1 || payload["model_ready_clean_truth_rows"].(float64) != 1 {
 		t.Fatalf("meter-state metrics missing: %#v", payload)
 	}
+	if payload["v2_open_intervals"].(float64) != 1 || payload["v2_model_ready_rows"].(float64) != 1 || payload["semantic_mapping_version"] != SemanticMappingVersion {
+		t.Fatalf("prospective v2 metrics missing: %#v", payload)
+	}
 	if payload["model_truth_review_rows"].(float64) != 1 {
 		t.Fatalf("review-only legacy request must remain visible in metrics: %#v", payload)
 	}
@@ -454,6 +471,7 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 			OutageAt:        outageAt,
 			PairStatus:      "OPEN",
 			BridgeStatus:    "METER_STATE_AWAITING_RESTORE",
+			SemanticMappingVersion: SemanticMappingVersion,
 			EvidenceJSON:    json.RawMessage(`{"source":"go_postgres_truth_pairing","reason":"ready_outage_waiting_for_restore","outage_source_event_id":"SRC-SECRET-1","pair_key":"sitehash","production_send":"blocked"}`),
 			ProductionSend:  "blocked",
 			CreatedAt:       outageAt,
@@ -493,6 +511,9 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 		t.Fatalf("expected one open interval, got %#v", payload)
 	}
 	item := items[0].(map[string]any)
+	if item["semantic_mapping_version"] != SemanticMappingVersion {
+		t.Fatalf("interval response omitted the redacted mapping version: %#v", item)
+	}
 	policy := item["review_policy"].(map[string]any)
 	if policy["disposition"] != "quarantine_review_queue" {
 		t.Fatalf("open interval must stay in quarantine review queue: %#v", policy)
@@ -502,6 +523,20 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 	}
 	if policy["ais_outbound_message"] != "hold_until_model_accuracy_gate_passes" {
 		t.Fatalf("AIS outbound must stay held until model gate passes: %#v", policy)
+	}
+}
+
+func TestHistoricalMeterStateClosedIntervalIsAuditOnly(t *testing.T) {
+	row := storage.TruthInterval{
+		PairStatus:       "CLOSED",
+		BridgeStatus:     "METER_STATE_MODEL_READY",
+		SemanticMappingVersion: "capture_v1",
+		RestoreAt:        ptrTime(time.Date(2026, 7, 10, 4, 0, 0, 0, time.UTC)),
+		DurationMinutes:  ptrFloat(60),
+	}
+	policy := truthIntervalReviewPolicy(&row)
+	if policy["model_accuracy_eligible"] != false || policy["disposition"] != "quarantine_review_queue" {
+		t.Fatalf("v1 historical interval must stay audit-only: %#v", policy)
 	}
 }
 
@@ -621,6 +656,7 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 		CallbackAttempts:  outbox.AttemptCount,
 		TruthEventType:       truth.EventType,
 		TruthEventTypeSource: truth.EventTypeSource,
+		TruthSemanticMappingVersion: truth.SemanticMappingVersion,
 		TruthValidation:      truth.ValidationStatus,
 		TruthSourceEventRef:  truth.SourceEventHash,
 		TruthSiteHash:        truth.SiteHash,
@@ -680,9 +716,15 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		}
 		if row.TruthEventType == "OUTAGE" {
 			snapshot.TruthOutageEvents++
+			if row.TruthSemanticMappingVersion == SemanticMappingVersion {
+				snapshot.V2OutageEvents++
+			}
 		}
 		if row.TruthEventType == "RESTORE" {
 			snapshot.TruthRestoreEvents++
+			if row.TruthSemanticMappingVersion == SemanticMappingVersion {
+				snapshot.V2RestoreEvents++
+			}
 		}
 		if row.TruthEventTypeSource != "" && row.TruthEventType != "" {
 			snapshot.TruthEventSemanticCounts[row.TruthEventTypeSource+":"+row.TruthEventType]++
@@ -700,6 +742,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 			snapshot.TruthOpenIntervals++
 			if interval.BridgeStatus == "METER_STATE_AWAITING_RESTORE" {
 				snapshot.TruthMeterStateOpenIntervals++
+				if interval.SemanticMappingVersion == SemanticMappingVersion {
+					snapshot.V2OpenIntervals++
+				}
 			}
 			snapshot.TruthQuarantineIntervals++
 		case "REVIEW":
@@ -707,9 +752,10 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 			snapshot.TruthQuarantineIntervals++
 		case "CLOSED":
 			snapshot.TruthClosedIntervals++
-			if interval.BridgeStatus == "METER_STATE_MODEL_READY" && interval.RestoreAt != nil && interval.DurationMinutes != nil {
+			if interval.BridgeStatus == "METER_STATE_MODEL_READY" && interval.SemanticMappingVersion == SemanticMappingVersion && interval.RestoreAt != nil && interval.DurationMinutes != nil {
 				snapshot.TruthAccuracyEligibleIntervals++
 				snapshot.ModelReadyCleanTruthRows++
+				snapshot.V2ModelReadyRows++
 			} else {
 				snapshot.TruthQuarantineIntervals++
 			}

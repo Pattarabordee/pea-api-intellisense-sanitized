@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -112,5 +113,44 @@ func TestStrictRestoreOutcomeRequiresTimeOrderAndValidDuration(t *testing.T) {
 	}
 	if got := strictRestoreOutcome(1, outageAt, outageAt.Add(60*time.Minute)); got.validationStatus != "READY_FOR_LEDGER" || got.bridgeStatus != "METER_STATE_MODEL_READY" || got.pairStatus != "CLOSED" {
 		t.Fatalf("valid strict pair must be model-ready: %#v", got)
+	}
+}
+
+func TestRestoreV2MigrationQuarantinesV1WithoutRewritingHistoricalEvents(t *testing.T) {
+	sqlBytes, err := migrationFS.ReadFile("migrations/007_restore_semantic_v2_activation.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(sqlBytes)
+	for _, required := range []string{
+		"REVIEW_PREACTIVATION_PAIR",
+		"REVIEW_PREACTIVATION_OPEN",
+		"REVIEW_STALE_PREACTIVATION_OPEN",
+		"ais_truth_interval_status_audit",
+		"semantic_mapping_version",
+		"ON CONFLICT (interval_id, new_bridge_status, semantic_mapping_version) DO NOTHING",
+	} {
+		if !strings.Contains(sql, required) {
+			t.Fatalf("migration 007 missing %q", required)
+		}
+	}
+	upper := strings.ToUpper(sql)
+	if strings.Contains(upper, "UPDATE AIS_TRUTH_LEDGER SET EVENT_TYPE") || strings.Contains(upper, "UPDATE AIS_TRUTH_LEDGER\nSET EVENT_TYPE") {
+		t.Fatal("migration must not rewrite historical ledger event types")
+	}
+}
+
+func TestMeterOpenIntervalQueryRequiresSameMappingVersion(t *testing.T) {
+	sourceBytes, err := migrationFS.ReadFile("migrations/007_restore_semantic_v2_activation.sql")
+	if err != nil || len(sourceBytes) == 0 {
+		t.Fatal("migration 007 must be embedded")
+	}
+	const requiredPredicate = "AND semantic_mapping_version = $2"
+	postgresSource, err := os.ReadFile("postgres.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(postgresSource), requiredPredicate) {
+		t.Fatal("meter-state pairing must reject cross-version intervals")
 	}
 }
