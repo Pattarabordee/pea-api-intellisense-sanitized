@@ -41,6 +41,7 @@ class V2LifecycleAuditTests(unittest.TestCase):
             "pair_status": status,
             "bridge_status": bridge,
             "duration_minutes": duration,
+            "outage_at": "2026-07-10T01:00:00Z",
             "restore_at": "2026-07-10T01:30:00Z" if status == "CLOSED" else "",
         }
 
@@ -63,6 +64,7 @@ class V2LifecycleAuditTests(unittest.TestCase):
                 report_md=root / "report.md",
                 summary_json=root / "summary.json",
                 peacon_md=root / "peacon.md",
+                incident_csv=root / "incidents.csv",
             )
             with (root / "cases.csv").open(encoding="utf-8-sig") as handle:
                 rows = list(csv.DictReader(handle))
@@ -202,6 +204,31 @@ class V2LifecycleAuditTests(unittest.TestCase):
     def test_invalid_closed_pair_blocks_integrity(self):
         result, _, *_ = self._run([], [self._interval(duration=3, bridge="METER_STATE_DURATION_REVIEW")])
         self.assertEqual("closed_pair_integrity_blocked", result["gate_status"])
+
+    def test_conservative_incident_grouping_counts_independent_events(self):
+        items = []
+        intervals = []
+        for index, outage_time in enumerate(
+            ("2026-07-10T01:00:00Z", "2026-07-10T01:03:00Z", "2026-07-10T01:10:00Z")
+        ):
+            ref = f"outage-{index}"
+            item = self._item(
+                request_ref=ref,
+                meter_hash=f"meter-{index}",
+                event_time=outage_time,
+                event_type="OUTAGE",
+            )
+            item["received_at"] = outage_time
+            item["etr_status"] = "SHADOW_BASELINE_CAPTURED"
+            item["result"] = {"etr": {"p50_minutes": 60, "prediction_created_at": outage_time}}
+            interval = self._interval()
+            interval["outage_at"] = outage_time
+            interval["outage_request_ref"] = ref
+            items.append(item)
+            intervals.append(interval)
+        result, *_ = self._run(items, intervals)
+        self.assertEqual(2, result["clean_independent_incident_groups"])
+        self.assertEqual(2, result["scorable_independent_incident_groups"])
 
     def test_nonblocked_metrics_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "production_send"):

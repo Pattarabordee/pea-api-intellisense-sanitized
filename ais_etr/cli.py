@@ -283,6 +283,7 @@ def cmd_ais_v2_lifecycle_audit(args: argparse.Namespace) -> None:
         report_md=args.report,
         summary_json=args.summary_json,
         peacon_md=args.peacon,
+        incident_csv=args.incident_output,
         limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
@@ -2838,6 +2839,7 @@ def build_parser() -> argparse.ArgumentParser:
     v2_lifecycle.add_argument("--report", default="runtime/private/ais_v2_lifecycle_report.md")
     v2_lifecycle.add_argument("--summary-json", default="runtime/private/ais_v2_lifecycle_summary.json")
     v2_lifecycle.add_argument("--peacon", default="runtime/private/peacon_v2_lifecycle_update.md")
+    v2_lifecycle.add_argument("--incident-output", default="runtime/private/ais_v2_incident_groups.csv")
     v2_lifecycle.add_argument("--limit", type=int, default=200)
     v2_lifecycle.set_defaults(func=cmd_ais_v2_lifecycle_audit)
 
