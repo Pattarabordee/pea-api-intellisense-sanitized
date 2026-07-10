@@ -26,6 +26,7 @@ from .cloud_production import (
     run_ais_truth_interval_pairing,
     run_cloud_worker_shadow_loop,
 )
+from .clean_etr_evaluation import build_clean_etr_evaluation_frame
 from .ais_active_state_challenger import build_active_state_remaining_challenger
 from .ais_add_field_truth import import_ais_add_field_truth
 from .ais_first_error_triage import build_ais_first_error_triage
@@ -81,8 +82,10 @@ from .evaluation import build_shadow_report, evaluate_sample_messages, export_sh
 from .incident_clustering import build_shadow_incident_clusters, build_shadow_incident_replay_report
 from .long_outage_challenger import build_long_outage_refresh_challenger
 from .long_outage_root_cause import build_long_outage_root_cause_pack
+from .local_evidence_lane import run_local_evidence_lane
 from .mock_webhook import DEFAULT_PATH as MOCK_WEBHOOK_PATH
 from .mock_webhook import serve_mock_webhook
+from .model import promote_model_candidate
 from .model_scope import (
     build_model_scope_comparison,
     build_shadow_model_comparison,
@@ -229,6 +232,32 @@ def cmd_train(args: argparse.Namespace) -> None:
     settings = _settings(args)
     pipeline = AisEtrPipeline(settings)
     result = pipeline.train_model()
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_promote_model(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = promote_model_candidate(
+        args.candidate,
+        settings.resolve(settings.model_path),
+        approved_by=args.approved_by,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_clean_etr_frame(args: argparse.Namespace) -> None:
+    result = build_clean_etr_evaluation_frame(args.source, args.output, args.summary)
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_local_evidence(args: argparse.Namespace) -> None:
+    result = run_local_evidence_lane(
+        base_url=args.base_url,
+        snapshot_csvs=args.snapshot,
+        output_csv=args.output,
+        report_md=args.report,
+        limit=args.limit,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
 
@@ -2740,6 +2769,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     train = sub.add_parser("train", help="Train quantile baseline ETR model")
     train.set_defaults(func=cmd_train)
+
+    promote_model = sub.add_parser("promote-model", help="Promote a gate-passed shadow candidate model")
+    promote_model.add_argument("--candidate", required=True)
+    promote_model.add_argument("--approved-by", required=True)
+    promote_model.set_defaults(func=cmd_promote_model)
+
+    clean_etr = sub.add_parser("clean-etr-frame", help="Build strict AIS remaining-ETR evaluation frame")
+    clean_etr.add_argument("--source", required=True)
+    clean_etr.add_argument("--output", default="runtime/private/clean_etr_evaluation.csv")
+    clean_etr.add_argument("--summary", default="runtime/private/clean_etr_evaluation_summary.json")
+    clean_etr.set_defaults(func=cmd_clean_etr_frame)
+
+    local_evidence = sub.add_parser("local-evidence-once", help="Run private PEA evidence context check using read-only cloud GET")
+    local_evidence.add_argument("--base-url", required=True)
+    local_evidence.add_argument("--snapshot", action="append", default=[], help="Local redacted evidence CSV; repeat as needed")
+    local_evidence.add_argument("--output", default="runtime/private/local_evidence_lane.csv")
+    local_evidence.add_argument("--report", default="runtime/private/local_evidence_lane.md")
+    local_evidence.add_argument("--limit", type=int, default=50)
+    local_evidence.set_defaults(func=cmd_local_evidence)
 
     poll = sub.add_parser("poll-once", help="Poll Webex once and send shadow notifications")
     poll.add_argument("--max-messages", type=int, default=50)

@@ -44,18 +44,15 @@ def validate_strict_payload(payload: dict[str, Any], *, assume_bangkok_if_naive:
     """Validate one OUTAGE or RESTORE payload without generating or emitting identifiers."""
     reasons: list[str] = []
     assumed: list[str] = []
-    event_type = _text(payload.get("event_type")).upper()
+    event_type = _meter_state_event_type(payload)
     if event_type not in {"OUTAGE", "RESTORE"}:
         reasons.append("event_type_required")
     _required_text(payload, "request_id", MAX_REQUEST_ID, reasons)
     _required_text(payload, "meter_no", MAX_METER, reasons)
-    _required_text(payload, "source_event_id", MAX_SOURCE_EVENT_ID, reasons)
-    if not (_bounded_text(payload.get("site_id"), MAX_SITE_ID) or _bounded_text(payload.get("location_id"), MAX_SITE_ID)):
-        reasons.append("site_or_location_required")
     _timestamp(payload, "timestamp", reasons, assumed, assume_bangkok_if_naive)
-    if event_type == "OUTAGE":
+    if event_type == "OUTAGE" and _text(payload.get("outage_at")):
         _timestamp(payload, "outage_at", reasons, assumed, assume_bangkok_if_naive)
-    if event_type == "RESTORE":
+    if event_type == "RESTORE" and _text(payload.get("restore_at")):
         _timestamp(payload, "restore_at", reasons, assumed, assume_bangkok_if_naive)
     return _result(payload, reasons, assumed)
 
@@ -79,14 +76,12 @@ def validate_strict_pair(
         reasons.append("outage_event_type_required")
     if _text(restore_payload.get("event_type")).upper() != "RESTORE":
         reasons.append("restore_event_type_required")
-    if _text(outage_payload.get("source_event_id")) != _text(restore_payload.get("source_event_id")):
-        reasons.append("source_event_id_mismatch")
     if _text(outage_payload.get("meter_no")) != _text(restore_payload.get("meter_no")):
         reasons.append("meter_identity_mismatch")
-    if _site_reference(outage_payload) != _site_reference(restore_payload):
+    if _site_reference(outage_payload) and _site_reference(restore_payload) and _site_reference(outage_payload) != _site_reference(restore_payload):
         reasons.append("site_identity_mismatch")
-    outage_at = _parsed_timestamp(outage_payload.get("outage_at"), assume_bangkok_if_naive)
-    restore_at = _parsed_timestamp(restore_payload.get("restore_at"), assume_bangkok_if_naive)
+    outage_at = _parsed_timestamp(outage_payload.get("outage_at") or outage_payload.get("timestamp"), assume_bangkok_if_naive)
+    restore_at = _parsed_timestamp(restore_payload.get("restore_at") or restore_payload.get("timestamp"), assume_bangkok_if_naive)
     if outage_at is not None and restore_at is not None:
         duration = (restore_at - outage_at).total_seconds() / 60.0
         if duration <= 0:
@@ -163,6 +158,18 @@ def _is_naive_timestamp(value: Any) -> bool:
 
 def _site_reference(payload: dict[str, Any]) -> str:
     return _text(payload.get("site_id")) or _text(payload.get("location_id"))
+
+
+def _meter_state_event_type(payload: dict[str, Any]) -> str:
+    explicit = _text(payload.get("event_type")).upper()
+    if explicit in {"OUTAGE", "RESTORE"}:
+        return explicit
+    mapped = _text(payload.get("power_status") or payload.get("event_status") or payload.get("status")).lower()
+    if mapped in {"outage", "power_off", "power off", "off", "down", "ac_main_fail", "ac main fail", "fail", "failure"}:
+        return "OUTAGE"
+    if mapped in {"restore", "restored", "power_on", "power on", "on", "normal", "recover", "recovered"}:
+        return "RESTORE"
+    return "UNKNOWN"
 
 
 def _text(value: Any) -> str:

@@ -75,25 +75,7 @@ try {
 }
 
 $items = @($operator.items)
-$smokePrefixes = @(
-  "AIS-CLOUD-SMOKE-",
-  "AIS-SMOKE-",
-  "AIS-PUBLIC-ALIAS-SMOKE-",
-  "AIS-FINAL-LOCAL-SMOKE-",
-  "AIS-BEARER-SMOKE-",
-  "AIS-DEMO-SHADOW-",
-  "AIS-CODEX-"
-)
-$realItems = @($items | Where-Object {
-  $rid = [string]$_.request_id
-  if (-not $rid) { return $false }
-  foreach ($prefix in $smokePrefixes) {
-    if ($rid.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
-      return $false
-    }
-  }
-  return $true
-})
+$realItems = @($items)
 
 $latestReal = $realItems | Select-Object -First 1
 $latestAny = $items | Select-Object -First 1
@@ -104,27 +86,15 @@ $truthValidationCounts = Count-Values (@($realItems | ForEach-Object { $_.truth_
 $callbackCounts = Count-Values (@($realItems | ForEach-Object { $_.callback_status }))
 $outboxCounts = Count-Values (@($realItems | ForEach-Object { $_.callback_outbox.status }))
 
-$greenRows = $null
-$greenGatePath = "runtime/green_gate_tracker.md"
-if (Test-Path -LiteralPath $greenGatePath) {
-  $greenText = Get-Content -Raw -LiteralPath $greenGatePath
-  $match = [regex]::Match($greenText, "Current green rows:\s*(\d+)")
-  if ($match.Success) {
-    $greenRows = [int]$match.Groups[1].Value
-  }
-}
+$modelReadyRows = [int64]$metrics.model_ready_clean_truth_rows
 
 $webStatus = "SKIPPED"
-$webHasFallback = $false
-$webHasLatest = $false
+$webHasDemoLabel = $false
 if ($cleanWeb) {
   try {
     $webHtml = curl.exe -sS --max-time 25 "$cleanWeb/"
-    $webHasFallback = $webHtml -match "fallback:"
-    if ($latest) {
-      $webHasLatest = $webHtml -match [regex]::Escape([string]$latest.request_id)
-    }
-    $webStatus = if (-not $webHasFallback -and ($webHasLatest -or -not $latest)) { "PASS" } else { "WARN" }
+    $webHasDemoLabel = $webHtml -match "DEMO DATA"
+    $webStatus = if ($webHasDemoLabel) { "PASS" } else { "WARN" }
   } catch {
     $webStatus = "WARN"
   }
@@ -138,8 +108,8 @@ $checks += New-Check "truth_review_queue" $(if ([int64]$metrics.truth_review_nee
 $checks += New-Check "truth_interval_state" $(if ([int64]$metrics.truth_open_intervals -eq 0) { "PASS" } else { "WARN" }) "open=$($metrics.truth_open_intervals), closed=$($metrics.truth_closed_intervals)" "open intervals must be explained as active outage or missing restore"
 $checks += New-Check "truth_interval_detail" $(if ([int64]$metrics.truth_open_intervals -eq 0 -or $truthIntervalStatus -eq "PASS") { "PASS" } else { "WARN" }) "detail_status=$truthIntervalStatus, open_detail_rows=$($truthIntervals.Count)" "open interval detail endpoint should be available for owner review"
 $checks += New-Check "callback_contract" $(if ($callbackCounts.Contains("CAPTURED_NO_CALLBACK_URL")) { "BLOCKED" } else { "WARN" }) "callback_counts=$(($callbackCounts | ConvertTo-Json -Compress))" "AIS callback URL/contract must be approved before real callback"
-$checks += New-Check "green_gate" $(if ($greenRows -ge 30) { "WARN" } else { "BLOCKED" }) "green_rows=$greenRows, target=30" "green subset target >=30 plus MAE/coverage gate"
-$checks += New-Check "web_console" $webStatus "has_fallback=$webHasFallback, has_latest=$webHasLatest" "web console should show live data without fallback"
+$checks += New-Check "clean_truth_capture" $(if ($modelReadyRows -ge 30) { "WARN" } else { "BLOCKED" }) "model_ready_rows=$modelReadyRows, independent_incident_target=30" "model-ready rows still require local incident grouping and MAE/coverage evaluation"
+$checks += New-Check "web_console" $webStatus "demo_label=$webHasDemoLabel" "public web console must show synthetic demo data only"
 
 $overall = "PASS_FOR_SHADOW_CAPTURE_ONLY"
 if (@($checks | Where-Object { $_.status -eq "FAIL" }).Count -gt 0) {
@@ -153,7 +123,7 @@ if (@($checks | Where-Object { $_.status -eq "FAIL" }).Count -gt 0) {
 $latestSummary = $null
 if ($latest) {
   $latestSummary = [ordered]@{
-    request_id = $latest.request_id
+    request_ref = $latest.request_ref
     received_at = $latest.received_at
     status = $latest.status
     callback_status = $latest.callback_status
@@ -222,7 +192,7 @@ foreach ($check in $checks) {
 
 $latestLines = if ($latestSummary) {
   @(
-    "- request_id: $($latestSummary.request_id)",
+    "- request_ref: $($latestSummary.request_ref)",
     "- received_at: $($latestSummary.received_at)",
     "- callback_status: $($latestSummary.callback_status)",
     "- truth_event_type: $($latestSummary.truth_event_type)",

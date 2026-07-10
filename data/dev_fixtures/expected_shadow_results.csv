@@ -1,0 +1,6 @@
+message_id,device_id,feeder,expected_match_level,expected_affected_count,expected_truth_match_status,expected_truth_match_level,expected_actual_minutes
+dev-msg-001,PFA06R-02,PFA06,recloser,2,matched,affected_peano_time,55.0
+dev-msg-002,WWA09VR-101,WWA09,recloser,1,matched,affected_peano_time,120.0
+dev-msg-003,WWA01VR-101,WWA01,recloser,1,no_match,,
+dev-msg-004,SEK05VR-101,SEK05,,0,feeder_candidate_only,feeder_time,45.0
+dev-msg-005,OUT99VR-101,OUT99,,0,no_match,,

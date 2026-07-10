@@ -31,7 +31,7 @@ func TestCallbackOutboxInsertArgsKeepEmptyLastErrorAsText(t *testing.T) {
 	}
 }
 
-func TestTruthIntervalIDUsesSiteWhenPresent(t *testing.T) {
+func TestTruthIntervalIDUsesMeterState(t *testing.T) {
 	outageAt := time.Date(2026, 7, 7, 1, 0, 0, 0, time.UTC)
 	truth := TruthObservation{
 		RequestID: "OUT-1",
@@ -48,8 +48,8 @@ func TestTruthIntervalIDUsesSiteWhenPresent(t *testing.T) {
 	if !strings.HasPrefix(id1, "ais-") || len(id1) != 24 {
 		t.Fatalf("unexpected interval id shape: %s", id1)
 	}
-	if truthPairKey(truth) != "site-hash" {
-		t.Fatalf("site hash should be preferred as pair key")
+	if truthPairKey(truth) != "meter-hash" {
+		t.Fatalf("meter hash must be the state key")
 	}
 }
 
@@ -61,15 +61,15 @@ func TestTruthPairKeyFallsBackToMeter(t *testing.T) {
 }
 
 func TestTruthCorrelationHashIsStableAndDoesNotContainSourceID(t *testing.T) {
-	truth := TruthObservation{SourceEventID: "SRC-SECRET-1001"}
+	truth := TruthObservation{SourceEventHash: "source_event_abcdef"}
 	first := truthCorrelationHash(truth)
 	second := truthCorrelationHash(truth)
 
 	if first == "" || first != second {
 		t.Fatalf("correlation hash must be deterministic and non-empty: %q %q", first, second)
 	}
-	if strings.Contains(first, truth.SourceEventID) {
-		t.Fatalf("correlation hash leaked source event id: %s", first)
+	if first != truth.SourceEventHash {
+		t.Fatalf("stored correlation reference must already be hashed: %s", first)
 	}
 	if truthCorrelationHash(TruthObservation{}) != "" {
 		t.Fatal("missing source event id must not produce a correlation hash")
@@ -94,10 +94,10 @@ func TestStrictModelDurationBoundaries(t *testing.T) {
 
 func TestStrictRestoreOutcomeRejectsMissingOrAmbiguousIdentityBridge(t *testing.T) {
 	now := time.Date(2026, 7, 10, 1, 0, 0, 0, time.UTC)
-	if got := strictRestoreOutcome(0, time.Time{}, now); got.validationStatus != "REVIEW_NO_MATCHING_OPEN_INTERVAL" {
+	if got := strictRestoreOutcome(0, time.Time{}, now); got.validationStatus != "REVIEW_NO_OPEN_INTERVAL" {
 		t.Fatalf("missing open interval must be review-only: %#v", got)
 	}
-	if got := strictRestoreOutcome(2, now.Add(-time.Hour), now); got.validationStatus != "REVIEW_IDENTITY_CONFLICT" {
+	if got := strictRestoreOutcome(2, now.Add(-time.Hour), now); got.validationStatus != "REVIEW_MULTIPLE_OPEN_INTERVALS" {
 		t.Fatalf("multiple open intervals must be an identity conflict: %#v", got)
 	}
 }
@@ -107,10 +107,10 @@ func TestStrictRestoreOutcomeRequiresTimeOrderAndValidDuration(t *testing.T) {
 	if got := strictRestoreOutcome(1, outageAt, outageAt); got.validationStatus != "REVIEW_RESTORE_BEFORE_OUTAGE" {
 		t.Fatalf("restore at outage time must be review-only: %#v", got)
 	}
-	if got := strictRestoreOutcome(1, outageAt, outageAt.Add(5*time.Minute)); got.validationStatus != "REVIEW_DURATION_OUT_OF_RANGE" || got.bridgeStatus != "STRICT_DURATION_REVIEW" {
+	if got := strictRestoreOutcome(1, outageAt, outageAt.Add(5*time.Minute)); got.validationStatus != "REVIEW_DURATION_OUT_OF_RANGE" || got.bridgeStatus != "METER_STATE_DURATION_REVIEW" {
 		t.Fatalf("short strict pair must remain duration review: %#v", got)
 	}
-	if got := strictRestoreOutcome(1, outageAt, outageAt.Add(60*time.Minute)); got.validationStatus != "READY_FOR_LEDGER" || got.bridgeStatus != "STRICT_MODEL_READY" || got.pairStatus != "CLOSED" {
+	if got := strictRestoreOutcome(1, outageAt, outageAt.Add(60*time.Minute)); got.validationStatus != "READY_FOR_LEDGER" || got.bridgeStatus != "METER_STATE_MODEL_READY" || got.pairStatus != "CLOSED" {
 		t.Fatalf("valid strict pair must be model-ready: %#v", got)
 	}
 }

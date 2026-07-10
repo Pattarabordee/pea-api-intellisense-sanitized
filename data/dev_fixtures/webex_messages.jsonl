@@ -1,0 +1,5 @@
+{"id":"dev-msg-001","roomId":"dev-room-redacted","created":"2026-06-15T05:28:39","text":"2026-06-15 05:28:39 Recloser PFA06R-02 trip open alarm\n2026-06-15 05:29:05 Recloser PFA06R-02 close normal"}
+{"id":"dev-msg-002","roomId":"dev-room-redacted","created":"2026-06-02T08:28:14","text":"2026-06-02 08:28:14 Recloser WWA09VR-101 lockout alarm"}
+{"id":"dev-msg-003","roomId":"dev-room-redacted","created":"2026-06-10T18:59:58","text":"2026-06-10 18:59:58 Recloser WWA01VR-101 trip open alarm\n2026-06-10 19:08:30 Recloser WWA01VR-101 close normal"}
+{"id":"dev-msg-004","roomId":"dev-room-redacted","created":"2026-06-05T04:54:57","text":"2026-06-05 04:54:57 Recloser SEK05VR-101 trip open alarm"}
+{"id":"dev-msg-005","roomId":"dev-room-redacted","created":"2026-06-12T12:00:00","text":"2026-06-12 12:00:00 Recloser OUT99VR-101 trip open alarm"}

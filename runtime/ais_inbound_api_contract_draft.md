@@ -1,4 +1,6 @@
-# PEA AIS Outage Verification API Contract v1
+# SUPERSEDED: PEA AIS Outage Verification API Contract Draft
+
+Use `runtime/ais_inbound_api_contract_v1.md`. This localtunnel-era contract is retained for reproducibility only.
 
 Generated: `2026-06-20T07:03:14+00:00`
 

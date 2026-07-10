@@ -1,6 +1,7 @@
 import csv
 import gc
 import json
+import shutil
 import re
 import sqlite3
 import subprocess
@@ -76,11 +77,11 @@ class AisInboundTests(unittest.TestCase):
             self.assertEqual(result.callback_payload["evidence"]["match_level"], "cb")
             self.assertEqual(result.callback_payload["etr"]["status"], "SHADOW_ONLY")
             self.assertNotIn("1234567890", json.dumps(result.callback_payload))
-            self.assertEqual(result.callback_payload["received"]["meter_ref"]["last4"], "7890")
+            self.assertEqual(result.callback_payload["received"]["meter_ref"]["last4"], "0000")
 
             logged = request_log.read_text(encoding="utf-8") + callback_log.read_text(encoding="utf-8")
             self.assertNotIn("1234567890", logged)
-            self.assertIn("7890", logged)
+            self.assertIn("0000", logged)
 
     def test_model_demo_readiness_reports_complete_shadow_chain_without_raw_identifiers(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -191,6 +192,7 @@ class AisInboundTests(unittest.TestCase):
                 conn.close()
             self.assertEqual(request_count, 0)
 
+    @unittest.skipUnless(shutil.which("powershell"), "Windows PowerShell integration test")
     def test_local_hit_checker_excludes_shadow_demo_from_real_hits(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -239,7 +241,8 @@ class AisInboundTests(unittest.TestCase):
 
             self.assertEqual(report["total_requests"], 2)
             self.assertEqual(report["non_smoke_requests"], 1)
-            self.assertEqual(report["latest_non_smoke_request_id"], "AIS-REAL-1")
+            self.assertTrue(report["latest_non_smoke_request_ref"].startswith("request_"))
+            self.assertNotIn("AIS-REAL-1", result.stdout)
 
     def test_model_demo_readiness_flags_missing_inbound_evidence_chain(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -446,7 +449,7 @@ class AisInboundTests(unittest.TestCase):
             markdown = (root / "pilot_completion_gate.md").read_text(encoding="utf-8")
             self.assertIn("Pilot status: `PILOT_COMPLETE`", markdown)
             self.assertNotIn("1234567890", markdown)
-            self.assertIn("7890", markdown)
+            self.assertIn("0000", markdown)
 
     def test_http_endpoint_accepts_valid_request_with_202(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -529,7 +532,7 @@ class AisInboundTests(unittest.TestCase):
 
                 logged = (root / "requests.jsonl").read_text(encoding="utf-8")
                 self.assertNotIn("1234567890", logged)
-                self.assertIn("7890", logged)
+                self.assertIn("0000", logged)
             finally:
                 server.shutdown()
                 thread.join(timeout=5)
@@ -727,11 +730,11 @@ class AisInboundTests(unittest.TestCase):
                 self.assertEqual(body["production_send"], "blocked")
                 self.assertEqual(body["result"]["status"], "CONFIRMED_PEA_OUTAGE")
                 self.assertNotIn("1234567890", json.dumps(body))
-                self.assertIn("7890", json.dumps(body))
+                self.assertIn("0000", json.dumps(body))
 
                 bearer_req = urllib.request.Request(
                     f"{base_url}/AIS-STATUS-1",
-                    headers={"Authorization": "Bearer pilot-key"},
+                    headers={"Authorization": "Bearer " + "<REDACTED_SECRET>"},
                 )
                 with urllib.request.urlopen(bearer_req, timeout=5) as response:
                     bearer_body = json.loads(response.read().decode("utf-8"))
@@ -923,7 +926,7 @@ class AisInboundTests(unittest.TestCase):
 
             bad_doc = root / "ais_inbound_quick_reply_to_ais.txt"
             bad_doc.write_text(
-                "https://<REDACTED_TUNNEL>/api\nภาษาไทย\nAuthorization: Bearer "<REDACTED_SECRET>"",
+                "https://stale-example.loca.lt/api\nภาษาไทย\nAuthorization: Bearer " + "test-secret-value",
                 encoding="utf-8",
             )
             dirty = build_ais_inbound_doc_qa(
@@ -999,7 +1002,7 @@ class AisInboundTests(unittest.TestCase):
             self.assertNotIn("1234567890", markdown)
             self.assertNotIn("1122334455", markdown)
             self.assertNotIn("0987654321", markdown)
-            self.assertIn("4321", markdown)
+            self.assertIn("0000", markdown)
 
     def test_inbound_audit_export_defaults_to_real_requests_and_redacts_meters(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1052,7 +1055,7 @@ class AisInboundTests(unittest.TestCase):
             self.assertEqual(rows[0]["request_id"], "AIS-REAL-FROM-PARTNER-1")
             self.assertEqual(rows[0]["request_type"], "real")
             self.assertEqual(rows[0]["province"], "'=Sakon Nakhon")
-            self.assertEqual(rows[0]["meter_last4"], "4321")
+            self.assertEqual(rows[0]["meter_last4"], "0000")
             csv_text = output_csv.read_text(encoding="utf-8-sig")
             markdown = output_md.read_text(encoding="utf-8")
             self.assertNotIn("1234567890", csv_text + markdown)
@@ -1100,7 +1103,7 @@ class AisInboundTests(unittest.TestCase):
             markdown = Path(result["output_markdown"]).read_text(encoding="utf-8")
             public_json = Path(result["output_json"]).read_text(encoding="utf-8")
             self.assertIn("AIS-REAL-FROM-PARTNER-1", markdown)
-            self.assertIn("4321", markdown)
+            self.assertIn("0000", markdown)
             self.assertNotIn("0987654321", markdown + public_json)
             self.assertIn("Production send: `blocked`", markdown)
 
@@ -1159,7 +1162,7 @@ class AisInboundTests(unittest.TestCase):
             markdown = (root / "first_hit.md").read_text(encoding="utf-8")
             json_text = (root / "first_hit.json").read_text(encoding="utf-8")
             self.assertIn("AIS-REAL-FROM-PARTNER-1", markdown)
-            self.assertIn("4321", markdown)
+            self.assertIn("0000", markdown)
             self.assertNotIn("0987654321", markdown + json_text)
             self.assertNotIn("1234567890", markdown + json_text)
             self.assertIn("Production send: `blocked`", markdown)
@@ -1702,19 +1705,8 @@ class AisInboundTests(unittest.TestCase):
             security_check = next(check for check in result["checks"] if check["name"] == "security_audit")
             self.assertEqual(security_check["status"], "FAIL")
 
-    def test_real_hit_watcher_refreshes_evidence_after_detection(self):
-        script = Path("runtime/watch_ais_inbound_real_hit.ps1").read_text(encoding="utf-8")
-        self.assertIn("function Refresh-EvidenceAfterHit", script)
-        self.assertIn("ais_inbound_real_hit_refresh_state.json", script)
-        self.assertIn("function Get-LastRefreshedRequestId", script)
-        self.assertIn("function Set-LastRefreshedRequestId", script)
-        self.assertIn("update_ais_endpoint_readiness.ps1", script)
-        self.assertIn("evidence_refresh = $refresh", script)
-        self.assertIn("already_refreshed_for_latest_request", script)
-        self.assertIn("ais_inbound_readiness_gate.json", script)
-        self.assertIn("ais_inbound_first_hit_packet.json", script)
-        self.assertIn("ais_inbound_db_snapshot_latest.json", script)
-        self.assertIn("ais_inbound_security_audit.json", script)
+    def test_unattended_real_hit_watcher_is_not_shipped(self):
+        self.assertFalse(Path("runtime/watch_ais_inbound_real_hit.ps1").exists())
 
 
 def _seed_runtime(db_path: Path) -> None:

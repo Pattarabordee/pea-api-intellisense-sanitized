@@ -93,12 +93,12 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
       <header className="topbar" aria-label="demo status">
         <div>
           <span>PEA API Intellisense</span>
-          <strong>AIS ETR executive demo</strong>
+          <strong>AIS ETR executive demo - DEMO DATA</strong>
         </div>
         <div className="topbar-status">
           <span>Shadow pilot</span>
           <span>Recording-ready demo</span>
-          <span>Thai context: สาธิตเท่านั้น</span>
+          <span>ข้อมูลสาธิตเท่านั้น</span>
         </div>
       </header>
 
@@ -134,7 +134,7 @@ export function MissionControl({ initialData }: { initialData: OperatorData }) {
           <div className="panel-head row">
             <div>
               <p className="eyebrow">Governed trace</p>
-              <h2>{latest?.request_id || "Waiting for AIS request"}</h2>
+              <h2>{latest?.request_id || "Synthetic demo request"}</h2>
             </div>
             <span className="source">{initialData.source || "live API when configured"}</span>
           </div>

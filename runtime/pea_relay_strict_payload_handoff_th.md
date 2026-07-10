@@ -1,4 +1,6 @@
-# PEA Relay Strict Payload Handoff
+# SUPERSEDED: PEA Relay Strict Payload Handoff
+
+AIS ส่งตรงเข้า Render และไม่ต้องสร้าง `source_event_id` หรือ `site_id` เพื่อให้ผ่าน gate เอกสาร canonical คือ `runtime/ais_inbound_api_contract_v1.md`.
 
 สถานะ: `shadow` เท่านั้น และ `production_send=blocked`.
 

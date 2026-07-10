@@ -1,6 +1,6 @@
 # PEA API Intellisense Go API
 
-Production-path shadow API for AIS inbound outage verification.
+Shadow receiver and meter-state truth ledger for AIS outage/restore observations.
 
 ## Guardrails
 
@@ -9,6 +9,8 @@ Production-path shadow API for AIS inbound outage verification.
 - No raw meter, PEANO list, room id, token, or customer identity in responses
 - AIS outage/restore remains customer-facing truth
 - Auto ETR stays blocked until green gate and owner approval pass
+- Startup fails when `AIS_INBOUND_API_KEY` or `DATABASE_URL` is missing
+- `meter_no` is the meter-state key; `source_event_id` and `site_id` are optional hashed evidence
 
 ## Environment
 
@@ -43,13 +45,15 @@ POST /api/v1/ais/outage-verifications
 GET  /api/v1/ais/outage-verifications/{request_id}
 ```
 
-`/metrics` and `/api/v1/ais/truth-intervals` are operator-only and require `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate `truth_validation_counts` for relay field-quality review; no raw identifiers are returned.
+Every endpoint except `/health` is operator/integration-only and requires `X-API-Key` or `Authorization: Bearer <key>`. Metrics include aggregate validation and meter-state counts; no raw identifiers are returned.
 
 `/metrics` returns aggregate counts only: total requests, duplicate callbacks, pending worker traces,
 `NOT_READY_FOR_AUTO_SEND` count, and `production_send=blocked`.
 
 `/api/v1/ais/truth-intervals` returns redacted outage/restore pairing rows for production gate review.
 Supported `status` values are `OPEN`, `CLOSED`, `REVIEW`, and `ALL`; the default is `OPEN`.
-Responses contain request IDs, hash/last4 references, timestamps, pairing status, safe evidence reason,
+Responses contain hashed request references, hash/last4 asset references, timestamps, pairing status, safe evidence reason,
 and `production_send=blocked`. They must not contain raw meter numbers, PEANO lists, customer identity,
 room IDs, tokens, or raw WebEx/Line text.
+
+The public Next.js application is synthetic demo data only. It has no live operator proxy route.

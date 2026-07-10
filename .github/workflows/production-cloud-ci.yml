@@ -12,11 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Python dependencies
+        run: python3 -m pip install -r requirements.txt
       - name: Run Python guardrail tests
         run: |
           python3 --version
           export PYTHONPATH="$PWD"
-          python3 tests/test_production_path.py
+          python3 -m unittest discover -s tests -p 'test_*.py'
       - name: Build sanitized source bundle
         run: |
           export PYTHONPATH="$PWD"
@@ -54,4 +56,6 @@ jobs:
         run: |
           npm ci
           npm audit --audit-level=moderate
+          test ! -f app/api/requests/route.ts
+          grep -q "DEMO DATA - synthetic only" app/page.tsx
           npm run build

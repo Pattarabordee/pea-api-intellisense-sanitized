@@ -67,7 +67,7 @@ func TestPostCapturesAISTruthObservationWithoutLeakingSiteOrMeter(t *testing.T) 
 	}
 }
 
-func TestPostLegacyTruthPayloadIsReviewOnly(t *testing.T) {
+func TestPostWithoutSourceOrSiteUsesMeterStateTruth(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-LEGACY-1","event_type":"OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","outage_at":"2026-06-19T17:04:00+07:00"}`
@@ -81,12 +81,12 @@ func TestPostLegacyTruthPayloadIsReviewOnly(t *testing.T) {
 	if res.Code != http.StatusAccepted {
 		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
 	}
-	if got := store.rows["AIS-LEGACY-1"].TruthValidation; got != "REVIEW_IDENTITY_KEY_REQUIRED" {
-		t.Fatalf("legacy truth must remain review-only, got %q", got)
+	if got := store.rows["AIS-LEGACY-1"].TruthValidation; got != "READY_FOR_LEDGER" {
+		t.Fatalf("meter-state truth must not require source or site ids, got %q", got)
 	}
 }
 
-func TestPostStrictTruthRequiresEventSpecificTimestamp(t *testing.T) {
+func TestPostUsesRequestTimestampAsEventTimestamp(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-MISSING-OUTAGE-TIME","source_event_id":"SRC-2001","event_type":"OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00"}`
@@ -100,8 +100,38 @@ func TestPostStrictTruthRequiresEventSpecificTimestamp(t *testing.T) {
 	if res.Code != http.StatusAccepted {
 		t.Fatalf("expected 202, got %d: %s", res.Code, res.Body.String())
 	}
-	if got := store.rows["AIS-MISSING-OUTAGE-TIME"].TruthValidation; got != "REVIEW_OUTAGE_TIMESTAMP" {
-		t.Fatalf("outage without outage_at must remain review-only, got %q", got)
+	if got := store.rows["AIS-MISSING-OUTAGE-TIME"].TruthValidation; got != "READY_FOR_LEDGER" {
+		t.Fatalf("explicit outage must use request timestamp when outage_at is absent, got %q", got)
+	}
+}
+
+func TestCauseTextDoesNotCreateModelTruth(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-CAUSE-ONLY","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","alarm_type":"AC_MAIN_FAIL","main_cause":"power failure"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	row := store.rows["AIS-CAUSE-ONLY"]
+	if row.TruthEventType != "UNKNOWN" || row.TruthValidation != "REVIEW_EVENT_TYPE" {
+		t.Fatalf("cause text must not create model truth: %#v", row)
+	}
+}
+
+func TestMappedPowerStatusCreatesMeterStateTruth(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"request_id":"AIS-MAPPED-OUTAGE","meter_no":"METER-1234","timestamp":"2026-06-19T17:04:00+07:00","power_status":"OFF"}`
+	req := httptest.NewRequest(http.MethodPost, inboundPath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	row := store.rows["AIS-MAPPED-OUTAGE"]
+	if row.TruthEventType != "OUTAGE" || row.TruthEventTypeSource != "mapped" || row.TruthValidation != "READY_FOR_LEDGER" {
+		t.Fatalf("allowlisted power status should create meter-state truth: %#v", row)
 	}
 }
 
@@ -162,6 +192,16 @@ func TestUnauthorizedRequestReturns401(t *testing.T) {
 	}
 }
 
+func TestMissingConfiguredAPIKeyFailsClosed(t *testing.T) {
+	handler := NewServer(ServerConfig{}, newFakeStore())
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("missing server API key must fail closed, got %d", res.Code)
+	}
+}
+
 func TestDuplicateRequestIsIdempotent(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
@@ -200,7 +240,8 @@ func TestStatusLookupWorks(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String())
 	}
 	payload := decodeBody(t, res)
-	if payload["request_id"] != "AIS-LOOKUP" || payload["production_send"] != "blocked" {
+	requestRef, _ := payload["request_ref"].(string)
+	if !strings.HasPrefix(requestRef, "request_") || payload["production_send"] != "blocked" || strings.Contains(res.Body.String(), "AIS-LOOKUP") {
 		t.Fatalf("bad lookup payload: %#v", payload)
 	}
 }
@@ -248,7 +289,7 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	store.intervals = []storage.TruthInterval{
 		{PairStatus: "OPEN"},
 		{PairStatus: "REVIEW"},
-		{PairStatus: "CLOSED", BridgeStatus: "STRICT_MODEL_READY", RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
+		{PairStatus: "CLOSED", BridgeStatus: "METER_STATE_MODEL_READY", RestoreAt: ptrTime(time.Date(2026, 7, 7, 3, 30, 0, 0, time.UTC)), DurationMinutes: ptrFloat(30)},
 	}
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
 	body := `{"request_id":"AIS-METRICS","meter_no":"REDACTED-METER-0000","timestamp":"2026-06-19T17:04:00+07:00"}`
@@ -290,8 +331,8 @@ func TestMetricsEndpointIsAuthOnlyAndReportsShadowGuardrails(t *testing.T) {
 	if payload["truth_quarantine_intervals"].(float64) != 2 || payload["truth_accuracy_eligible_intervals"].(float64) != 1 {
 		t.Fatalf("truth interval quarantine metrics missing: %#v", payload)
 	}
-	if payload["truth_strict_identity_intervals"].(float64) != 1 || payload["model_ready_clean_truth_rows"].(float64) != 1 {
-		t.Fatalf("strict identity metrics missing: %#v", payload)
+	if payload["truth_strict_identity_intervals"].(float64) != 0 || payload["truth_meter_state_intervals"].(float64) != 1 || payload["model_ready_clean_truth_rows"].(float64) != 1 {
+		t.Fatalf("meter-state metrics missing: %#v", payload)
 	}
 	if payload["model_truth_review_rows"].(float64) != 1 {
 		t.Fatalf("review-only legacy request must remain visible in metrics: %#v", payload)
@@ -323,7 +364,7 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 			SiteLast4:       "T-99",
 			OutageAt:        outageAt,
 			PairStatus:      "OPEN",
-			BridgeStatus:    "STRICT_AWAITING_RESTORE",
+			BridgeStatus:    "METER_STATE_AWAITING_RESTORE",
 			EvidenceJSON:    json.RawMessage(`{"source":"go_postgres_truth_pairing","reason":"ready_outage_waiting_for_restore","outage_source_event_id":"SRC-SECRET-1","pair_key":"sitehash","production_send":"blocked"}`),
 			ProductionSend:  "blocked",
 			CreatedAt:       outageAt,
@@ -353,7 +394,7 @@ func TestTruthIntervalsEndpointIsAuthOnlyAndRedacted(t *testing.T) {
 	}
 	payload := decodeBody(t, res)
 	items := payload["items"].([]any)
-	if items[0].(map[string]any)["bridge_status"] != "STRICT_AWAITING_RESTORE" {
+	if items[0].(map[string]any)["bridge_status"] != "METER_STATE_AWAITING_RESTORE" {
 		t.Fatalf("truth interval response omitted safe bridge status: %#v", payload)
 	}
 	if payload["production_send"] != "blocked" || payload["status_filter"] != "OPEN" {
@@ -490,8 +531,9 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 		CallbackTransport: outbox.Transport,
 		CallbackAttempts:  outbox.AttemptCount,
 		TruthEventType:       truth.EventType,
+		TruthEventTypeSource: truth.EventTypeSource,
 		TruthValidation:      truth.ValidationStatus,
-		TruthSourceEventID:   truth.SourceEventID,
+		TruthSourceEventRef:  truth.SourceEventHash,
 		TruthSiteHash:        truth.SiteHash,
 		TruthSiteLast4:       truth.SiteLast4,
 	}
@@ -554,6 +596,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		if interval.BridgeStatus == "STRICT_MODEL_READY" || interval.BridgeStatus == "STRICT_DURATION_REVIEW" {
 			snapshot.TruthStrictIdentityIntervals++
 		}
+		if interval.BridgeStatus == "METER_STATE_MODEL_READY" || interval.BridgeStatus == "METER_STATE_DURATION_REVIEW" {
+			snapshot.TruthMeterStateIntervals++
+		}
 		switch interval.PairStatus {
 		case "OPEN":
 			snapshot.TruthOpenIntervals++
@@ -563,7 +608,7 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 			snapshot.TruthQuarantineIntervals++
 		case "CLOSED":
 			snapshot.TruthClosedIntervals++
-			if interval.BridgeStatus == "STRICT_MODEL_READY" && interval.RestoreAt != nil && interval.DurationMinutes != nil {
+			if interval.BridgeStatus == "METER_STATE_MODEL_READY" && interval.RestoreAt != nil && interval.DurationMinutes != nil {
 				snapshot.TruthAccuracyEligibleIntervals++
 				snapshot.ModelReadyCleanTruthRows++
 			} else {
