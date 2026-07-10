@@ -34,6 +34,7 @@ class EventSemanticAuditTests(unittest.TestCase):
     def _item(event_type, source, value="AC_MAIN_FAIL", field="alarm_type"):
         return {
             "request_ref": "must-not-be-written",
+            "semantic_capture_version": "v1",
             "received_at": "2026-07-10T00:00:00Z",
             "meter": {"last4": "9999"},
             "truth_observation": {
@@ -51,6 +52,14 @@ class EventSemanticAuditTests(unittest.TestCase):
         self.assertEqual("insufficient_semantic_observations", result["gate_status"])
         self.assertNotIn("must-not-be-written", csv_text)
         self.assertNotIn("9999", csv_text)
+
+    def test_pre_capture_rows_do_not_satisfy_threshold(self):
+        legacy = [self._item("OUTAGE", "mapped_alarm_type") for _ in range(100)]
+        for item in legacy:
+            item.pop("semantic_capture_version")
+        result, _, _ = self._run(legacy)
+        self.assertEqual(0, result["observed_requests"])
+        self.assertEqual("insufficient_semantic_observations", result["gate_status"])
 
     def test_missing_restore_after_threshold_is_explicit(self):
         items = [self._item("OUTAGE", "mapped_alarm_type") for _ in range(100)]
