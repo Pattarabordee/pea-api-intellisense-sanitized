@@ -21,6 +21,14 @@ CASE_COLUMNS = (
     "use_for_evaluation",
     "production_send",
 )
+INCIDENT_COLUMNS = (
+    "incident_group_ref",
+    "outage_anchor_time",
+    "meter_interval_count",
+    "prediction_ready_count",
+    "group_scorable",
+    "production_send",
+)
 
 
 def run_v2_lifecycle_audit(
@@ -30,6 +38,7 @@ def run_v2_lifecycle_audit(
     report_md: str | Path,
     summary_json: str | Path,
     peacon_md: str | Path,
+    incident_csv: str | Path,
     api_key: str | None = None,
     limit: int = 200,
 ) -> dict[str, Any]:
@@ -57,6 +66,7 @@ def run_v2_lifecycle_audit(
         report_md=report_md,
         summary_json=summary_json,
         peacon_md=peacon_md,
+        incident_csv=incident_csv,
     )
 
 
@@ -69,6 +79,7 @@ def build_v2_lifecycle_audit(
     report_md: str | Path,
     summary_json: str | Path,
     peacon_md: str | Path,
+    incident_csv: str | Path,
 ) -> dict[str, Any]:
     if metrics.get("production_send") != "blocked":
         raise ValueError("production_send must remain blocked")
@@ -123,8 +134,10 @@ def build_v2_lifecycle_audit(
     matched_outage_requests = 0
     valid_prediction_snapshots = 0
     invalid_prediction_timing = 0
+    prediction_ready_by_outage_ref: dict[str, bool] = {}
     for row in clean_intervals:
         outage_ref = str(row.get("outage_request_ref") or "").strip()
+        prediction_ready_by_outage_ref[outage_ref] = False
         item = request_index.get(outage_ref)
         if item is None:
             continue
@@ -140,6 +153,19 @@ def build_v2_lifecycle_audit(
             invalid_prediction_timing += 1
             continue
         valid_prediction_snapshots += 1
+        prediction_ready_by_outage_ref[outage_ref] = True
+
+    incident_groups, missing_incident_time = _group_clean_intervals(
+        clean_intervals,
+        prediction_ready_by_outage_ref,
+    )
+    scorable_incident_groups = sum(1 for group in incident_groups if group["group_scorable"] == "TRUE")
+    incident_output = Path(incident_csv)
+    incident_output.parent.mkdir(parents=True, exist_ok=True)
+    with incident_output.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=INCIDENT_COLUMNS)
+        writer.writeheader()
+        writer.writerows(incident_groups)
 
     cases = []
     classification_counts: Counter[str] = Counter()
@@ -187,8 +213,10 @@ def build_v2_lifecycle_audit(
         blockers.append("prediction_snapshot_missing")
     if lifecycle_review_count:
         blockers.append("bounded_lifecycle_evidence_review")
-    if len(clean_intervals) < 30:
-        blockers.append("insufficient_clean_pairs")
+    if len(incident_groups) < 30:
+        blockers.append("insufficient_independent_incidents")
+    if missing_incident_time:
+        blockers.append("incident_time_missing")
     if invalid_closed_intervals:
         gate_status = "closed_pair_integrity_blocked"
     elif invalid_prediction_timing:
@@ -199,7 +227,7 @@ def build_v2_lifecycle_audit(
         gate_status = "bounded_lifecycle_evidence_review_required"
     elif no_open_count:
         gate_status = "activation_backlog_or_duplicate_restore_observed"
-    elif len(clean_intervals) < 30:
+    elif len(incident_groups) < 30:
         gate_status = "prospective_capture_accumulating"
     else:
         gate_status = "incident_grouping_ready"
@@ -228,6 +256,9 @@ def build_v2_lifecycle_audit(
         "missing_prediction_snapshots": missing_prediction_snapshots,
         "invalid_prediction_timing": invalid_prediction_timing,
         "prediction_status_counts": dict(sorted(prediction_status_counts.items())),
+        "clean_independent_incident_groups": len(incident_groups),
+        "scorable_independent_incident_groups": scorable_incident_groups,
+        "clean_intervals_missing_incident_time": missing_incident_time,
         "restore_without_open": no_open_count,
         "restore_without_open_ratio": round(no_open_ratio, 4),
         "restore_without_open_explained_context": no_open_count - lifecycle_review_count,
@@ -242,6 +273,7 @@ def build_v2_lifecycle_audit(
         "output_csv": str(output),
         "report_md": str(report_md),
         "peacon_md": str(peacon_md),
+        "incident_csv": str(incident_output),
     }
     summary_path = Path(summary_json)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
@@ -265,6 +297,8 @@ def build_v2_lifecycle_audit(
         f"- clean pair ที่จับกลับไปยัง OUTAGE request ได้: `{matched_outage_requests}`\n"
         f"- prediction snapshot ที่มีตัวเลขและเกิดก่อน RESTORE: `{valid_prediction_snapshots}`\n"
         f"- clean pair ที่ยังไม่มี prediction snapshot: `{missing_prediction_snapshots}`\n"
+        f"- clean independent incident groups (5-minute conservative grouping): `{len(incident_groups)}`\n"
+        f"- scorable independent incident groups: `{scorable_incident_groups}`\n"
         f"- blockers: `{json.dumps(blockers, ensure_ascii=False)}`\n"
         "- ใช้ train/evaluation: `FALSE` จนกว่าจะผ่าน incident grouping และมีอย่างน้อย 30 เหตุการณ์อิสระ\n"
         "- production_send: `blocked`\n\n"
@@ -283,6 +317,52 @@ def build_v2_lifecycle_audit(
         encoding="utf-8",
     )
     return summary
+
+
+def _group_clean_intervals(
+    clean_intervals: list[dict[str, Any]],
+    prediction_ready_by_outage_ref: dict[str, bool],
+    *,
+    window_minutes: float = 5.0,
+) -> tuple[list[dict[str, Any]], int]:
+    timed = []
+    missing_time = 0
+    for row in clean_intervals:
+        outage_time = _parse_time(row.get("outage_at"))
+        if outage_time is None:
+            missing_time += 1
+            continue
+        outage_ref = str(row.get("outage_request_ref") or "").strip()
+        timed.append((outage_time, outage_ref))
+
+    grouped: list[list[tuple[datetime, str]]] = []
+    for observation in sorted(timed):
+        if not grouped:
+            grouped.append([observation])
+            continue
+        anchor = grouped[-1][0][0]
+        if (observation[0] - anchor).total_seconds() <= window_minutes * 60:
+            grouped[-1].append(observation)
+        else:
+            grouped.append([observation])
+
+    rows = []
+    for group in grouped:
+        anchor = group[0][0]
+        refs = sorted(item[1] for item in group)
+        ready_count = sum(1 for ref in refs if prediction_ready_by_outage_ref.get(ref, False))
+        seed = anchor.isoformat() + "|" + "|".join(refs)
+        rows.append(
+            {
+                "incident_group_ref": "incident_" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16],
+                "outage_anchor_time": anchor.isoformat().replace("+00:00", "Z"),
+                "meter_interval_count": len(group),
+                "prediction_ready_count": ready_count,
+                "group_scorable": "TRUE" if ready_count == len(group) else "FALSE",
+                "production_send": "blocked",
+            }
+        )
+    return rows, missing_time
 
 
 def _classify_no_open_restore(
