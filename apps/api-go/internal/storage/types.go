@@ -141,6 +141,11 @@ type RequestStatus struct {
 	CallbackSentAt     *time.Time
 	EvidenceJSON       json.RawMessage
 	ETRStatus          string
+	ETRP50Minutes      *float64
+	ETRQ10Minutes      *float64
+	ETRQ90Minutes      *float64
+	ETRModelVersion    string
+	ETRGeneratedAt     *time.Time
 	ProductionSend     string
 	SendPolicyMode     string
 	SendEffectiveMode  string
@@ -214,6 +219,7 @@ type MetricsSnapshot struct {
 	V2RestoreWithoutOpen           int64
 	V2DurationReview               int64
 	V2ActivationFirstSeenAt        *time.Time
+	ShadowBaselinePredictionSnapshots int64
 	CallbackCounts                map[string]int64
 	TruthValidationCounts         map[string]int64
 	TruthEventSemanticCounts      map[string]int64

@@ -133,6 +133,20 @@ func TestACMainFailAlarmCreatesMappedOutage(t *testing.T) {
 	if row.TruthEventType != "OUTAGE" || row.TruthEventTypeSource != "mapped_alarm_type" || row.TruthValidation != "READY_FOR_LEDGER" {
 		t.Fatalf("AC_MAIN_FAIL must create an allowlisted mapped outage: %#v", row)
 	}
+	if row.ETRStatus != "SHADOW_BASELINE_CAPTURED" || row.ETRP50Minutes == nil || *row.ETRP50Minutes != ShadowBaselineP50Minutes || row.ETRModelVersion != ShadowBaselineModelVersion {
+		t.Fatalf("prospective outage must capture the fixed shadow baseline: %#v", row)
+	}
+	if strings.Contains(string(row.CallbackPayload), "p50_minutes") || strings.Contains(string(row.CallbackPayload), ShadowBaselineModelVersion) {
+		t.Fatalf("research baseline must not enter callback payload: %s", row.CallbackPayload)
+	}
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsReq.Header.Set("X-API-Key", "pilot-key")
+	metricsRes := httptest.NewRecorder()
+	handler.ServeHTTP(metricsRes, metricsReq)
+	metrics := decodeBody(t, metricsRes)
+	if metrics["shadow_baseline_prediction_snapshots"].(float64) != 1 || metrics["production_send"] != "blocked" {
+		t.Fatalf("shadow baseline metric missing or unsafe: %#v", metrics)
+	}
 }
 
 func TestACMainRestoreCreatesProspectiveV2Restore(t *testing.T) {
@@ -147,6 +161,9 @@ func TestACMainRestoreCreatesProspectiveV2Restore(t *testing.T) {
 	row := store.rows["AIS-ALARM-RESTORE-CANDIDATE"]
 	if row.TruthEventType != "RESTORE" || row.TruthEventTypeSource != "mapped_alarm_type" || row.TruthValidation != "READY_FOR_LEDGER" {
 		t.Fatalf("AC_MAIN_RESTORE must create an allowlisted prospective restore: %#v", row)
+	}
+	if row.ETRStatus != "NOT_READY_FOR_AUTO_SEND" || row.ETRP50Minutes != nil {
+		t.Fatalf("RESTORE must not create a new prediction snapshot: %#v", row)
 	}
 	if row.TruthSemanticMappingVersion != SemanticMappingVersion {
 		t.Fatalf("restore must be tagged with v2 mapping version: %#v", row)
@@ -224,6 +241,32 @@ func TestStatusPayloadReturnsOnlySanitizedSemanticSignals(t *testing.T) {
 	}
 	if payload["semantic_capture_version"] != "v1" {
 		t.Fatalf("operator payload omitted semantic capture version: %#v", payload)
+	}
+	encoded, _ := json.Marshal(payload)
+	if strings.Contains(string(encoded), "RAW-REQUEST-ID") {
+		t.Fatalf("operator payload leaked raw request id: %s", encoded)
+	}
+}
+
+func TestStatusPayloadExposesBlockedResearchBaselineOnlyToOperator(t *testing.T) {
+	createdAt := time.Date(2026, 7, 10, 3, 0, 0, 0, time.UTC)
+	p50 := ShadowBaselineP50Minutes
+	row := &storage.RequestStatus{
+		RequestID:       "RAW-REQUEST-ID",
+		ReceivedAt:      createdAt,
+		DetectedAt:      createdAt,
+		ETRStatus:       "SHADOW_BASELINE_CAPTURED",
+		ETRP50Minutes:   &p50,
+		ETRModelVersion: ShadowBaselineModelVersion,
+		ETRGeneratedAt:  &createdAt,
+		ProductionSend:  "blocked",
+	}
+	payload := statusPayload(row)
+	result := payload["result"].(map[string]any)
+	etr := result["etr"].(map[string]any)
+	value, ok := etr["p50_minutes"].(*float64)
+	if !ok || value == nil || *value != ShadowBaselineP50Minutes || etr["model_version"] != ShadowBaselineModelVersion || etr["production_send"] != "blocked" {
+		t.Fatalf("operator baseline snapshot is incomplete: %#v", etr)
 	}
 	encoded, _ := json.Marshal(payload)
 	if strings.Contains(string(encoded), "RAW-REQUEST-ID") {
@@ -644,6 +687,11 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 		LatestCallback:     callback.Status,
 		EvidenceJSON:       evidence.EvidenceJSON,
 		ETRStatus:          etr.Status,
+		ETRP50Minutes:      etr.P50Minutes,
+		ETRQ10Minutes:      etr.Q10Minutes,
+		ETRQ90Minutes:      etr.Q90Minutes,
+		ETRModelVersion:    etr.ModelVersion,
+		ETRGeneratedAt:     &etr.GeneratedAt,
 		ProductionSend:     "blocked",
 		SendPolicyMode:     send.PolicyMode,
 		SendEffectiveMode:  send.EffectiveMode,
@@ -700,6 +748,9 @@ func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, erro
 		}
 		if row.ETRStatus == "NOT_READY_FOR_AUTO_SEND" {
 			snapshot.NotReadyETR++
+		}
+		if row.ETRStatus == "SHADOW_BASELINE_CAPTURED" {
+			snapshot.ShadowBaselinePredictionSnapshots++
 		}
 		snapshot.PendingWorkerTraces++
 		if row.CallbackOutboxStatus == "DRY_RUN_HELD" {

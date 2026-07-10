@@ -298,8 +298,11 @@ func (s *PostgresStore) Metrics(ctx context.Context) (*MetricsSnapshot, error) {
 			FROM etr_candidates
 			ORDER BY request_id, id DESC
 		)
-		SELECT count(*) FROM latest_etr WHERE status = 'NOT_READY_FOR_AUTO_SEND'`,
-	).Scan(&snapshot.NotReadyETR); err != nil {
+		SELECT
+			count(*) FILTER (WHERE status = 'NOT_READY_FOR_AUTO_SEND'),
+			count(*) FILTER (WHERE status = 'SHADOW_BASELINE_CAPTURED')
+		FROM latest_etr`,
+	).Scan(&snapshot.NotReadyETR, &snapshot.ShadowBaselinePredictionSnapshots); err != nil {
 		return nil, err
 	}
 	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM callback_outbox WHERE status = 'DRY_RUN_HELD'`).Scan(&snapshot.OutboxDryRunHeld); err != nil {
@@ -452,7 +455,7 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 	),
 	latest_etr AS (
 		SELECT DISTINCT ON (request_id)
-			request_id, status, production_send
+			request_id, status, p50_minutes, q10_minutes, q90_minutes, model_version, generated_at, production_send
 		FROM etr_candidates
 		ORDER BY request_id, id DESC
 	),
@@ -478,7 +481,8 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 		r.timestamp_quality, r.meter_hash, r.meter_last4, r.province, r.district, r.subdistrict,
 		r.request_json, r.response_json, r.callback_status,
 		c.payload_json, c.status, c.status_code, c.sent_at,
-		e.evidence_json, coalesce(t.status, ''), coalesce(t.production_send, 'blocked'),
+		e.evidence_json, coalesce(t.status, ''), t.p50_minutes::float8, t.q10_minutes::float8, t.q90_minutes::float8,
+		coalesce(t.model_version, ''), t.generated_at, coalesce(t.production_send, 'blocked'),
 		coalesce(s.policy_mode, 'blocked'), coalesce(s.effective_mode, 'blocked'),
 		coalesce(s.eligibility_status, 'red_blocked'), coalesce(s.decision, 'blocked'),
 		coalesce(s.reason, 'production_send_blocked_by_default'), coalesce(s.gate_version, 'blocked_green_gate'),
@@ -524,6 +528,11 @@ func (s *PostgresStore) queryStatuses(ctx context.Context, where string, limit i
 			&item.CallbackSentAt,
 			&item.EvidenceJSON,
 			&item.ETRStatus,
+			&item.ETRP50Minutes,
+			&item.ETRQ10Minutes,
+			&item.ETRQ90Minutes,
+			&item.ETRModelVersion,
+			&item.ETRGeneratedAt,
 			&item.ProductionSend,
 			&item.SendPolicyMode,
 			&item.SendEffectiveMode,

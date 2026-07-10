@@ -29,6 +29,11 @@ The authenticated operator list includes `semantic_capture_version=v2`, `semanti
 
 Rows captured before v2 activation remain audit-only. They are never replayed or relabeled into model-ready truth.
 
+For each new v2 OUTAGE that passes ledger validation, the cloud records a private research benchmark
+`fixed_naive_60m_v1` with p50 = 60 minutes at request receipt time. This is a pre-registered naive baseline,
+not a trained or promoted model. It is visible only through the authenticated operator response, is excluded
+from callback/outbox payloads, and always remains `production_send=blocked`.
+
 ## Meter-State Rules
 
 - First OUTAGE opens one interval for the meter.
@@ -91,3 +96,7 @@ ais_event_remaining_restoration_minutes = restore_at - prediction_created_at
 ```
 
 If no prediction exists, use `request_received_at`. Interval duration (`restore_at - outage_at`) is control evidence only. Protection, topology, ReportPO, SFSD, WebEx, LINE, and telecom/GIS remain context-only.
+
+MAE evaluation requires a numeric prediction snapshot created before RESTORE. Historical v1 rows and v2
+rows captured before the research baseline activation remain truth/audit evidence only and cannot be scored
+retroactively as if a prediction had existed.
