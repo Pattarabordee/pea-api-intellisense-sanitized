@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import tempfile
@@ -47,6 +48,8 @@ class V2BaselineEvaluationTests(unittest.TestCase):
                 summary_json=root / "summary.json",
                 report_md=root / "report.md",
                 peacon_md=root / "peacon.md",
+                registry_jsonl=root / "registry.jsonl",
+                now=datetime(2026, 7, 10, tzinfo=timezone.utc),
             )
             with (root / "groups.csv").open(encoding="utf-8-sig") as handle:
                 rows = list(csv.DictReader(handle))
@@ -54,6 +57,7 @@ class V2BaselineEvaluationTests(unittest.TestCase):
                 (root / "summary.json").read_text(encoding="utf-8")
                 + (root / "report.md").read_text(encoding="utf-8")
                 + (root / "peacon.md").read_text(encoding="utf-8")
+                + (root / "registry.jsonl").read_text(encoding="utf-8")
                 + json.dumps(rows)
             )
             return result, rows, bundle
@@ -127,6 +131,27 @@ class V2BaselineEvaluationTests(unittest.TestCase):
     def test_nonblocked_metrics_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "production_send"):
             self._run([], [], {"production_send": "allowed"})
+
+    def test_registry_is_deterministic_and_idempotent(self):
+        items = [self._item("r1", "2026-07-10T01:00:00Z")]
+        intervals = [self._interval("r1", "2026-07-10T01:00:00Z", "2026-07-10T01:45:00Z", 45)]
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            kwargs = {
+                "output_csv": root / "groups.csv",
+                "summary_json": root / "summary.json",
+                "report_md": root / "report.md",
+                "peacon_md": root / "peacon.md",
+                "registry_jsonl": root / "registry.jsonl",
+                "now": datetime(2026, 7, 10, tzinfo=timezone.utc),
+            }
+            first = build_v2_baseline_evaluation({"production_send": "blocked"}, items, intervals, **kwargs)
+            second = build_v2_baseline_evaluation({"production_send": "blocked"}, items, intervals, **kwargs)
+            lines = (root / "registry.jsonl").read_text(encoding="utf-8").splitlines()
+        self.assertEqual(first["evaluation_id"], second["evaluation_id"])
+        self.assertTrue(first["registry_entry_added"])
+        self.assertFalse(second["registry_entry_added"])
+        self.assertEqual(1, len(lines))
 
 
 if __name__ == "__main__":
