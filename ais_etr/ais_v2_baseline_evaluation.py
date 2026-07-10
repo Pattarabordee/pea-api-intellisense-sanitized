@@ -20,7 +20,9 @@ GROUP_COLUMNS = (
     "actual_remaining_minutes",
     "predicted_p50_minutes",
     "absolute_error_minutes",
+    "worst_meter_absolute_error_minutes",
     "green_incident",
+    "high_error_incident",
     "model_version",
     "production_send",
 )
@@ -76,6 +78,7 @@ def build_v2_baseline_evaluation(
     request_index = {str(item.get("request_ref") or "").strip(): item for item in items}
     candidates = []
     rejection_counts = {
+        "excluded_non_v2_audit": 0,
         "not_clean_v2_interval": 0,
         "missing_outage_request": 0,
         "missing_numeric_prediction": 0,
@@ -85,10 +88,12 @@ def build_v2_baseline_evaluation(
         "missing_outage_time": 0,
     }
     for row in intervals:
+        if row.get("semantic_mapping_version") != MAPPING_VERSION:
+            rejection_counts["excluded_non_v2_audit"] += 1
+            continue
         duration = _float_or_none(row.get("duration_minutes"))
         clean = (
-            row.get("semantic_mapping_version") == MAPPING_VERSION
-            and row.get("pair_status") == "CLOSED"
+            row.get("pair_status") == "CLOSED"
             and row.get("bridge_status") == "METER_STATE_MODEL_READY"
             and duration is not None
             and 5 < duration <= 1440
@@ -133,10 +138,12 @@ def build_v2_baseline_evaluation(
 
     groups = _group_predictions(candidates)
     errors = [float(row["absolute_error_minutes"]) for row in groups]
+    worst_errors = [float(row["worst_meter_absolute_error_minutes"]) for row in groups]
     mae = sum(errors) / len(errors) if errors else None
     median_ae = median(errors) if errors else None
     p90_ae = _nearest_rank(errors, 0.90) if errors else None
     green = sum(1 for row in groups if row["green_incident"] == "TRUE")
+    high_error = sum(1 for row in groups if row["high_error_incident"] == "TRUE")
     if not groups:
         gate_status = "awaiting_first_scorable_incident"
     elif len(groups) < 30:
@@ -166,7 +173,9 @@ def build_v2_baseline_evaluation(
         "mae_minutes": round(mae, 3) if mae is not None else None,
         "median_absolute_error_minutes": round(median_ae, 3) if median_ae is not None else None,
         "p90_absolute_error_minutes": round(p90_ae, 3) if p90_ae is not None else None,
+        "mean_worst_meter_absolute_error_minutes": round(sum(worst_errors) / len(worst_errors), 3) if worst_errors else None,
         "green_incidents": green,
+        "high_error_incidents": high_error,
         "coverage": None,
         "coverage_status": "unavailable_no_q10_q90_baseline",
         "rejection_counts": rejection_counts,
@@ -193,6 +202,8 @@ def build_v2_baseline_evaluation(
         f"- median AE: `{summary['median_absolute_error_minutes']}` นาที\n"
         f"- p90 AE: `{summary['p90_absolute_error_minutes']}` นาที\n"
         f"- green incidents (AE <= 16): `{green}`\n"
+        f"- high-error incidents (worst meter AE >= 60): `{high_error}`\n"
+        f"- mean worst-meter AE: `{summary['mean_worst_meter_absolute_error_minutes']}` นาที\n"
         "- coverage: `unavailable_no_q10_q90_baseline`\n"
         "- high-error clean incidents: retained\n"
         "- production_send: `blocked`\n",
@@ -224,6 +235,7 @@ def _group_predictions(candidates: list[dict[str, Any]], window_minutes: float =
         actual = float(median(row["actual"] for row in group))
         p50 = float(median(row["p50"] for row in group))
         error = abs(actual - p50)
+        worst_error = max(abs(float(row["actual"]) - float(row["p50"])) for row in group)
         seed = anchor.isoformat() + "|" + "|".join(sorted(row["outage_ref"] for row in group))
         rows.append(
             {
@@ -233,7 +245,9 @@ def _group_predictions(candidates: list[dict[str, Any]], window_minutes: float =
                 "actual_remaining_minutes": round(actual, 3),
                 "predicted_p50_minutes": round(p50, 3),
                 "absolute_error_minutes": round(error, 3),
+                "worst_meter_absolute_error_minutes": round(worst_error, 3),
                 "green_incident": "TRUE" if error <= 16 else "FALSE",
+                "high_error_incident": "TRUE" if worst_error >= 60 else "FALSE",
                 "model_version": MODEL_VERSION,
                 "production_send": "blocked",
             }
