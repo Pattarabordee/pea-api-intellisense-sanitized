@@ -59,6 +59,10 @@ Prospective alarm mapping uses `semantic_capture_version=v2` and
 `semantic_mapping_version=alarm_mapping_v2`. Migration 007 quarantines every open v1 interval before
 v2 capture begins, and pairing queries require the same mapping version. Historical/v1 rows are audit-only.
 
+Validated v2 OUTAGE requests capture the pre-registered `fixed_naive_60m_v1` p50 benchmark in
+`etr_candidates` at request receipt time. The benchmark is research-only, is never copied into callback/outbox
+payloads, and cannot bypass the send-control gate.
+
 `/api/v1/ais/truth-intervals` returns redacted outage/restore pairing rows for production gate review.
 Supported `status` values are `OPEN`, `CLOSED`, `REVIEW`, and `ALL`; the default is `OPEN`.
 Responses contain hashed request references, hash/last4 asset references, timestamps, pairing status, safe evidence reason,

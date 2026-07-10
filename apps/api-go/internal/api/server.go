@@ -25,11 +25,13 @@ import (
 
 const (
 	APIVersion           = "v1"
-	SchemaVersion        = "2026-07-10"
+	SchemaVersion        = "2026-07-10.1"
 	Mode                 = "shadow"
 	ProductionSend       = "blocked"
 	SemanticCaptureVersion = "v2"
 	SemanticMappingVersion = "alarm_mapping_v2"
+	ShadowBaselineModelVersion = "fixed_naive_60m_v1"
+	ShadowBaselineP50Minutes = 60.0
 	inboundPath          = "/api/v1/ais/outage-verifications"
 	truthIntervalsPath   = "/api/v1/ais/truth-intervals"
 	maxBodyBytes   int64 = 1_000_000
@@ -247,6 +249,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"v2_restore_without_open":      snapshot.V2RestoreWithoutOpen,
 		"v2_duration_review":           snapshot.V2DurationReview,
 		"semantic_mapping_version":     SemanticMappingVersion,
+		"shadow_baseline_prediction_snapshots": snapshot.ShadowBaselinePredictionSnapshots,
 		"truth_interval_policy": truthIntervalMetricsPolicy(),
 		"send_control":          s.safeSendControlPayload(),
 		"generated_at":          nowISO(),
@@ -685,14 +688,7 @@ func (s *Server) buildStorageRecords(req inboundRequest, accepted map[string]any
 			ProductionSend: ProductionSend,
 			GeneratedAt:    receivedAt,
 		},
-		etr: storage.ETRCandidate{
-			RequestID:      req.RequestID,
-			Status:         "NOT_READY_FOR_AUTO_SEND",
-			ModelVersion:   "shadow",
-			ProductionGate: "blocked_green_gate",
-			ProductionSend: ProductionSend,
-			GeneratedAt:    receivedAt,
-		},
+		etr: buildShadowETRCandidate(req, receivedAt),
 		send: storage.SendDecision{
 			RequestID:         req.RequestID,
 			PolicyMode:        decision.PolicyMode,
@@ -820,6 +816,18 @@ func classifyCause(req inboundRequest) string {
 func statusPayload(row *storage.RequestStatus) map[string]any {
 	result := map[string]any{}
 	_ = json.Unmarshal(row.CallbackPayload, &result)
+	if row.ETRP50Minutes != nil {
+		result["etr"] = map[string]any{
+			"status":                row.ETRStatus,
+			"p50_minutes":           row.ETRP50Minutes,
+			"q10_minutes":           row.ETRQ10Minutes,
+			"q90_minutes":           row.ETRQ90Minutes,
+			"model_version":         row.ETRModelVersion,
+			"prediction_created_at": formatTimePtr(row.ETRGeneratedAt),
+			"research_baseline_only": true,
+			"production_send":       ProductionSend,
+		}
+	}
 	requestSummary := map[string]any{}
 	_ = json.Unmarshal(row.RequestJSON, &requestSummary)
 	semanticSignals, _ := requestSummary["semantic_signals"].(map[string]any)
@@ -879,6 +887,27 @@ func statusPayload(row *storage.RequestStatus) map[string]any {
 			"attempts":  row.CallbackAttempts,
 		},
 	}
+}
+
+func buildShadowETRCandidate(req inboundRequest, receivedAt time.Time) storage.ETRCandidate {
+	candidate := storage.ETRCandidate{
+		RequestID:      req.RequestID,
+		Status:         "NOT_READY_FOR_AUTO_SEND",
+		ModelVersion:   "shadow",
+		ProductionGate: "blocked_green_gate",
+		ProductionSend: ProductionSend,
+		GeneratedAt:    receivedAt,
+	}
+	if req.EventType != "OUTAGE" || req.TruthValidation != "READY_FOR_LEDGER" {
+		return candidate
+	}
+	p50 := ShadowBaselineP50Minutes
+	candidate.Status = "SHADOW_BASELINE_CAPTURED"
+	candidate.P50Minutes = &p50
+	candidate.RiskLevel = "RESEARCH_BASELINE_ONLY"
+	candidate.ModelVersion = ShadowBaselineModelVersion
+	candidate.ProductionGate = "blocked_research_baseline"
+	return candidate
 }
 
 func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
