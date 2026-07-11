@@ -1,32 +1,7 @@
-# Production Cloud Real Hit Status
+# Superseded Cloud Hit Snapshot
 
-- Status: 
-NO_REAL_AIS_HIT_YET
-- Mode: 
-shadow
-- Production send: 
-blocked
-- API: 
-https://pea-api-intellisense-api.onrender.com
-- Web console: 
-https://pea-api-intellisense-web.onrender.com
-- Health: 
-ok
-- Database: 
-ok
-- Operator query: 
-PASS
-- Web console live data: 
-PASS
-- Total requests: 
-5
-- Non-smoke requests: 
-0
+This tracked snapshot is retained only to prevent stale operational claims. It is not current cloud evidence and must not be used for production, model, or PEA-CON claims.
 
-## Latest Redacted Request
+Use `runtime/production_cloud_real_hit_check.ps1` with authenticated GET-only access instead. The current guard writes JSON and Markdown reports under `runtime/private/`, emits only redacted hash references, and requires `production_send=blocked`.
 
-- request_id: AIS-CLOUD-SMOKE-20260622061708 - received_at: 2026-06-21T23:17:06Z - status: COMPLETED - callback_status: CAPTURED_NO_CALLBACK_URL - production_send: blocked
-
-## Safety
-
-This report intentionally omits API keys, full meter numbers, PEANO lists, customer identity, DB URLs, and verbatim WebEx text.
+The public console is demo-isolated and is not an evidence source.
