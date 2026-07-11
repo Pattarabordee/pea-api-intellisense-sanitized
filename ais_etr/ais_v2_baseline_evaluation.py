@@ -18,6 +18,8 @@ EVALUATOR_VERSION = "v2_baseline_eval_v3"
 GROUP_COLUMNS = (
     "incident_group_ref",
     "outage_anchor_time",
+    "incident_prediction_created_at",
+    "incident_target_available_at",
     "meter_interval_count",
     "actual_remaining_minutes",
     "predicted_p50_minutes",
@@ -215,6 +217,8 @@ def build_v2_baseline_evaluation(
             {
                 "outage_ref": outage_ref,
                 "outage_time": outage_time,
+                "prediction_time": prediction_time,
+                "restore_time": restore_time,
                 "actual": actual,
                 "p50": p50,
             }
@@ -261,6 +265,7 @@ def build_v2_baseline_evaluation(
         "high_error_threshold_minutes": 60,
         "coverage": "unavailable_no_q10_q90_baseline",
         "late_arrival_policy": "exclude_when_prediction_created_at_is_not_before_restore_at",
+        "history_availability_policy": "future research may use an incident target only after incident_target_available_at; grouped timestamps use earliest prediction and latest restore conservatively",
     }
     evaluation_seed = MODEL_VERSION + "|" + EVALUATOR_VERSION + "|" + group_artifact_sha256 + "|" + json.dumps(metric_semantics, sort_keys=True)
     evaluation_id = "eval_" + hashlib.sha256(evaluation_seed.encode("utf-8")).hexdigest()[:20]
@@ -303,6 +308,10 @@ def build_v2_baseline_evaluation(
         "registry_jsonl": str(registry_jsonl),
         "rejection_csv": str(rejection_output),
         "time_leakage_detected": False,
+        "availability_timestamps_complete": all(
+            bool(row.get("incident_prediction_created_at")) and bool(row.get("incident_target_available_at"))
+            for row in groups
+        ),
     }
     registry_entry = {
         "evaluation_id": evaluation_id,
@@ -347,6 +356,7 @@ def build_v2_baseline_evaluation(
         f"- green incidents (AE <= 16): `{green}`\n"
         f"- high-error incidents (worst meter AE >= 60): `{high_error}`\n"
         f"- late-arriving outage exclusions: `{rejection_counts['late_arriving_outage_after_restore']}`\n"
+        f"- incident availability timestamps complete: `{str(summary['availability_timestamps_complete']).lower()}`\n"
         "- time leakage detected: `false`\n"
         f"- mean worst-meter AE: `{summary['mean_worst_meter_absolute_error_minutes']}` นาที\n"
         "- coverage: `unavailable_no_q10_q90_baseline`\n"
@@ -408,6 +418,8 @@ def _group_predictions(candidates: list[dict[str, Any]], window_minutes: float =
         anchor: datetime = group[0]["outage_time"]
         actual = float(median(row["actual"] for row in group))
         p50 = float(median(row["p50"] for row in group))
+        prediction_time = min(row["prediction_time"] for row in group)
+        target_available_at = max(row["restore_time"] for row in group)
         error = abs(actual - p50)
         worst_error = max(abs(float(row["actual"]) - float(row["p50"])) for row in group)
         seed = anchor.isoformat() + "|" + "|".join(sorted(row["outage_ref"] for row in group))
@@ -415,6 +427,8 @@ def _group_predictions(candidates: list[dict[str, Any]], window_minutes: float =
             {
                 "incident_group_ref": "incident_" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16],
                 "outage_anchor_time": anchor.isoformat().replace("+00:00", "Z"),
+                "incident_prediction_created_at": prediction_time.isoformat().replace("+00:00", "Z"),
+                "incident_target_available_at": target_available_at.isoformat().replace("+00:00", "Z"),
                 "meter_interval_count": len(group),
                 "actual_remaining_minutes": round(actual, 3),
                 "predicted_p50_minutes": round(p50, 3),

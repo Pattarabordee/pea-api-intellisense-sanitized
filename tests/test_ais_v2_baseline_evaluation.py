@@ -72,6 +72,9 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         self.assertEqual(1, result["scorable_independent_incidents"])
         self.assertEqual(15.0, result["mae_minutes"])
         self.assertEqual("TRUE", rows[0]["green_incident"])
+        self.assertEqual("2026-07-10T01:00:00Z", rows[0]["incident_prediction_created_at"])
+        self.assertEqual("2026-07-10T01:45:00Z", rows[0]["incident_target_available_at"])
+        self.assertTrue(result["availability_timestamps_complete"])
         self.assertNotIn("secret-ref", bundle)
         self.assertEqual("research_baseline_accumulating", result["gate_status"])
         self.assertEqual("pilot_smoke_only", result["sample_size_status"])
@@ -93,6 +96,8 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         self.assertEqual(2, result["scorable_independent_incidents"])
         self.assertEqual(2, len(rows))
         self.assertEqual("2", rows[0]["meter_interval_count"])
+        self.assertEqual("2026-07-10T01:00:00Z", rows[0]["incident_prediction_created_at"])
+        self.assertEqual("2026-07-10T01:48:00Z", rows[0]["incident_target_available_at"])
 
     def test_prediction_at_or_after_restore_is_rejected(self):
         items = [self._item("r1", "2026-07-10T02:00:00Z")]
