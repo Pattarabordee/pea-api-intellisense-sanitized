@@ -23,8 +23,8 @@ class RuntimeMeterStateReleaseGuardTests(unittest.TestCase):
     def test_open_interval_review_hashes_references_and_omits_request_and_last4_values(self):
         text = _read("open_interval_review.ps1")
 
-        self.assertIn("function Safe-Reference", text)
-        self.assertIn('interval_ref = Safe-Reference "interval" $item.interval_id', text)
+        self.assertIn("interval_ref = Safe-Text $item.interval_ref", text)
+        self.assertNotIn("$item.interval_id", text)
         self.assertNotIn("$item.outage_request_id", text)
         self.assertNotIn("$item.restore_request_id", text)
         self.assertNotIn("$item.meter.last4", text)
