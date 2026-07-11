@@ -54,6 +54,7 @@ EXCLUDED_RUNTIME_DIRS = {
     "dev_export",
     "github_sanitized_source",
     "github_sanitized_source_stage",
+    "google_workspace_pilot",
     "office_pc_handoff",
     "pc_command_bridge",
     "unattended_pc_bridge",
@@ -525,7 +526,7 @@ def _should_include_for_chatgpt(source: Path, root: Path) -> tuple[bool, str]:
     if rel.parts[0] in {"ais_etr", "tests"}:
         return suffix == ".py", "source/test python" if suffix == ".py" else "non-python source fixture excluded"
     if rel.parts[0] == "runtime":
-        if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit", "google_workspace_pilot"}:
+        if len(rel.parts) >= 2 and rel.parts[1] in {"cloud_pilot", "ais_inbound_test_kit"}:
             return _is_text_candidate(source), "runtime allowlisted directory"
         return upper_name in RUNTIME_ALLOWLIST, "runtime top-level allowlist" if upper_name in RUNTIME_ALLOWLIST else "runtime file not allowlisted"
     if rel.parts[0] == ".github":
