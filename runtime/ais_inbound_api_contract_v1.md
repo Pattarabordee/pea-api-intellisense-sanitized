@@ -27,6 +27,8 @@ Cause text cannot create model truth. An unknown or non-allowlisted status/alarm
 
 The authenticated operator list includes `semantic_capture_version=v2`, `semantic_mapping_version=alarm_mapping_v2`, and a sanitized `semantic_signals` object for newly captured rows. Signals contain only fixed event/status/alarm fields; unsafe or long categorical values are represented by a hash reference only.
 
+For model evaluation, an authenticated operator lookup may use `GET /api/v1/ais/outage-verifications?view=operator&request_ref=<hash>[,<hash>...]`. It accepts at most 200 values in the form `request_<16 lowercase hex characters>`. This is a targeted lookup over hash references only; raw `request_id` is rejected and never returned.
+
 Rows captured before v2 activation remain audit-only. They are never replayed or relabeled into model-ready truth.
 
 For each new v2 OUTAGE that passes ledger validation, the cloud records a private research benchmark

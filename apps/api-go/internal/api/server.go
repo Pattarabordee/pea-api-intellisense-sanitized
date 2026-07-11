@@ -38,6 +38,7 @@ const (
 )
 
 var safeID = regexp.MustCompile(`^[A-Za-z0-9_.:@-]+$`)
+var safeRequestReference = regexp.MustCompile(`^request_[a-f0-9]{16}$`)
 
 type ServerConfig struct {
 	APIKey             string
@@ -165,7 +166,19 @@ func (s *Server) handleContract(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-		rows, err := s.store.ListStatuses(r.Context(), limit)
+		requestRefs, err := parseRequestReferences(r.URL.Query().Get("request_ref"))
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_REQUEST_REF", err.Error(), ""))
+			return
+		}
+		lookupMode := "recent"
+		var rows []storage.RequestStatus
+		if len(requestRefs) > 0 {
+			lookupMode = "request_ref"
+			rows, err = s.store.ListStatusesByRequestRefs(r.Context(), requestRefs, len(requestRefs))
+		} else {
+			rows, err = s.store.ListStatuses(r.Context(), limit)
+		}
 		if err != nil {
 			s.cfg.Logger.Error("operator list failed", "error", err)
 			writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load operator request list", ""))
@@ -181,6 +194,7 @@ func (s *Server) handleContract(w http.ResponseWriter, r *http.Request) {
 			"schema_version":  SchemaVersion,
 			"mode":            Mode,
 			"production_send": ProductionSend,
+			"lookup_mode":     lookupMode,
 			"count":           len(items),
 			"items":           items,
 			"generated_at":    nowISO(),
@@ -196,6 +210,30 @@ func (s *Server) handleContract(w http.ResponseWriter, r *http.Request) {
 		"status_lookup":   inboundPath + "/{request_id}",
 		"production_send": ProductionSend,
 	})
+}
+
+func parseRequestReferences(value string) ([]string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	result := make([]string, 0)
+	seen := map[string]bool{}
+	for _, raw := range strings.Split(value, ",") {
+		ref := strings.ToLower(strings.TrimSpace(raw))
+		if !safeRequestReference.MatchString(ref) {
+			return nil, errors.New("request_ref must be a comma-separated list of hashed request references")
+		}
+		if seen[ref] {
+			continue
+		}
+		seen[ref] = true
+		result = append(result, ref)
+		if len(result) > 200 {
+			return nil, errors.New("request_ref supports at most 200 hashed request references")
+		}
+	}
+	return result, nil
 }
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {

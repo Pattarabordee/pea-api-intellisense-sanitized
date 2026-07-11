@@ -86,6 +86,48 @@ func TestPostWithoutSourceOrSiteUsesMeterStateTruth(t *testing.T) {
 	}
 }
 
+func TestOperatorRequestReferenceLookupIsRedacted(t *testing.T) {
+	store := newFakeStore()
+	rawRequestID := "RAW-OPERATOR-REQUEST-001"
+	store.requestRefRows = []storage.RequestStatus{{
+		RequestID:      rawRequestID,
+		ReceivedAt:     time.Date(2026, 7, 11, 1, 0, 0, 0, time.UTC),
+		DetectedAt:     time.Date(2026, 7, 11, 1, 0, 0, 0, time.UTC),
+		ProductionSend: "blocked",
+	}}
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	ref := hashReference("request", rawRequestID)
+	req := httptest.NewRequest(http.MethodGet, inboundPath+"?view=operator&request_ref="+ref, nil)
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String())
+	}
+	if !strings.Contains(res.Body.String(), ref) || strings.Contains(res.Body.String(), rawRequestID) {
+		t.Fatalf("operator reference lookup leaked or lost expected reference: %s", res.Body.String())
+	}
+	if len(store.requestRefLookups) != 1 || len(store.requestRefLookups[0]) != 1 || store.requestRefLookups[0][0] != ref {
+		t.Fatalf("expected one targeted hash lookup, got %#v", store.requestRefLookups)
+	}
+}
+
+func TestOperatorRequestReferenceLookupRejectsRawIdentifier(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	req := httptest.NewRequest(http.MethodGet, inboundPath+"?view=operator&request_ref=RAW-REQUEST-001", nil)
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", res.Code, res.Body.String())
+	}
+}
+
 func TestPostUsesRequestTimestampAsEventTimestamp(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
@@ -624,6 +666,8 @@ type fakeStore struct {
 	rows                map[string]storage.RequestStatus
 	intervals           []storage.TruthInterval
 	callbackStatusCount map[string]int64
+	requestRefRows      []storage.RequestStatus
+	requestRefLookups   [][]string
 	inserted            int
 }
 
@@ -641,6 +685,12 @@ func (f *fakeStore) InsertCallback(ctx context.Context, callback storage.Callbac
 }
 func (f *fakeStore) ListStatuses(ctx context.Context, limit int) ([]storage.RequestStatus, error) {
 	return []storage.RequestStatus{}, nil
+}
+func (f *fakeStore) ListStatusesByRequestRefs(ctx context.Context, requestRefs []string, limit int) ([]storage.RequestStatus, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.requestRefLookups = append(f.requestRefLookups, append([]string{}, requestRefs...))
+	return append([]storage.RequestStatus{}, f.requestRefRows...), nil
 }
 func (f *fakeStore) ListTruthIntervals(ctx context.Context, status string, limit int) ([]storage.TruthInterval, error) {
 	f.mu.Lock()

@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from ais_etr.ais_v2_baseline_evaluation import MODEL_VERSION, build_v2_baseline_evaluation
+from ais_etr.ais_v2_baseline_evaluation import MODEL_VERSION, build_v2_baseline_evaluation, run_v2_baseline_evaluation
 
 
 class V2BaselineEvaluationTests(unittest.TestCase):
@@ -140,6 +141,73 @@ class V2BaselineEvaluationTests(unittest.TestCase):
     def test_nonblocked_metrics_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "production_send"):
             self._run([], [], {"production_send": "allowed"})
+
+    def test_live_evaluator_uses_targeted_hashed_request_reference_lookup(self):
+        intervals = [
+            self._interval("request_aaaaaaaaaaaaaaaa", "2026-07-10T01:00:00Z", "2026-07-10T01:30:00Z", 30),
+            self._interval("request_bbbbbbbbbbbbbbbb", "2026-07-10T01:10:00Z", "2026-07-10T01:50:00Z", 40),
+        ]
+        requested_urls = []
+
+        def fake_get(url, _key):
+            requested_urls.append(url)
+            if url.endswith("/metrics"):
+                return {"production_send": "blocked", "v2_model_ready_rows": 2}
+            if "/truth-intervals?" in url:
+                return {"production_send": "blocked", "items": intervals}
+            if "request_ref=" in url:
+                return {
+                    "production_send": "blocked",
+                    "lookup_mode": "request_ref",
+                    "items": [
+                        self._item("request_aaaaaaaaaaaaaaaa", "2026-07-10T01:00:00Z"),
+                        self._item("request_bbbbbbbbbbbbbbbb", "2026-07-10T01:10:00Z"),
+                    ],
+                }
+            raise AssertionError(url)
+
+        with tempfile.TemporaryDirectory() as temp, patch("ais_etr.ais_v2_baseline_evaluation._get_json", side_effect=fake_get):
+            root = Path(temp)
+            result = run_v2_baseline_evaluation(
+                base_url="https://example.invalid",
+                output_csv=root / "groups.csv",
+                summary_json=root / "summary.json",
+                report_md=root / "report.md",
+                peacon_md=root / "peacon.md",
+                registry_jsonl=root / "registry.jsonl",
+                rejection_csv=root / "rejections.csv",
+                api_key="test-key",
+            )
+
+        self.assertEqual(2, result["scorable_meter_rows"])
+        lookup_urls = [url for url in requested_urls if "request_ref=" in url]
+        self.assertEqual(1, len(lookup_urls))
+        self.assertIn("request_aaaaaaaaaaaaaaaa", lookup_urls[0])
+        self.assertNotIn("outage-verifications?view=operator&limit", lookup_urls[0])
+
+    def test_live_evaluator_fails_closed_when_truth_window_is_incomplete(self):
+        interval = self._interval("request_aaaaaaaaaaaaaaaa", "2026-07-10T01:00:00Z", "2026-07-10T01:30:00Z", 30)
+
+        def fake_get(url, _key):
+            if url.endswith("/metrics"):
+                return {"production_send": "blocked", "v2_model_ready_rows": 2}
+            if "/truth-intervals?" in url:
+                return {"production_send": "blocked", "items": [interval]}
+            raise AssertionError("operator lookup must not run for an incomplete truth window")
+
+        with tempfile.TemporaryDirectory() as temp, patch("ais_etr.ais_v2_baseline_evaluation._get_json", side_effect=fake_get):
+            root = Path(temp)
+            with self.assertRaisesRegex(ValueError, "incomplete_truth_interval_window"):
+                run_v2_baseline_evaluation(
+                    base_url="https://example.invalid",
+                    output_csv=root / "groups.csv",
+                    summary_json=root / "summary.json",
+                    report_md=root / "report.md",
+                    peacon_md=root / "peacon.md",
+                    registry_jsonl=root / "registry.jsonl",
+                    rejection_csv=root / "rejections.csv",
+                    api_key="test-key",
+                )
 
     def test_registry_is_deterministic_and_idempotent(self):
         items = [self._item("r1", "2026-07-10T01:00:00Z")]
