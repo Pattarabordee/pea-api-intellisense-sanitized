@@ -1,6 +1,5 @@
 param(
   [string]$BaseUrl = "https://pea-api-intellisense-api.onrender.com",
-  [string]$WebUrl = "https://pea-api-intellisense-web.onrender.com",
   [string]$ApiKey = $env:AIS_INBOUND_API_KEY,
   [int]$Limit = 200,
   [string]$OutputDir = "runtime/private/production_gate"
@@ -13,7 +12,6 @@ if (-not $ApiKey) {
 }
 
 $cleanBase = $BaseUrl.TrimEnd("/")
-$cleanWeb = $WebUrl.TrimEnd("/")
 $headers = @{ "X-API-Key" = $ApiKey }
 $generatedAt = (Get-Date).ToUniversalTime()
 $runId = $generatedAt.ToString("yyyyMMddTHHmmssZ")
@@ -39,6 +37,13 @@ function Count-Values {
   return $map
 }
 
+function Metric-Int {
+  param($Payload, [string]$Name)
+  $property = $Payload.PSObject.Properties[$Name]
+  if ($null -eq $property -or $null -eq $property.Value) { return [int64]0 }
+  return [int64]$property.Value
+}
+
 function New-Check {
   param(
     [string]$Name,
@@ -60,56 +65,39 @@ Assert-Blocked $health "health"
 $metrics = Invoke-RestMethod -Method GET -Uri "$cleanBase/metrics" -Headers $headers -TimeoutSec 25
 Assert-Blocked $metrics "metrics"
 
-$operator = Invoke-RestMethod -Method GET -Uri "$cleanBase/api/v1/ais/outage-verifications?view=operator&limit=$Limit" -Headers $headers -TimeoutSec 30
-Assert-Blocked $operator "operator"
-
 $truthIntervalStatus = "UNAVAILABLE"
-$truthIntervals = @()
 try {
-  $truthIntervalResponse = Invoke-RestMethod -Method GET -Uri "$cleanBase/api/v1/ais/truth-intervals?status=OPEN&limit=50" -Headers $headers -TimeoutSec 25
+  $truthIntervalResponse = Invoke-RestMethod -Method GET -Uri "$cleanBase/api/v1/ais/truth-intervals?status=ALL&limit=$Limit" -Headers $headers -TimeoutSec 25
   Assert-Blocked $truthIntervalResponse "truth_intervals"
-  $truthIntervals = @($truthIntervalResponse.items)
   $truthIntervalStatus = "PASS"
 } catch {
   $truthIntervalStatus = "NOT_DEPLOYED_OR_UNAVAILABLE"
 }
 
-$items = @($operator.items)
-$realItems = @($items)
-
-$latestReal = $realItems | Select-Object -First 1
-$latestAny = $items | Select-Object -First 1
-$latest = if ($latestReal) { $latestReal } else { $latestAny }
-
-$truthEventCounts = Count-Values (@($realItems | ForEach-Object { $_.truth_observation.event_type }))
-$truthValidationCounts = Count-Values (@($realItems | ForEach-Object { $_.truth_observation.validation_status }))
-$callbackCounts = Count-Values (@($realItems | ForEach-Object { $_.callback_status }))
-$outboxCounts = Count-Values (@($realItems | ForEach-Object { $_.callback_outbox.status }))
-
-$modelReadyRows = [int64]$metrics.model_ready_clean_truth_rows
-
-$webStatus = "SKIPPED"
-$webHasDemoLabel = $false
-if ($cleanWeb) {
-  try {
-    $webHtml = curl.exe -sS --max-time 25 "$cleanWeb/"
-    $webHasDemoLabel = $webHtml -match "DEMO DATA"
-    $webStatus = if ($webHasDemoLabel) { "PASS" } else { "WARN" }
-  } catch {
-    $webStatus = "WARN"
-  }
-}
+$modelReadyRows = Metric-Int $metrics "model_ready_clean_truth_rows"
+$v2ModelReadyRows = Metric-Int $metrics "v2_model_ready_rows"
+$v2OutageEvents = Metric-Int $metrics "v2_outage_events"
+$v2RestoreEvents = Metric-Int $metrics "v2_restore_events"
+$v2OpenIntervals = Metric-Int $metrics "v2_open_intervals"
+$v2DurationReview = Metric-Int $metrics "v2_duration_review"
+$truthReviewNeeded = Metric-Int $metrics "truth_review_needed"
+$truthOpenIntervals = Metric-Int $metrics "truth_open_intervals"
+$truthClosedIntervals = Metric-Int $metrics "truth_closed_intervals"
+$callbackCounts = $metrics.callback_counts
+if ($null -eq $callbackCounts) { $callbackCounts = @{} }
+$mappingVersion = [string]$metrics.semantic_mapping_version
+$meterStateAligned = $mappingVersion -eq "alarm_mapping_v2" -and $modelReadyRows -eq $v2ModelReadyRows
 
 $checks = @()
 $checks += New-Check "cloud_health" $(if ($health.status -eq "ok" -and $health.database -eq "ok") { "PASS" } else { "FAIL" }) "health=$($health.status), database=$($health.database)" "health/database must be ok"
-$checks += New-Check "production_send_block" $(if ($health.production_send -eq "blocked" -and $metrics.production_send -eq "blocked" -and $operator.production_send -eq "blocked") { "PASS" } else { "FAIL" }) "health=$($health.production_send), metrics=$($metrics.production_send), operator=$($operator.production_send)" "all public/operator surfaces must stay blocked"
-$checks += New-Check "real_ais_seen" $(if ($realItems.Count -gt 0) { "PASS" } else { "WARN" }) "non_smoke_requests_in_window=$($realItems.Count)" "real AIS should be visible in latest operator window"
-$checks += New-Check "truth_review_queue" $(if ([int64]$metrics.truth_review_needed -eq 0) { "PASS" } else { "FAIL" }) "truth_review_needed=$($metrics.truth_review_needed)" "truth_review_needed must be 0 before customer send"
-$checks += New-Check "truth_interval_state" $(if ([int64]$metrics.truth_open_intervals -eq 0) { "PASS" } else { "WARN" }) "open=$($metrics.truth_open_intervals), closed=$($metrics.truth_closed_intervals)" "open intervals must be explained as active outage or missing restore"
-$checks += New-Check "truth_interval_detail" $(if ([int64]$metrics.truth_open_intervals -eq 0 -or $truthIntervalStatus -eq "PASS") { "PASS" } else { "WARN" }) "detail_status=$truthIntervalStatus, open_detail_rows=$($truthIntervals.Count)" "open interval detail endpoint should be available for owner review"
-$checks += New-Check "callback_contract" $(if ($callbackCounts.Contains("CAPTURED_NO_CALLBACK_URL")) { "BLOCKED" } else { "WARN" }) "callback_counts=$(($callbackCounts | ConvertTo-Json -Compress))" "AIS callback URL/contract must be approved before real callback"
-$checks += New-Check "clean_truth_capture" $(if ($modelReadyRows -ge 30) { "WARN" } else { "BLOCKED" }) "model_ready_rows=$modelReadyRows, independent_incident_target=30" "model-ready rows still require local incident grouping and MAE/coverage evaluation"
-$checks += New-Check "web_console" $webStatus "demo_label=$webHasDemoLabel" "public web console must show synthetic demo data only"
+$checks += New-Check "production_send_block" $(if ($health.production_send -eq "blocked" -and $metrics.production_send -eq "blocked") { "PASS" } else { "FAIL" }) "health=$($health.production_send), metrics=$($metrics.production_send)" "all customer-send surfaces must remain blocked"
+$checks += New-Check "meter_state_truth_alignment" $(if ($meterStateAligned) { "PASS" } else { "FAIL" }) "mapping_version=$mappingVersion, model_ready=$modelReadyRows, v2_model_ready=$v2ModelReadyRows" "only alarm_mapping_v2 meter-state pairs may count as model-ready truth"
+$checks += New-Check "truth_review_queue" $(if ($truthReviewNeeded -eq 0) { "PASS" } else { "WARN" }) "truth_review_needed=$truthReviewNeeded" "review rows are operationally pending and cannot support customer send"
+$checks += New-Check "truth_interval_state" $(if ($truthOpenIntervals -eq 0) { "PASS" } else { "WARN" }) "open=$truthOpenIntervals, v2_open=$v2OpenIntervals, closed=$truthClosedIntervals" "open intervals require active-outage or missing-restore review"
+$checks += New-Check "truth_interval_detail" $(if ($truthOpenIntervals -eq 0 -or $truthIntervalStatus -eq "PASS") { "PASS" } else { "WARN" }) "detail_status=$truthIntervalStatus" "redacted truth-interval endpoint must remain available for review"
+$checks += New-Check "callback_contract" "BLOCKED" "callback_counts=$(($callbackCounts | ConvertTo-Json -Compress))" "no real callback until a separately approved contract and production gate"
+$checks += New-Check "model_evaluation_readiness" $(if ($v2ModelReadyRows -ge 30) { "WARN" } else { "BLOCKED" }) "v2_model_ready_rows=$v2ModelReadyRows, independent_incident_target=30" "row count is not an accuracy claim; local chronological incident grouping and evaluation are still required"
+$checks += New-Check "duration_review" $(if ($v2DurationReview -eq 0) { "PASS" } else { "WARN" }) "v2_duration_review=$v2DurationReview" "duration-review rows remain outside training and evaluation"
 
 $overall = "PASS_FOR_SHADOW_CAPTURE_ONLY"
 if (@($checks | Where-Object { $_.status -eq "FAIL" }).Count -gt 0) {
@@ -120,26 +108,10 @@ if (@($checks | Where-Object { $_.status -eq "FAIL" }).Count -gt 0) {
   $overall = "WARN_REVIEW_BEFORE_PILOT"
 }
 
-$latestSummary = $null
-if ($latest) {
-  $latestSummary = [ordered]@{
-    request_ref = $latest.request_ref
-    received_at = $latest.received_at
-    status = $latest.status
-    callback_status = $latest.callback_status
-    production_send = $latest.production_send
-    truth_event_type = $latest.truth_observation.event_type
-    truth_validation = $latest.truth_observation.validation_status
-    outbox_status = $latest.callback_outbox.status
-    outbox_transport = $latest.callback_outbox.transport
-  }
-}
-
 $report = [ordered]@{
   generated_at = $generatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
   run_id = $runId
   base_url = $cleanBase
-  web_url = $cleanWeb
   overall_status = $overall
   mode = $health.mode
   production_send = $health.production_send
@@ -151,30 +123,26 @@ $report = [ordered]@{
     outbox_dry_run_held = $metrics.outbox_dry_run_held
     dead_letters = $metrics.dead_letters
     truth_observations = $metrics.truth_observations
-    truth_review_needed = $metrics.truth_review_needed
     truth_outage_events = $metrics.truth_outage_events
     truth_restore_events = $metrics.truth_restore_events
-    truth_open_intervals = $metrics.truth_open_intervals
-    truth_closed_intervals = $metrics.truth_closed_intervals
-  }
-  operator_window = [ordered]@{
-    limit = $Limit
-    items_returned = $items.Count
-    non_smoke_items = $realItems.Count
-    truth_event_counts = $truthEventCounts
-    truth_validation_counts = $truthValidationCounts
-    callback_counts = $callbackCounts
-    outbox_counts = $outboxCounts
-    latest = $latestSummary
+    truth_open_intervals = $truthOpenIntervals
+    truth_closed_intervals = $truthClosedIntervals
+    truth_review_needed = $truthReviewNeeded
+    semantic_mapping_version = $mappingVersion
+    v2_outage_events = $v2OutageEvents
+    v2_restore_events = $v2RestoreEvents
+    v2_open_intervals = $v2OpenIntervals
+    v2_model_ready_rows = $v2ModelReadyRows
+    v2_duration_review = $v2DurationReview
+    model_ready_clean_truth_rows = $modelReadyRows
   }
   truth_interval_review = [ordered]@{
     detail_status = $truthIntervalStatus
-    open_detail_rows = $truthIntervals.Count
-    note = "Rows are available only after the redacted truth-interval endpoint is deployed."
+    note = "Only aggregate endpoint availability is recorded here; row-level review is written by open_interval_review.ps1 with hashed references."
   }
   checks = $checks
   safety = [ordered]@{
-    redaction = "Report omits API keys, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
+    redaction = "Report contains aggregates only. It omits API keys, request/source-event identifiers, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
     production_send = "blocked"
     line_webex_policy = "Line/WebEx may be collected only as bounded context, not outage/restore truth."
   }
@@ -190,20 +158,6 @@ foreach ($check in $checks) {
   $checkLines += "| $($check.name) | $($check.status) | $($check.evidence) |"
 }
 
-$latestLines = if ($latestSummary) {
-  @(
-    "- request_ref: $($latestSummary.request_ref)",
-    "- received_at: $($latestSummary.received_at)",
-    "- callback_status: $($latestSummary.callback_status)",
-    "- truth_event_type: $($latestSummary.truth_event_type)",
-    "- truth_validation: $($latestSummary.truth_validation)",
-    "- outbox: $($latestSummary.outbox_transport) / $($latestSummary.outbox_status)",
-    "- production_send: $($latestSummary.production_send)"
-  )
-} else {
-  @("- none")
-}
-
 $markdown = @(
   "# Production Gate Live Snapshot",
   "",
@@ -212,25 +166,27 @@ $markdown = @(
   "- Mode: $($report.mode)",
   "- Production send: $($report.production_send)",
   "- API: $($report.base_url)",
-  "- Web: $($report.web_url)",
   "",
   "## Metrics",
   "",
   "- total_requests: $($metrics.total_requests)",
-  "- non_smoke_requests_in_window: $($realItems.Count)",
   "- truth_observations: $($metrics.truth_observations)",
-  "- truth_review_needed: $($metrics.truth_review_needed)",
+  "- truth_review_needed: $truthReviewNeeded",
   "- truth_outage_events: $($metrics.truth_outage_events)",
   "- truth_restore_events: $($metrics.truth_restore_events)",
-  "- truth_open_intervals: $($metrics.truth_open_intervals)",
-  "- truth_closed_intervals: $($metrics.truth_closed_intervals)",
+  "- truth_open_intervals: $truthOpenIntervals",
+  "- truth_closed_intervals: $truthClosedIntervals",
+  "- semantic_mapping_version: $mappingVersion",
+  "- v2_outage_events: $v2OutageEvents",
+  "- v2_restore_events: $v2RestoreEvents",
+  "- v2_open_intervals: $v2OpenIntervals",
+  "- v2_model_ready_rows: $v2ModelReadyRows",
+  "- model_ready_clean_truth_rows: $modelReadyRows",
+  "- v2_duration_review: $v2DurationReview",
   "- truth_interval_detail_status: $truthIntervalStatus",
-  "- truth_interval_detail_rows: $($truthIntervals.Count)",
   "- outbox_dry_run_held: $($metrics.outbox_dry_run_held)",
-  "",
-  "## Latest Redacted Request",
   ""
-) + $latestLines + @(
+) + @(
   "",
   "## Gate Checks",
   "",
@@ -240,11 +196,11 @@ $markdown = @(
   "",
   "## Decision",
   "",
-  "Shadow capture can continue. Customer-facing callback/ETR remains blocked until callback contract, topology owner approval, and green gate pass.",
+  "Shadow capture can continue. Model-ready meter-state rows must first be grouped into independent incidents and evaluated chronologically. Customer-facing callback/ETR remains blocked until the model, contract, and owner gates pass.",
   "",
   "## Safety",
   "",
-  "This report omits API keys, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
+  "This aggregate report omits API keys, request/source-event identifiers, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
 )
 
 $markdown | Set-Content -LiteralPath $mdPath -Encoding UTF8

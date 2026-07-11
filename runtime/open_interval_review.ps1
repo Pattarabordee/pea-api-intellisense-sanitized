@@ -31,6 +31,21 @@ function Safe-Text {
   return [string]$Value
 }
 
+function Safe-Reference {
+  param([string]$Namespace, $Value)
+  $raw = Safe-Text $Value
+  if (-not $raw) { return "" }
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try {
+    $bytes = [Text.Encoding]::UTF8.GetBytes($raw)
+    $hash = $sha.ComputeHash($bytes)
+    $hex = ([BitConverter]::ToString($hash) -replace "-", "").ToLowerInvariant()
+    return "$Namespace" + "_" + $hex.Substring(0, 16)
+  } finally {
+    $sha.Dispose()
+  }
+}
+
 function Interval-Action {
   param($Item)
   if ((Safe-Text $Item.pair_status) -eq "CLOSED") { return "no_action_paired" }
@@ -66,16 +81,12 @@ foreach ($item in $items) {
     }
   }
   $reviewRows += [ordered]@{
-    interval_id = Safe-Text $item.interval_id
+    interval_ref = Safe-Reference "interval" $item.interval_id
     pair_status = Safe-Text $item.pair_status
-    outage_request_id = Safe-Text $item.outage_request_id
-    restore_request_id = Safe-Text $item.restore_request_id
+    bridge_status = Safe-Text $item.bridge_status
+    semantic_mapping_version = Safe-Text $item.semantic_mapping_version
     outage_at = Safe-Text $item.outage_at
-    restore_at = Safe-Text $item.restore_at
     age_hours = $ageHours
-    duration_minutes = $item.duration_minutes
-    meter_last4 = Safe-Text $item.meter.last4
-    site_last4 = Safe-Text $item.site.last4
     review_hint = Safe-Text $item.review_hint
     evidence_reason = Safe-Text $item.evidence.reason
     recommended_action = Interval-Action $item
@@ -104,6 +115,8 @@ $report = [ordered]@{
     truth_restore_events = $metrics.truth_restore_events
     truth_open_intervals = $metrics.truth_open_intervals
     truth_closed_intervals = $metrics.truth_closed_intervals
+    v2_open_intervals = $metrics.v2_open_intervals
+    v2_model_ready_rows = $metrics.v2_model_ready_rows
   }
   detail = [ordered]@{
     status = $detailStatus
@@ -113,7 +126,7 @@ $report = [ordered]@{
   }
   review_rows = $reviewRows
   safety = [ordered]@{
-    redaction = "Report uses request ids, hash-derived references, last4, timestamps, and status only. It omits API keys, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
+    redaction = "Report uses hashed interval references, timestamps, and status only. It omits API keys, request/source-event identifiers, meter/site values and last4, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
     production_send = "blocked"
     truth_source = "AIS outage/restore is the primary truth; Line/WebEx are context only."
   }
@@ -126,10 +139,10 @@ $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $jsonPath -Encodin
 
 $rows = @()
 foreach ($row in $reviewRows) {
-  $rows += "| $($row.interval_id) | $($row.pair_status) | $($row.outage_request_id) | $($row.outage_at) | $($row.age_hours) | $($row.site_last4) | $($row.meter_last4) | $($row.recommended_action) |"
+  $rows += "| $($row.interval_ref) | $($row.pair_status) | $($row.bridge_status) | $($row.semantic_mapping_version) | $($row.outage_at) | $($row.age_hours) | $($row.recommended_action) |"
 }
 if ($rows.Count -eq 0) {
-  $rows += "| none | - | - | - | - | - | - | - |"
+  $rows += "| none | - | - | - | - | - | - |"
 }
 
 $markdown = @(
@@ -149,12 +162,14 @@ $markdown = @(
   "- truth_restore_events: $($metrics.truth_restore_events)",
   "- truth_open_intervals: $($metrics.truth_open_intervals)",
   "- truth_closed_intervals: $($metrics.truth_closed_intervals)",
+  "- v2_open_intervals: $($metrics.v2_open_intervals)",
+  "- v2_model_ready_rows: $($metrics.v2_model_ready_rows)",
   "- detail_status: $detailStatus",
   "",
   "## Review Queue",
   "",
-  "| Interval | Status | Outage request | Outage at | Age hours | Site last4 | Meter last4 | Action |",
-  "|---|---|---|---|---:|---|---|---|"
+  "| Interval ref | Status | Bridge status | Mapping version | Outage at | Age hours | Action |",
+  "|---|---|---|---|---|---:|---|"
 ) + $rows + @(
   "",
   "## Decision",
@@ -163,7 +178,7 @@ $markdown = @(
   "",
   "## Safety",
   "",
-  "This private report omits API keys, full meter numbers, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
+  "This private report omits API keys, request/source-event identifiers, meter/site values and last4, PEANO lists, customer identity, room ids, tokens, and raw WebEx/Line text."
 )
 
 $markdown | Set-Content -LiteralPath $mdPath -Encoding UTF8
