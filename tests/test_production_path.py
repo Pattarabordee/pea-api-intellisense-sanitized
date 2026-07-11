@@ -102,7 +102,7 @@ class ProductionPathTests(unittest.TestCase):
                 self.assertIn("render.yaml", names)
                 self.assertIn("runtime/pea_api_intellisense_technical_brief.md", names)
                 self.assertIn("runtime/pea_api_intellisense_pitch_answers.md", names)
-                self.assertIn("runtime/google_workspace_pilot/Code.gs", names)
+                self.assertNotIn("runtime/google_workspace_pilot/Code.gs", names)
                 self.assertIn("apps/api-go/main.go", names)
                 self.assertIn("apps/api-go/go.sum", names)
                 self.assertIn("apps/web-next/app/page.tsx", names)
@@ -114,6 +114,17 @@ class ProductionPathTests(unittest.TestCase):
             self.assertNotIn("1234567890", service_text)
             self.assertNotIn("room-secret", service_text)
             self.assertIn("REDACTED-METER-0000", service_text)
+
+    def test_legacy_google_workspace_pilot_is_superseded_not_a_deployment_path(self):
+        root = Path(__file__).resolve().parents[1]
+        pilot = root / "runtime" / "google_workspace_pilot"
+        for name in ("README.md", "deployment_note.md", "setup_checklist.md"):
+            text = (pilot / name).read_text(encoding="utf-8")
+            self.assertIn("Superseded", text)
+            self.assertNotIn("pilot_key=", text)
+            self.assertNotIn("Deploy >", text)
+        code = (pilot / "Code.gs").read_text(encoding="utf-8")
+        self.assertIn("SUPERSEDED", code)
 
     def test_production_readiness_gate_blocks_auto_etr_until_green_and_owner_approval(self):
         with tempfile.TemporaryDirectory() as tmp:

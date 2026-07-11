@@ -1,5 +1,7 @@
 const API_VERSION = "v1";
 const SCHEMA_VERSION = "2026-06-21-google-workspace-pilot";
+// SUPERSEDED: historical reference only. Do not deploy or route AIS traffic here.
+// The current receiver is the authenticated Render Go API.
 const MODE = "shadow";
 const PRODUCTION_SEND = "blocked";
 const DEFAULT_MATCH_WINDOW_MINUTES = 360;
