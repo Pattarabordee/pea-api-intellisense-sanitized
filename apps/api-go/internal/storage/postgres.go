@@ -203,6 +203,24 @@ func (s *PostgresStore) ListStatuses(ctx context.Context, limit int) ([]RequestS
 	return s.queryStatuses(ctx, "", limit)
 }
 
+func (s *PostgresStore) ListStatusesByRequestRefs(ctx context.Context, requestRefs []string, limit int) ([]RequestStatus, error) {
+	if len(requestRefs) == 0 {
+		return []RequestStatus{}, nil
+	}
+	if len(requestRefs) > 200 {
+		return nil, fmt.Errorf("request reference lookup supports at most 200 values")
+	}
+	if limit <= 0 || limit > len(requestRefs) {
+		limit = len(requestRefs)
+	}
+	return s.queryStatuses(
+		ctx,
+		"WHERE coalesce(r.request_json ->> 'request_ref', '') = ANY($1)",
+		limit,
+		requestRefs,
+	)
+}
+
 func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50

@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from statistics import median
 from typing import Any
+from urllib.parse import urlencode
 
 from .ais_v2_lifecycle_audit import MAPPING_VERSION, _float_or_none, _get_json, _parse_time
 
@@ -54,18 +55,31 @@ def run_v2_baseline_evaluation(
         raise ValueError("AIS_INBOUND_API_KEY is required")
     root = base_url.rstrip("/")
     metrics = _get_json(root + "/metrics", key)
-    requests = _get_json(
-        root + f"/api/v1/ais/outage-verifications?view=operator&limit={max(1, min(limit, 200))}", key
-    )
     intervals = _get_json(
         root + f"/api/v1/ais/truth-intervals?status=ALL&limit={max(1, min(limit, 200))}", key
     )
-    for label, payload in (("metrics", metrics), ("requests", requests), ("intervals", intervals)):
+    for label, payload in (("metrics", metrics), ("intervals", intervals)):
         if payload.get("production_send") != "blocked":
             raise ValueError(f"{label} production_send must remain blocked")
+    clean_refs = sorted(
+        {
+            str(row.get("outage_request_ref") or "").strip()
+            for row in intervals.get("items") or []
+            if row.get("semantic_mapping_version") == MAPPING_VERSION
+            and row.get("pair_status") == "CLOSED"
+            and row.get("bridge_status") == "METER_STATE_MODEL_READY"
+            and str(row.get("outage_request_ref") or "").strip()
+        }
+    )
+    expected_clean_rows = int(metrics.get("v2_model_ready_rows") or 0)
+    if len(clean_refs) < expected_clean_rows:
+        raise ValueError(
+            "incomplete_truth_interval_window: fetched clean v2 interval references do not cover v2_model_ready_rows"
+        )
+    request_items = _fetch_operator_rows_by_request_refs(root, key, clean_refs)
     return build_v2_baseline_evaluation(
         metrics,
-        requests.get("items") or [],
+        request_items,
         intervals.get("items") or [],
         output_csv=output_csv,
         summary_json=summary_json,
@@ -74,6 +88,20 @@ def run_v2_baseline_evaluation(
         registry_jsonl=registry_jsonl,
         rejection_csv=rejection_csv,
     )
+
+
+def _fetch_operator_rows_by_request_refs(root: str, api_key: str, request_refs: list[str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for start in range(0, len(request_refs), 100):
+        refs = request_refs[start : start + 100]
+        query = urlencode({"view": "operator", "request_ref": ",".join(refs)})
+        payload = _get_json(root + "/api/v1/ais/outage-verifications?" + query, api_key)
+        if payload.get("production_send") != "blocked":
+            raise ValueError("operator lookup production_send must remain blocked")
+        if payload.get("lookup_mode") not in ("request_ref", ""):
+            raise ValueError("operator lookup did not confirm request_ref mode")
+        rows.extend(payload.get("items") or [])
+    return rows
 
 
 def build_v2_baseline_evaluation(

@@ -16,6 +16,7 @@ type Store interface {
 	InsertCallback(ctx context.Context, callback Callback) error
 	GetStatus(ctx context.Context, requestID string) (*RequestStatus, error)
 	ListStatuses(ctx context.Context, limit int) ([]RequestStatus, error)
+	ListStatusesByRequestRefs(ctx context.Context, requestRefs []string, limit int) ([]RequestStatus, error)
 	ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error)
 	Metrics(ctx context.Context) (*MetricsSnapshot, error)
 }
