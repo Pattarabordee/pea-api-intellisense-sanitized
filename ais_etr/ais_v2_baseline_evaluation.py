@@ -55,10 +55,10 @@ def run_v2_baseline_evaluation(
         raise ValueError("AIS_INBOUND_API_KEY is required")
     root = base_url.rstrip("/")
     metrics = _get_json(root + "/metrics", key)
-    intervals = _get_json(
-        root + f"/api/v1/ais/truth-intervals?status=ALL&limit={max(1, min(limit, 200))}", key
-    )
-    for label, payload in (("metrics", metrics), ("intervals", intervals)):
+    if metrics.get("production_send") != "blocked":
+        raise ValueError("metrics production_send must remain blocked")
+    intervals = _fetch_v2_truth_interval_window(root, key, int(metrics.get("v2_model_ready_rows") or 0), limit)
+    for label, payload in (("intervals", intervals),):
         if payload.get("production_send") != "blocked":
             raise ValueError(f"{label} production_send must remain blocked")
     clean_refs = sorted(
@@ -71,11 +71,6 @@ def run_v2_baseline_evaluation(
             and str(row.get("outage_request_ref") or "").strip()
         }
     )
-    expected_clean_rows = int(metrics.get("v2_model_ready_rows") or 0)
-    if len(clean_refs) < expected_clean_rows:
-        raise ValueError(
-            "incomplete_truth_interval_window: fetched clean v2 interval references do not cover v2_model_ready_rows"
-        )
     request_items = _fetch_operator_rows_by_request_refs(root, key, clean_refs)
     return build_v2_baseline_evaluation(
         metrics,
@@ -87,6 +82,39 @@ def run_v2_baseline_evaluation(
         peacon_md=peacon_md,
         registry_jsonl=registry_jsonl,
         rejection_csv=rejection_csv,
+    )
+
+
+def _fetch_v2_truth_interval_window(root: str, api_key: str, expected_clean_rows: int, limit: int) -> dict[str, Any]:
+    page_limit = max(1, min(limit, 200))
+    items: list[dict[str, Any]] = []
+    cursor = ""
+    seen_cursors: set[str] = set()
+    for _ in range(50):
+        query = {"status": "ALL", "limit": str(page_limit)}
+        if cursor:
+            query["cursor"] = cursor
+        payload = _get_json(root + "/api/v1/ais/truth-intervals?" + urlencode(query), api_key)
+        if payload.get("production_send") != "blocked":
+            raise ValueError("intervals production_send must remain blocked")
+        page_items = payload.get("items") or []
+        items.extend(page_items)
+        clean_count = sum(
+            1
+            for row in items
+            if row.get("semantic_mapping_version") == MAPPING_VERSION
+            and row.get("pair_status") == "CLOSED"
+            and row.get("bridge_status") == "METER_STATE_MODEL_READY"
+        )
+        if clean_count >= expected_clean_rows:
+            return {"production_send": "blocked", "items": items}
+        next_cursor = str(payload.get("next_cursor") or "").strip()
+        if not next_cursor or next_cursor in seen_cursors or not page_items:
+            break
+        seen_cursors.add(next_cursor)
+        cursor = next_cursor
+    raise ValueError(
+        "incomplete_truth_interval_window: fetched clean v2 intervals do not cover v2_model_ready_rows"
     )
 
 

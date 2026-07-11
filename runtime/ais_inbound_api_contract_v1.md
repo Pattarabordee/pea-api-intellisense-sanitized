@@ -29,6 +29,8 @@ The authenticated operator list includes `semantic_capture_version=v2`, `semanti
 
 For model evaluation, an authenticated operator lookup may use `GET /api/v1/ais/outage-verifications?view=operator&request_ref=<hash>[,<hash>...]`. It accepts at most 200 values in the form `request_<16 lowercase hex characters>`. This is a targeted lookup over hash references only; raw `request_id` is rejected and never returned.
 
+Authenticated `GET /api/v1/ais/truth-intervals` returns `interval_ref` rather than an internal interval identifier. When a page is full, it may include an opaque `next_cursor`; pass that value unchanged as `cursor` to obtain the next redacted page. The cursor is only for ordering and contains no request, source-event, meter, site, or customer identifier.
+
 Rows captured before v2 activation remain audit-only. They are never replayed or relabeled into model-ready truth.
 
 For each new v2 OUTAGE that passes ledger validation, the cloud records a private research benchmark

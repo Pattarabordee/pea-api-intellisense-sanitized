@@ -149,12 +149,17 @@ class V2BaselineEvaluationTests(unittest.TestCase):
         ]
         requested_urls = []
 
+        truth_calls = []
+
         def fake_get(url, _key):
             requested_urls.append(url)
             if url.endswith("/metrics"):
                 return {"production_send": "blocked", "v2_model_ready_rows": 2}
             if "/truth-intervals?" in url:
-                return {"production_send": "blocked", "items": intervals}
+                truth_calls.append(url)
+                if len(truth_calls) == 1:
+                    return {"production_send": "blocked", "items": [intervals[0]], "next_cursor": "cursor-page-2"}
+                return {"production_send": "blocked", "items": [intervals[1]], "next_cursor": ""}
             if "request_ref=" in url:
                 return {
                     "production_send": "blocked",
@@ -180,6 +185,8 @@ class V2BaselineEvaluationTests(unittest.TestCase):
             )
 
         self.assertEqual(2, result["scorable_meter_rows"])
+        self.assertEqual(2, len(truth_calls))
+        self.assertIn("cursor=cursor-page-2", truth_calls[1])
         lookup_urls = [url for url in requested_urls if "request_ref=" in url]
         self.assertEqual(1, len(lookup_urls))
         self.assertIn("request_aaaaaaaaaaaaaaaa", lookup_urls[0])

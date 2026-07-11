@@ -222,18 +222,31 @@ func (s *PostgresStore) ListStatusesByRequestRefs(ctx context.Context, requestRe
 }
 
 func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error) {
+	return s.ListTruthIntervalsPage(ctx, status, nil, limit)
+}
+
+func (s *PostgresStore) ListTruthIntervalsPage(ctx context.Context, status string, cursor *TruthIntervalCursor, limit int) ([]TruthInterval, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
 	status = strings.ToUpper(strings.TrimSpace(status))
-	where := ""
+	clauses := []string{}
 	args := []any{}
 	if status != "" && status != "ALL" {
-		where = "WHERE pair_status = $1"
+		clauses = append(clauses, "pair_status = $1")
 		args = append(args, status)
 	}
+	if cursor != nil {
+		position := len(args) + 1
+		clauses = append(clauses, "(outage_at, id) < ($"+fmt.Sprint(position)+", $"+fmt.Sprint(position+1)+")")
+		args = append(args, cursor.OutageAt, cursor.RecordID)
+	}
+	where := ""
+	if len(clauses) > 0 {
+		where = "WHERE " + strings.Join(clauses, " AND ")
+	}
 	query := `
-	SELECT interval_id, source, coalesce(outage_request_id, ''), coalesce(restore_request_id, ''),
+	SELECT id, interval_id, source, coalesce(outage_request_id, ''), coalesce(restore_request_id, ''),
 		correlation_hash, meter_hash, meter_last4, site_hash, site_last4, outage_at, restore_at,
 		duration_minutes::float8, pair_status, bridge_status, semantic_mapping_version, evidence_json, production_send, created_at, updated_at
 	FROM ais_truth_intervals
@@ -250,6 +263,7 @@ func (s *PostgresStore) ListTruthIntervals(ctx context.Context, status string, l
 	for rows.Next() {
 		var item TruthInterval
 		if err := rows.Scan(
+			&item.CursorID,
 			&item.IntervalID,
 			&item.Source,
 			&item.OutageRequestID,

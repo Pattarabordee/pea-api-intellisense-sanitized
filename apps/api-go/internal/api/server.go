@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -113,7 +114,15 @@ func (s *Server) handleTruthIntervals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	rows, err := s.store.ListTruthIntervals(r.Context(), status, limit)
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	cursor, err := parseTruthIntervalCursor(r.URL.Query().Get("cursor"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_CURSOR", err.Error(), ""))
+		return
+	}
+	rows, err := s.store.ListTruthIntervalsPage(r.Context(), status, cursor, limit)
 	if err != nil {
 		s.cfg.Logger.Error("truth interval list failed", "status", status, "error", err)
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load truth intervals", ""))
@@ -124,6 +133,10 @@ func (s *Server) handleTruthIntervals(w http.ResponseWriter, r *http.Request) {
 		row := rows[index]
 		items = append(items, truthIntervalPayload(&row))
 	}
+	nextCursor := ""
+	if len(rows) == limit && rows[len(rows)-1].CursorID > 0 {
+		nextCursor = encodeTruthIntervalCursor(rows[len(rows)-1])
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"api_version":     APIVersion,
 		"schema_version":  SchemaVersion,
@@ -132,8 +145,42 @@ func (s *Server) handleTruthIntervals(w http.ResponseWriter, r *http.Request) {
 		"status_filter":   status,
 		"count":           len(items),
 		"items":           items,
+		"next_cursor":     nextCursor,
 		"generated_at":    nowISO(),
 	})
+}
+
+type truthIntervalCursorPayload struct {
+	OutageAt string `json:"outage_at"`
+	RecordID int64  `json:"record_id"`
+}
+
+func encodeTruthIntervalCursor(row storage.TruthInterval) string {
+	payload, _ := json.Marshal(truthIntervalCursorPayload{
+		OutageAt: row.OutageAt.UTC().Format(time.RFC3339Nano),
+		RecordID: row.CursorID,
+	})
+	return base64.RawURLEncoding.EncodeToString(payload)
+}
+
+func parseTruthIntervalCursor(value string) (*storage.TruthIntervalCursor, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	raw, err := base64.RawURLEncoding.DecodeString(value)
+	if err != nil {
+		return nil, errors.New("cursor must be an opaque truth-interval cursor")
+	}
+	payload := truthIntervalCursorPayload{}
+	if err := json.Unmarshal(raw, &payload); err != nil || payload.RecordID <= 0 {
+		return nil, errors.New("cursor must be an opaque truth-interval cursor")
+	}
+	outageAt, err := time.Parse(time.RFC3339Nano, payload.OutageAt)
+	if err != nil {
+		return nil, errors.New("cursor must be an opaque truth-interval cursor")
+	}
+	return &storage.TruthIntervalCursor{OutageAt: outageAt.UTC(), RecordID: payload.RecordID}, nil
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -951,7 +998,7 @@ func buildShadowETRCandidate(req inboundRequest, receivedAt time.Time) storage.E
 func truthIntervalPayload(row *storage.TruthInterval) map[string]any {
 	policy := truthIntervalReviewPolicy(row)
 	return map[string]any{
-		"interval_id":        row.IntervalID,
+		"interval_ref":       hashReference("interval", row.IntervalID),
 		"source":             blankDefault(row.Source, "AIS"),
 		"pair_status":        row.PairStatus,
 		"bridge_status":      blankDefault(row.BridgeStatus, "LEGACY_UNVERIFIED"),

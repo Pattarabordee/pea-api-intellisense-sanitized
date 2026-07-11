@@ -18,6 +18,7 @@ type Store interface {
 	ListStatuses(ctx context.Context, limit int) ([]RequestStatus, error)
 	ListStatusesByRequestRefs(ctx context.Context, requestRefs []string, limit int) ([]RequestStatus, error)
 	ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error)
+	ListTruthIntervalsPage(ctx context.Context, status string, cursor *TruthIntervalCursor, limit int) ([]TruthInterval, error)
 	Metrics(ctx context.Context) (*MetricsSnapshot, error)
 }
 
@@ -167,6 +168,7 @@ type RequestStatus struct {
 }
 
 type TruthInterval struct {
+	CursorID         int64
 	IntervalID       string
 	Source           string
 	OutageRequestID  string
@@ -186,6 +188,11 @@ type TruthInterval struct {
 	ProductionSend   string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+}
+
+type TruthIntervalCursor struct {
+	OutageAt time.Time
+	RecordID int64
 }
 
 type MetricsSnapshot struct {

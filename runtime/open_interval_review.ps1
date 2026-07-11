@@ -31,21 +31,6 @@ function Safe-Text {
   return [string]$Value
 }
 
-function Safe-Reference {
-  param([string]$Namespace, $Value)
-  $raw = Safe-Text $Value
-  if (-not $raw) { return "" }
-  $sha = [Security.Cryptography.SHA256]::Create()
-  try {
-    $bytes = [Text.Encoding]::UTF8.GetBytes($raw)
-    $hash = $sha.ComputeHash($bytes)
-    $hex = ([BitConverter]::ToString($hash) -replace "-", "").ToLowerInvariant()
-    return "$Namespace" + "_" + $hex.Substring(0, 16)
-  } finally {
-    $sha.Dispose()
-  }
-}
-
 function Interval-Action {
   param($Item)
   if ((Safe-Text $Item.pair_status) -eq "CLOSED") { return "no_action_paired" }
@@ -81,7 +66,7 @@ foreach ($item in $items) {
     }
   }
   $reviewRows += [ordered]@{
-    interval_ref = Safe-Reference "interval" $item.interval_id
+    interval_ref = Safe-Text $item.interval_ref
     pair_status = Safe-Text $item.pair_status
     bridge_status = Safe-Text $item.bridge_status
     semantic_mapping_version = Safe-Text $item.semantic_mapping_version

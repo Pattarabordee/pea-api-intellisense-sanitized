@@ -128,6 +128,35 @@ func TestOperatorRequestReferenceLookupRejectsRawIdentifier(t *testing.T) {
 	}
 }
 
+func TestTruthIntervalCursorIsOpaqueAndIntervalIdentifierIsRedacted(t *testing.T) {
+	store := newFakeStore()
+	store.intervals = []storage.TruthInterval{
+		{CursorID: 2, IntervalID: "INTERVAL-SECRET-2", OutageAt: time.Date(2026, 7, 11, 1, 1, 0, 0, time.UTC), PairStatus: "CLOSED", ProductionSend: "blocked"},
+		{CursorID: 1, IntervalID: "INTERVAL-SECRET-1", OutageAt: time.Date(2026, 7, 11, 1, 0, 0, 0, time.UTC), PairStatus: "CLOSED", ProductionSend: "blocked"},
+	}
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	req := httptest.NewRequest(http.MethodGet, truthIntervalsPath+"?status=ALL&limit=1", nil)
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String())
+	}
+	payload := decodeBody(t, res)
+	if strings.Contains(res.Body.String(), "INTERVAL-SECRET") || payload["next_cursor"] == "" {
+		t.Fatalf("truth interval response leaked interval identifier or omitted cursor: %s", res.Body.String())
+	}
+	bad := httptest.NewRequest(http.MethodGet, truthIntervalsPath+"?cursor=not-a-valid-cursor", nil)
+	bad.Header.Set("X-API-Key", "pilot-key")
+	badRes := httptest.NewRecorder()
+	handler.ServeHTTP(badRes, bad)
+	if badRes.Code != http.StatusBadRequest {
+		t.Fatalf("expected invalid cursor 400, got %d: %s", badRes.Code, badRes.Body.String())
+	}
+}
+
 func TestPostUsesRequestTimestampAsEventTimestamp(t *testing.T) {
 	store := newFakeStore()
 	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
@@ -693,6 +722,9 @@ func (f *fakeStore) ListStatusesByRequestRefs(ctx context.Context, requestRefs [
 	return append([]storage.RequestStatus{}, f.requestRefRows...), nil
 }
 func (f *fakeStore) ListTruthIntervals(ctx context.Context, status string, limit int) ([]storage.TruthInterval, error) {
+	return f.ListTruthIntervalsPage(ctx, status, nil, limit)
+}
+func (f *fakeStore) ListTruthIntervalsPage(ctx context.Context, status string, cursor *storage.TruthIntervalCursor, limit int) ([]storage.TruthInterval, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if limit <= 0 || limit > 200 {
@@ -702,6 +734,9 @@ func (f *fakeStore) ListTruthIntervals(ctx context.Context, status string, limit
 	result := []storage.TruthInterval{}
 	for _, interval := range f.intervals {
 		if status != "" && status != "ALL" && interval.PairStatus != status {
+			continue
+		}
+		if cursor != nil && (interval.OutageAt.After(cursor.OutageAt) || (interval.OutageAt.Equal(cursor.OutageAt) && interval.CursorID >= cursor.RecordID)) {
 			continue
 		}
 		result = append(result, interval)
