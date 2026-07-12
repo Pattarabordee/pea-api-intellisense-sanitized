@@ -57,6 +57,7 @@ from .ais_inbound_contract import (
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
+from .ais_v2_history_quantile_challenger import build_v2_history_quantile_challenger
 from .ais_v2_baseline_stability import build_v2_baseline_stability_gate
 from .ais_v2_source_latency_audit import run_v2_source_latency_audit
 from .ais_v2_baseline_trend import build_v2_baseline_trend
@@ -303,6 +304,19 @@ def cmd_ais_v2_baseline_evaluation(args: argparse.Namespace) -> None:
         registry_jsonl=args.registry,
         rejection_csv=args.rejection_output,
         limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_history_quantile_challenger(args: argparse.Namespace) -> None:
+    settings = _settings(args)
+    result = build_v2_history_quantile_challenger(
+        settings.resolve(args.incidents),
+        predictions_csv=settings.resolve(args.output),
+        folds_csv=settings.resolve(args.fold_output),
+        summary_json=settings.resolve(args.summary_json),
+        report_md=settings.resolve(args.report),
+        peacon_md=settings.resolve(args.peacon),
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2912,6 +2926,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     v2_evaluation.add_argument("--limit", type=int, default=200)
     v2_evaluation.set_defaults(func=cmd_ais_v2_baseline_evaluation)
+
+    v2_history_quantile = sub.add_parser(
+        "ais-v2-history-quantile-challenger",
+        help="Evaluate pre-registered available-history p10/p50/p90 challenger on prospective v2 incidents",
+    )
+    v2_history_quantile.add_argument("--incidents", default="runtime/private/ais_v2_baseline_incidents.csv")
+    v2_history_quantile.add_argument("--output", default="runtime/private/ais_v2_history_quantile_predictions.csv")
+    v2_history_quantile.add_argument("--fold-output", default="runtime/private/ais_v2_history_quantile_folds.csv")
+    v2_history_quantile.add_argument("--summary-json", default="runtime/private/ais_v2_history_quantile_summary.json")
+    v2_history_quantile.add_argument("--report", default="runtime/private/ais_v2_history_quantile_report.md")
+    v2_history_quantile.add_argument("--peacon", default="runtime/private/peacon_v2_history_quantile_update.md")
+    v2_history_quantile.set_defaults(func=cmd_ais_v2_history_quantile_challenger)
 
     v2_trend = sub.add_parser(
         "ais-v2-baseline-trend",
