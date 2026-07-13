@@ -56,6 +56,7 @@ from .ais_inbound_contract import (
 )
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_meter_state_review_gate import run_meter_state_review_gate
+from .ais_v2_review_delta import run_v2_review_delta
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
 from .ais_v2_history_quantile_challenger import build_v2_history_quantile_challenger
@@ -303,6 +304,18 @@ def cmd_ais_meter_state_review_gate(args: argparse.Namespace) -> None:
         report_md=args.report,
         handoff_md=args.handoff,
         limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_review_delta(args: argparse.Namespace) -> None:
+    result = run_v2_review_delta(
+        base_url=args.base_url,
+        history_jsonl=args.history,
+        delta_csv=args.output,
+        summary_json=args.summary_json,
+        report_md=args.report,
+        missing_restore_csv=args.missing_restore_output,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2934,6 +2947,18 @@ def build_parser() -> argparse.ArgumentParser:
     meter_state_review.add_argument("--handoff", default="runtime/private/ais_meter_state_integration_handoff.md")
     meter_state_review.add_argument("--limit", type=int, default=200)
     meter_state_review.set_defaults(func=cmd_ais_meter_state_review_gate)
+
+    v2_review_delta = sub.add_parser(
+        "ais-v2-review-delta-once",
+        help="Append a GET-only v2 review snapshot and classify deltas from cumulative backlog",
+    )
+    v2_review_delta.add_argument("--base-url", required=True)
+    v2_review_delta.add_argument("--history", default="runtime/private/ais_v2_review_delta_history.jsonl")
+    v2_review_delta.add_argument("--output", default="runtime/private/ais_v2_review_delta.csv")
+    v2_review_delta.add_argument("--summary-json", default="runtime/private/ais_v2_review_delta_summary.json")
+    v2_review_delta.add_argument("--report", default="runtime/private/ais_v2_review_delta_report.md")
+    v2_review_delta.add_argument("--missing-restore-output", default="runtime/private/ais_v2_missing_restore_queue.csv")
+    v2_review_delta.set_defaults(func=cmd_ais_v2_review_delta)
 
     v2_evaluation = sub.add_parser(
         "ais-v2-baseline-evaluate-once",
