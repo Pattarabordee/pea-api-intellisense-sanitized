@@ -55,6 +55,7 @@ from .ais_inbound_contract import (
     write_ais_inbound_test_kit,
 )
 from .ais_event_semantic_audit import run_event_semantic_audit
+from .ais_meter_state_review_gate import run_meter_state_review_gate
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
 from .ais_v2_history_quantile_challenger import build_v2_history_quantile_challenger
@@ -289,6 +290,18 @@ def cmd_ais_v2_lifecycle_audit(args: argparse.Namespace) -> None:
         summary_json=args.summary_json,
         peacon_md=args.peacon,
         incident_csv=args.incident_output,
+        limit=args.limit,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_meter_state_review_gate(args: argparse.Namespace) -> None:
+    result = run_meter_state_review_gate(
+        base_url=args.base_url,
+        queue_csv=args.output,
+        summary_json=args.summary_json,
+        report_md=args.report,
+        handoff_md=args.handoff,
         limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
@@ -2909,6 +2922,18 @@ def build_parser() -> argparse.ArgumentParser:
     v2_lifecycle.add_argument("--incident-output", default="runtime/private/ais_v2_incident_groups.csv")
     v2_lifecycle.add_argument("--limit", type=int, default=200)
     v2_lifecycle.set_defaults(func=cmd_ais_v2_lifecycle_audit)
+
+    meter_state_review = sub.add_parser(
+        "ais-meter-state-review-gate-once",
+        help="Build a redacted meter-state review queue from authenticated GET-only evidence",
+    )
+    meter_state_review.add_argument("--base-url", required=True)
+    meter_state_review.add_argument("--output", default="runtime/private/ais_meter_state_review_queue.csv")
+    meter_state_review.add_argument("--summary-json", default="runtime/private/ais_meter_state_review_summary.json")
+    meter_state_review.add_argument("--report", default="runtime/private/ais_meter_state_review_report.md")
+    meter_state_review.add_argument("--handoff", default="runtime/private/ais_meter_state_integration_handoff.md")
+    meter_state_review.add_argument("--limit", type=int, default=200)
+    meter_state_review.set_defaults(func=cmd_ais_meter_state_review_gate)
 
     v2_evaluation = sub.add_parser(
         "ais-v2-baseline-evaluate-once",
