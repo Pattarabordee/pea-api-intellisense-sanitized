@@ -57,6 +57,7 @@ from .ais_inbound_contract import (
 from .ais_event_semantic_audit import run_event_semantic_audit
 from .ais_meter_state_review_gate import run_meter_state_review_gate
 from .ais_v2_review_delta import run_v2_review_delta
+from .ais_v2_seven_day_regate import run_v2_seven_day_regate
 from .ais_v2_lifecycle_audit import run_v2_lifecycle_audit
 from .ais_v2_baseline_evaluation import run_v2_baseline_evaluation
 from .ais_v2_history_quantile_challenger import build_v2_history_quantile_challenger
@@ -316,6 +317,15 @@ def cmd_ais_v2_review_delta(args: argparse.Namespace) -> None:
         summary_json=args.summary_json,
         report_md=args.report,
         missing_restore_csv=args.missing_restore_output,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def cmd_ais_v2_seven_day_regate(args: argparse.Namespace) -> None:
+    result = run_v2_seven_day_regate(
+        base_url=args.base_url,
+        output_dir=args.output_dir,
+        history_jsonl=args.history,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -2959,6 +2969,15 @@ def build_parser() -> argparse.ArgumentParser:
     v2_review_delta.add_argument("--report", default="runtime/private/ais_v2_review_delta_report.md")
     v2_review_delta.add_argument("--missing-restore-output", default="runtime/private/ais_v2_missing_restore_queue.csv")
     v2_review_delta.set_defaults(func=cmd_ais_v2_review_delta)
+
+    v2_seven_day = sub.add_parser(
+        "ais-v2-seven-day-regate-once",
+        help="Run GET-only review delta and execute baseline/challenger/stability only after 168 hours",
+    )
+    v2_seven_day.add_argument("--base-url", required=True)
+    v2_seven_day.add_argument("--output-dir", default="runtime/private/ais_v2_seven_day_regate")
+    v2_seven_day.add_argument("--history", default="runtime/private/ais_v2_review_delta_history.jsonl")
+    v2_seven_day.set_defaults(func=cmd_ais_v2_seven_day_regate)
 
     v2_evaluation = sub.add_parser(
         "ais-v2-baseline-evaluate-once",
