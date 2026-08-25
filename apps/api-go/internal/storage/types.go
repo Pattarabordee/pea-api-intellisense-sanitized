@@ -23,9 +23,25 @@ type Store interface {
 	InsertBuengKanTesterFeedback(ctx context.Context, feedback BuengKanTesterFeedback) (duplicate bool, err error)
 	ListBuengKanTesterFeedback(ctx context.Context, limit int) ([]BuengKanTesterFeedback, error)
 	BuengKanTesterFeedbackCounts(ctx context.Context) (*BuengKanTesterFeedbackCounts, error)
+	InsertBuengKanOutageResolution(ctx context.Context, resolution BuengKanOutageResolution) (duplicate bool, err error)
+	GetBuengKanOutageResolution(ctx context.Context, requestID string) (*BuengKanOutageResolution, error)
 }
 
 
+
+type BuengKanOutageResolution struct {
+	RequestID            string
+	RecordedAt           time.Time
+	OccurredAt           time.Time
+	SourceChannel        string
+	SourceEventHash      string
+	MessageHash          string
+	ReporterRefHash      string
+	ConversationRefHash  string
+	ResultJSON           json.RawMessage
+	Mode                 string
+	ProductionSend       string
+}
 
 type BuengKanTesterFeedback struct {
 	ReceiptID              string

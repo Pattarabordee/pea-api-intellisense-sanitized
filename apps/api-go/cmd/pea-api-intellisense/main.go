@@ -40,6 +40,7 @@ func main() {
 
 	handler := api.NewServer(api.ServerConfig{
 		APIKey:             cfg.APIKey,
+		OutageIntegrationAPIKey: cfg.OutageIntegrationAPIKey,
 		RateLimitPerMinute: cfg.RateLimitPerMinute,
 		AllowedOrigin:      cfg.AllowedOrigin,
 		ProductionSendMode: cfg.ProductionSendMode,

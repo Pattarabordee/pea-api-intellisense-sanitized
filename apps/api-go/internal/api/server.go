@@ -45,6 +45,7 @@ var safeRequestReference = regexp.MustCompile(`^request_[a-f0-9]{16}$`)
 
 type ServerConfig struct {
 	APIKey             string
+	OutageIntegrationAPIKey string
 	RateLimitPerMinute int
 	AllowedOrigin      string
 	ProductionSendMode string
@@ -95,6 +96,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleBuengKanTesterFeedbackList(w, r)
 	case r.URL.Path == buengKanTesterFeedbackPath && r.Method == http.MethodPost:
 		s.handleBuengKanTesterFeedbackPost(w, r)
+	case r.URL.Path == outageResolvePath && r.Method == http.MethodPost:
+		s.handleBuengKanOutageResolve(w, r)
+	case strings.HasPrefix(r.URL.Path, outageResultPathPrefix) && r.Method == http.MethodGet:
+		s.handleBuengKanOutageResult(w, r)
+	case strings.HasPrefix(r.URL.Path, transformerPathPrefix) && r.Method == http.MethodGet:
+		s.handleTransformerLookup(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodGet:
 		s.handleContract(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodPost:

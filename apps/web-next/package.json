@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "smoke:buengkan": "node scripts/buengkan-tester-smoke.mjs"
+    "smoke:buengkan": "node scripts/buengkan-tester-smoke.mjs",
+    "smoke:buengkan:api": "node scripts/buengkan-integration-api-smoke.mjs"
   },
   "dependencies": {
     "next": "15.5.23",

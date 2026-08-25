@@ -1,0 +1,1798 @@
+{
+  "schema_version": 5,
+  "scope": "Tambol Bueng Kan / LV service footprint / shadow-only",
+  "villages": [
+    {
+      "village_key": "38-01-01-M02",
+      "village_name": "ศรีโสภณ",
+      "aliases": [
+        "บ้านศรีโสภณ",
+        "บ.ศรีโสภณ",
+        "ศรีโสภณ",
+        "ม.2 ศรีโสภณ",
+        "หมู่2ศรีโสภณ"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUB07",
+          "core_meter_count": 44,
+          "topology_share": 1.0
+        }
+      ],
+      "village_transformers": [
+        "45-015667",
+        "58-007685",
+        "66-012004",
+        "66-014525"
+      ],
+      "village_transformers_by_feeder": {
+        "BUB07": [
+          "45-015667",
+          "58-007685",
+          "66-012004",
+          "66-014525"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {
+        "BUB07": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUB08VS-104"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 1221,
+          "target_transformers": [
+            "45-015667",
+            "58-007685",
+            "66-012004",
+            "66-014525"
+          ]
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M03",
+      "village_name": "บึงกาฬใต้",
+      "aliases": [
+        "บ้านบึงกาฬใต้",
+        "บ.บึงกาฬใต้",
+        "บึงกาฬใต้",
+        "ม.3 บึงกาฬใต้",
+        "หมู่3บึงกาฬใต้"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUB07",
+          "core_meter_count": 71,
+          "topology_share": 0.865854
+        },
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 11,
+          "topology_share": 0.134146
+        }
+      ],
+      "village_transformers": [
+        "45-015667",
+        "46-007645",
+        "57-107867",
+        "58-007685",
+        "65-010992",
+        "66-012004",
+        "66-014525",
+        "66-019434"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA07": [
+          "65-010992"
+        ],
+        "BUB07": [
+          "45-015667",
+          "46-007645",
+          "57-107867",
+          "58-007685",
+          "66-012004",
+          "66-014525",
+          "66-019434"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {
+        "BUB07": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUB08VS-104"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 1221,
+          "target_transformers": [
+            "45-015667",
+            "46-007645",
+            "57-107867",
+            "58-007685",
+            "66-012004",
+            "66-014525",
+            "66-019434"
+          ]
+        },
+        "BUA07": {
+          "gate": "STRONG_BOUNDED_ZONE_CANDIDATE",
+          "devices": [
+            "BUA07F-02"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 254,
+          "target_transformers": [
+            "65-010992"
+          ]
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M04",
+      "village_name": "นาโนน",
+      "aliases": [
+        "บ้านนาโนน",
+        "บ.นาโนน",
+        "นาโนน",
+        "ม.4 นาโนน",
+        "หมู่4นาโนน"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 172,
+          "topology_share": 0.693548
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 61,
+          "topology_share": 0.245968
+        },
+        {
+          "feeder": "BUB07",
+          "core_meter_count": 15,
+          "topology_share": 0.060484
+        }
+      ],
+      "village_transformers": [
+        "28-003538",
+        "45-007605",
+        "45-022403",
+        "53-001409",
+        "56-003924",
+        "56-009402",
+        "56-011601",
+        "58-107523",
+        "60-002145",
+        "63-001954",
+        "63-006170",
+        "63-006345",
+        "63-031998",
+        "64-109601",
+        "65-010992",
+        "65-107451",
+        "67-023116",
+        "67-027576"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA03": [
+          "53-001409",
+          "56-003924",
+          "56-009402",
+          "56-011601",
+          "63-001954",
+          "63-031998",
+          "64-109601",
+          "67-023116",
+          "67-027576"
+        ],
+        "BUA07": [
+          "28-003538",
+          "45-007605",
+          "45-022403",
+          "58-107523",
+          "60-002145",
+          "63-006345",
+          "65-010992",
+          "65-107451"
+        ],
+        "BUB07": [
+          "63-006170"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {
+        "BUA07": {
+          "gate": "WEAK_PARTIAL_ZONE_CANDIDATE",
+          "devices": [
+            "BUA07F-02"
+          ],
+          "coverage": 0.656977,
+          "downstream_meter_count": 254,
+          "target_transformers": [
+            "28-003538",
+            "45-007605",
+            "45-022403",
+            "58-107523",
+            "60-002145",
+            "63-006345",
+            "65-010992",
+            "65-107451"
+          ]
+        },
+        "BUA03": {
+          "gate": "WEAK_PARTIAL_ZONE_CANDIDATE",
+          "devices": [
+            "BUA03F-099"
+          ],
+          "coverage": 0.016393,
+          "downstream_meter_count": 1,
+          "target_transformers": [
+            "53-001409",
+            "56-003924",
+            "56-009402",
+            "56-011601",
+            "63-001954",
+            "63-031998",
+            "64-109601",
+            "67-023116",
+            "67-027576"
+          ]
+        },
+        "BUB07": {
+          "gate": "STRONG_BOUNDED_ZONE_CANDIDATE",
+          "devices": [
+            "BUA06F-03"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 269,
+          "target_transformers": [
+            "63-006170"
+          ]
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M06",
+      "village_name": "ท่าโพธิ์",
+      "aliases": [
+        "บ้านท่าโพธิ์",
+        "บ.ท่าโพธิ์",
+        "ท่าโพธิ์",
+        "ม.6 ท่าโพธิ์",
+        "หมู่6ท่าโพธิ์"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 114,
+          "topology_share": 0.814286
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 26,
+          "topology_share": 0.185714
+        }
+      ],
+      "village_transformers": [
+        "22-000012",
+        "22-999912",
+        "56-003922",
+        "59-013964",
+        "60-037069",
+        "63-006344",
+        "63-100453",
+        "65-015695",
+        "67-027578"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA03": [
+          "56-003922",
+          "59-013964",
+          "63-006344",
+          "63-100453",
+          "65-015695"
+        ],
+        "BUA07": [
+          "22-000012",
+          "22-999912",
+          "60-037069",
+          "67-027578"
+        ]
+      },
+      "landmark_rules": [
+        {
+          "id": "thapho_front_school",
+          "phrases": [
+            "หน้า รร.",
+            "หน้าโรงเรียน",
+            "โรงเรียนบ้านท่าโพธิ์"
+          ],
+          "feeder": "BUA03",
+          "transformers": [
+            "56-003922"
+          ],
+          "strength": 100
+        },
+        {
+          "id": "thapho_3r01",
+          "phrases": [
+            "ใกล้ 3r-01",
+            "3r-01",
+            "3r01"
+          ],
+          "feeder": "BUA03",
+          "transformers": [
+            "59-013964"
+          ],
+          "strength": 100
+        },
+        {
+          "id": "thapho_bua07f05",
+          "phrases": [
+            "bua07f-05"
+          ],
+          "feeder": "BUA07",
+          "transformers": [
+            "60-037069"
+          ],
+          "strength": 100
+        }
+      ],
+      "protection_zones": {
+        "BUA07": {
+          "gate": "STRONG_BOUNDED_ZONE_CANDIDATE",
+          "devices": [
+            "BUA07F-05"
+          ],
+          "coverage": 0.95614,
+          "downstream_meter_count": 265
+        },
+        "BUA03": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUA03VS-042"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 6507
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M07",
+      "village_name": "ดงหมากยาง",
+      "aliases": [
+        "บ้านดงหมากยาง",
+        "บ.ดงหมากยาง",
+        "ดงหมากยาง",
+        "ม.7 ดงหมากยาง",
+        "หมู่7ดงหมากยาง"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 73,
+          "topology_share": 1.0
+        }
+      ],
+      "village_transformers": [
+        "63-006344"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA03": [
+          "63-006344"
+        ]
+      },
+      "landmark_rules": [
+        {
+          "id": "dongmakyang_branch",
+          "phrases": [
+            "bua03f-01",
+            "ไลน์แยก ดงหมากยาง",
+            "ไลน์แยก บ.ดงหมากยาง"
+          ],
+          "feeder": "BUA03",
+          "transformers": [
+            "63-006344"
+          ],
+          "strength": 100
+        }
+      ],
+      "protection_zones": {
+        "BUA03": {
+          "gate": "STRONG_BOUNDED_ZONE_CANDIDATE",
+          "devices": [
+            "BUA03F-01"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 162,
+          "target_transformers": [
+            "63-006344"
+          ]
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M08",
+      "village_name": "บึงสวรรค์",
+      "aliases": [
+        "บ้านบึงสวรรค์",
+        "บ.บึงสวรรค์",
+        "บึงสวรรค์",
+        "ม.8 บึงสวรรค์",
+        "หมู่8บึงสวรรค์"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUB07",
+          "core_meter_count": 171,
+          "topology_share": 0.77027
+        },
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 42,
+          "topology_share": 0.189189
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 9,
+          "topology_share": 0.040541
+        }
+      ],
+      "village_transformers": [
+        "38-000631",
+        "45-015667",
+        "53-001409",
+        "54-007943",
+        "55-006041",
+        "55-014569",
+        "55-015489",
+        "56-116048",
+        "59-028945",
+        "59-109318",
+        "63-006169",
+        "63-006170",
+        "63-014612",
+        "63-014613",
+        "65-006228",
+        "65-109538",
+        "66-014523",
+        "66-015201",
+        "66-107030"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA03": [
+          "38-000631",
+          "53-001409",
+          "63-014612"
+        ],
+        "BUA07": [
+          "55-015489",
+          "56-116048",
+          "59-028945",
+          "59-109318",
+          "63-014613",
+          "65-109538",
+          "66-014523",
+          "66-015201"
+        ],
+        "BUB07": [
+          "45-015667",
+          "54-007943",
+          "55-006041",
+          "55-014569",
+          "63-006169",
+          "63-006170",
+          "65-006228",
+          "66-107030"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {},
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M09",
+      "village_name": "แสนประเสริฐ",
+      "aliases": [
+        "บ้านแสนประเสริฐ",
+        "บ.แสนประเสริฐ",
+        "แสนประเสริฐ",
+        "ม.9 แสนประเสริฐ",
+        "หมู่9แสนประเสริฐ"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA04",
+          "core_meter_count": 140,
+          "topology_share": 0.509091
+        },
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 41,
+          "topology_share": 0.149091
+        },
+        {
+          "feeder": "BUB07",
+          "core_meter_count": 36,
+          "topology_share": 0.130909
+        },
+        {
+          "feeder": "BUA08",
+          "core_meter_count": 32,
+          "topology_share": 0.116364
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 26,
+          "topology_share": 0.094545
+        }
+      ],
+      "village_transformers": [
+        "22-000004",
+        "42-004789",
+        "43-113173",
+        "45-004107",
+        "53-002626",
+        "54-004633",
+        "54-013354",
+        "57-012308",
+        "57-112998",
+        "58-017784",
+        "58-106987",
+        "58-108591",
+        "62-004534",
+        "63-032388",
+        "66-004050",
+        "66-016324",
+        "67-006308",
+        "67-007077"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA03": [
+          "67-007077"
+        ],
+        "BUA04": [
+          "42-004789",
+          "53-002626",
+          "54-004633",
+          "57-112998",
+          "58-106987",
+          "58-108591",
+          "62-004534",
+          "66-004050",
+          "67-006308"
+        ],
+        "BUA07": [
+          "45-004107",
+          "57-012308",
+          "58-017784"
+        ],
+        "BUA08": [
+          "22-000004",
+          "43-113173",
+          "54-013354",
+          "63-032388"
+        ],
+        "BUB07": [
+          "66-016324"
+        ]
+      },
+      "landmark_rules": [
+        {
+          "id": "sanprasert_soi_technic",
+          "phrases": [
+            "ซอยเทคนิค",
+            "เทคนิคบึงกาฬ"
+          ],
+          "feeder": "BUA04",
+          "transformers": [
+            "67-006308"
+          ],
+          "strength": 100
+        },
+        {
+          "id": "sanprasert_resort",
+          "phrases": [
+            "รีสอร์ทบ้านแสนประเสริฐ",
+            "รีสอร์ทแสนประเสริฐ"
+          ],
+          "feeder": "BUA04",
+          "transformers": [
+            "53-002626"
+          ],
+          "strength": 95
+        },
+        {
+          "id": "chaiwet",
+          "phrases": [
+            "ชัยเวทย์"
+          ],
+          "feeder": "BUA04",
+          "transformers": [
+            "62-004534"
+          ],
+          "strength": 92
+        },
+        {
+          "id": "big_suea_front",
+          "phrases": [
+            "หน้าบิ๊กเสือ",
+            "หน้าบิ้กเสือ"
+          ],
+          "feeder": "BUA07",
+          "transformers": [
+            "45-004107"
+          ],
+          "strength": 100
+        },
+        {
+          "id": "big_suea_opposite",
+          "phrases": [
+            "ตรงข้ามบิ๊กเสือ",
+            "ตรงข้ามบิ้กเสือ"
+          ],
+          "feeder": "BUB07",
+          "transformers": [
+            "66-016324"
+          ],
+          "strength": 100
+        },
+        {
+          "id": "big_suea_generic_bua07",
+          "phrases": [
+            "บิ๊กเสือ",
+            "บิ้กเสือ"
+          ],
+          "feeder": "BUA07",
+          "transformers": [
+            "45-004107"
+          ],
+          "strength": 45,
+          "generic_ambiguous": true
+        },
+        {
+          "id": "big_suea_generic_bub07",
+          "phrases": [
+            "บิ๊กเสือ",
+            "บิ้กเสือ"
+          ],
+          "feeder": "BUB07",
+          "transformers": [
+            "66-016324"
+          ],
+          "strength": 45,
+          "generic_ambiguous": true
+        },
+        {
+          "id": "wilipda",
+          "phrases": [
+            "วิลิปดา",
+            "โครงการวิลิปดา"
+          ],
+          "feeder": "BUA07",
+          "transformers": [
+            "57-012308"
+          ],
+          "strength": 95
+        },
+        {
+          "id": "transport_office",
+          "phrases": [
+            "สำนักงานขนส่งบึงกาฬ",
+            "สำนักงานขนส่ง",
+            "ขนส่งบึงกาฬ"
+          ],
+          "feeder": "BUA07",
+          "transformers": [
+            "58-017784"
+          ],
+          "strength": 88
+        },
+        {
+          "id": "sai_ngoen_resort",
+          "phrases": [
+            "ทรายเงินรีสอร์ท",
+            "รีสอร์ททรายเงิน",
+            "ข้างทรายเงิน",
+            "ทรายเงิน"
+          ],
+          "feeder": "BUA08",
+          "transformers": [
+            "63-032388",
+            "43-113173"
+          ],
+          "strength": 92
+        },
+        {
+          "id": "sanprasert_noi",
+          "phrases": [
+            "แสนประเสริฐน้อย",
+            "แสนปรเสริฐน้อย"
+          ],
+          "feeder": "BUA08",
+          "transformers": [],
+          "strength": 96
+        }
+      ],
+      "protection_zones": {
+        "BUA04": {
+          "gate": "STRONG_LOCAL_ZONE_CANDIDATE",
+          "devices": [
+            "BUA04F-01"
+          ],
+          "coverage": 0.985714,
+          "downstream_meter_count": 415
+        },
+        "BUB07": {
+          "gate": "STRONG_PAIR_ZONE_CANDIDATE",
+          "devices": [
+            "BUB07VS-105",
+            "BUB07VS-104"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 77
+        },
+        "BUA08": {
+          "gate": "PARTIAL_LOCAL_PLUS_BROAD_FULL_ZONE",
+          "devices": [
+            "BUA08F-03"
+          ],
+          "coverage": 0.84375,
+          "downstream_meter_count": 132
+        },
+        "BUA07": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUA07VS-105"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 1940
+        },
+        "BUA03": {
+          "gate": "INCONCLUSIVE_LOCAL_PROTECTION",
+          "devices": [],
+          "coverage": null,
+          "downstream_meter_count": null
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M10",
+      "village_name": "แสนสำราญ",
+      "aliases": [
+        "บ้านแสนสำราญ",
+        "บ.แสนสำราญ",
+        "แสนสำราญ",
+        "ม.10 แสนสำราญ",
+        "หมู่10แสนสำราญ"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 103,
+          "topology_share": 0.515
+        },
+        {
+          "feeder": "BUA08",
+          "core_meter_count": 46,
+          "topology_share": 0.23
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 28,
+          "topology_share": 0.14
+        },
+        {
+          "feeder": "BUA02",
+          "core_meter_count": 12,
+          "topology_share": 0.06
+        },
+        {
+          "feeder": "BUA01",
+          "core_meter_count": 6,
+          "topology_share": 0.03
+        },
+        {
+          "feeder": "BUA04",
+          "core_meter_count": 5,
+          "topology_share": 0.025
+        }
+      ],
+      "village_transformers": [
+        "38-022857",
+        "40-019042",
+        "45-009017",
+        "47-112164",
+        "54-940175",
+        "55-123223",
+        "56-111025",
+        "57-008565",
+        "60-005603",
+        "60-021162",
+        "61-011967",
+        "62-104270",
+        "63-006167",
+        "63-031973",
+        "63-107452",
+        "64-004652",
+        "64-018467",
+        "64-103430",
+        "65-003214",
+        "65-010992",
+        "65-027998"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA01": [
+          "60-021162"
+        ],
+        "BUA02": [
+          "45-009017"
+        ],
+        "BUA03": [
+          "56-111025",
+          "64-004652",
+          "64-103430",
+          "65-003214"
+        ],
+        "BUA04": [
+          "55-123223",
+          "64-018467"
+        ],
+        "BUA07": [
+          "38-022857",
+          "40-019042",
+          "47-112164",
+          "54-940175",
+          "60-005603",
+          "62-104270",
+          "63-006167",
+          "63-031973",
+          "63-107452",
+          "65-010992",
+          "65-027998"
+        ],
+        "BUA08": [
+          "57-008565",
+          "61-011967"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {},
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    },
+    {
+      "village_key": "38-01-01-M11",
+      "village_name": "แสนสุข",
+      "aliases": [
+        "บ้านแสนสุข",
+        "บ.แสนสุข",
+        "แสนสุข",
+        "ม.11 แสนสุข",
+        "หมู่11แสนสุข"
+      ],
+      "topology_prior": [
+        {
+          "feeder": "BUA07",
+          "core_meter_count": 87,
+          "topology_share": 0.696
+        },
+        {
+          "feeder": "BUA03",
+          "core_meter_count": 28,
+          "topology_share": 0.224
+        },
+        {
+          "feeder": "BUA08",
+          "core_meter_count": 8,
+          "topology_share": 0.064
+        },
+        {
+          "feeder": "BUA02",
+          "core_meter_count": 2,
+          "topology_share": 0.016
+        }
+      ],
+      "village_transformers": [
+        "40-019042",
+        "45-009017",
+        "49-118695",
+        "54-013354",
+        "54-111206",
+        "55-011185",
+        "60-005603",
+        "63-006167",
+        "63-006168",
+        "63-010203",
+        "63-031973",
+        "69-005337",
+        "99-999928"
+      ],
+      "village_transformers_by_feeder": {
+        "BUA02": [
+          "45-009017"
+        ],
+        "BUA03": [
+          "54-111206",
+          "63-006168",
+          "99-999928"
+        ],
+        "BUA07": [
+          "40-019042",
+          "49-118695",
+          "55-011185",
+          "60-005603",
+          "63-006167",
+          "63-010203",
+          "63-031973",
+          "69-005337"
+        ],
+        "BUA08": [
+          "54-013354"
+        ]
+      },
+      "landmark_rules": [],
+      "protection_zones": {
+        "BUA07": {
+          "gate": "STRONG_BOUNDED_ZONE_CANDIDATE",
+          "devices": [
+            "BUA07F-01"
+          ],
+          "coverage": 0.988506,
+          "downstream_meter_count": 204,
+          "target_transformers": [
+            "40-019042",
+            "49-118695",
+            "55-011185",
+            "60-005603",
+            "63-006167",
+            "63-010203",
+            "63-031973",
+            "69-005337"
+          ]
+        },
+        "BUA03": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUA03VS-104"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 6921,
+          "target_transformers": [
+            "54-111206",
+            "63-006168",
+            "99-999928"
+          ]
+        },
+        "BUA08": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUA08VS-107"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 774,
+          "target_transformers": [
+            "54-013354"
+          ]
+        },
+        "BUA02": {
+          "gate": "BROAD_UPSTREAM_ZONE_CANDIDATE",
+          "devices": [
+            "BUA02VS-02"
+          ],
+          "coverage": 1.0,
+          "downstream_meter_count": 4922,
+          "target_transformers": [
+            "45-009017"
+          ]
+        }
+      },
+      "qa_gate": "PASS_LV_SERVICE_CORE_100",
+      "core_coverage": 1.0
+    }
+  ],
+  "excluded_villages": [
+    {
+      "village_key": "38-01-01-M01",
+      "village_name": "บึงกาฬกลาง",
+      "gate": "PARTIAL_INCONCLUSIVE",
+      "reason": "bounded LV service footprint gap closure did not reach 100% native TraceDown core coverage",
+      "core_coverage": 0.942623
+    },
+    {
+      "village_key": "38-01-01-M05",
+      "village_name": "ท่าไคร้",
+      "gate": "PARTIAL_INCONCLUSIVE",
+      "reason": "bounded LV service footprint gap closure did not reach 100% native TraceDown core coverage",
+      "core_coverage": 0.995816
+    }
+  ],
+  "guardrails": {
+    "raw_peano_persisted": false,
+    "accountnumber_persisted": false,
+    "customer_identity_persisted": false,
+    "conductor_geometry_persisted": false,
+    "gis_topology_is_realtime_state": false,
+    "single_report_can_confirm_mv": false,
+    "mode": "shadow",
+    "production_send": "blocked"
+  },
+  "transformer_catalog": {
+    "22-000004": {
+      "facility_id": "22-000004",
+      "feeder_id": "BUA08",
+      "lat": 18.358322,
+      "lon": 103.639179,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "22-000012": {
+      "facility_id": "22-000012",
+      "feeder_id": "BUA07",
+      "lat": 18.335025,
+      "lon": 103.715555,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "22-999912": {
+      "facility_id": "22-999912",
+      "feeder_id": "BUA07",
+      "lat": 18.335121,
+      "lon": 103.729056,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "28-003538": {
+      "facility_id": "28-003538",
+      "feeder_id": "BUA07",
+      "lat": 18.346556,
+      "lon": 103.677421,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "38-000631": {
+      "facility_id": "38-000631",
+      "feeder_id": "BUA03",
+      "lat": 18.357286,
+      "lon": 103.650539,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "38-022857": {
+      "facility_id": "38-022857",
+      "feeder_id": "BUA07",
+      "lat": 18.323431,
+      "lon": 103.633367,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "40-019042": {
+      "facility_id": "40-019042",
+      "feeder_id": "BUA07",
+      "lat": 18.318697,
+      "lon": 103.672121,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "42-004789": {
+      "facility_id": "42-004789",
+      "feeder_id": "BUA04",
+      "lat": 18.35304,
+      "lon": 103.633952,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "43-113173": {
+      "facility_id": "43-113173",
+      "feeder_id": "BUA08",
+      "lat": 18.355452,
+      "lon": 103.639914,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "45-004107": {
+      "facility_id": "45-004107",
+      "feeder_id": "BUA07",
+      "lat": 18.356749,
+      "lon": 103.643447,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "45-007605": {
+      "facility_id": "45-007605",
+      "feeder_id": "BUA07",
+      "lat": 18.344826,
+      "lon": 103.680034,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "45-009017": {
+      "facility_id": "45-009017",
+      "feeder_id": "BUA02",
+      "lat": 18.31862,
+      "lon": 103.635842,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "45-015667": {
+      "facility_id": "45-015667",
+      "feeder_id": "BUB07",
+      "lat": 18.366135,
+      "lon": 103.654114,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "45-022403": {
+      "facility_id": "45-022403",
+      "feeder_id": "BUA07",
+      "lat": 18.35063,
+      "lon": 103.67227,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "46-007645": {
+      "facility_id": "46-007645",
+      "feeder_id": "BUB07",
+      "lat": 18.360722,
+      "lon": 103.663858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "47-112164": {
+      "facility_id": "47-112164",
+      "feeder_id": "BUA07",
+      "lat": 18.323413,
+      "lon": 103.633104,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "49-118695": {
+      "facility_id": "49-118695",
+      "feeder_id": "BUA07",
+      "lat": 18.345371,
+      "lon": 103.639523,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "53-001409": {
+      "facility_id": "53-001409",
+      "feeder_id": "BUA03",
+      "lat": 18.348508,
+      "lon": 103.661609,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "53-002626": {
+      "facility_id": "53-002626",
+      "feeder_id": "BUA04",
+      "lat": 18.355513,
+      "lon": 103.628149,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "54-004633": {
+      "facility_id": "54-004633",
+      "feeder_id": "BUA04",
+      "lat": 18.348443,
+      "lon": 103.637406,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "54-007943": {
+      "facility_id": "54-007943",
+      "feeder_id": "BUB07",
+      "lat": 18.360531,
+      "lon": 103.654858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "54-013354": {
+      "facility_id": "54-013354",
+      "feeder_id": "BUA08",
+      "lat": 18.347658,
+      "lon": 103.637947,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "54-111206": {
+      "facility_id": "54-111206",
+      "feeder_id": "BUA03",
+      "lat": 18.348494,
+      "lon": 103.638902,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "54-940175": {
+      "facility_id": "54-940175",
+      "feeder_id": "BUA07",
+      "lat": 18.342242,
+      "lon": 103.638472,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "55-006041": {
+      "facility_id": "55-006041",
+      "feeder_id": "BUB07",
+      "lat": 18.35445,
+      "lon": 103.664042,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "55-011185": {
+      "facility_id": "55-011185",
+      "feeder_id": "BUA07",
+      "lat": 18.346692,
+      "lon": 103.640561,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "55-014569": {
+      "facility_id": "55-014569",
+      "feeder_id": "BUB07",
+      "lat": 18.356366,
+      "lon": 103.656347,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "55-015489": {
+      "facility_id": "55-015489",
+      "feeder_id": "BUA07",
+      "lat": 18.354441,
+      "lon": 103.660465,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "55-123223": {
+      "facility_id": "55-123223",
+      "feeder_id": "BUA04",
+      "lat": 18.339885,
+      "lon": 103.633607,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-003922": {
+      "facility_id": "56-003922",
+      "feeder_id": "BUA03",
+      "lat": 18.334405,
+      "lon": 103.727783,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-003924": {
+      "facility_id": "56-003924",
+      "feeder_id": "BUA03",
+      "lat": 18.350252,
+      "lon": 103.659305,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-009402": {
+      "facility_id": "56-009402",
+      "feeder_id": "BUA03",
+      "lat": 18.344649,
+      "lon": 103.665754,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-011601": {
+      "facility_id": "56-011601",
+      "feeder_id": "BUA03",
+      "lat": 18.343535,
+      "lon": 103.669204,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-111025": {
+      "facility_id": "56-111025",
+      "feeder_id": "BUA03",
+      "lat": 18.332247,
+      "lon": 103.631859,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "56-116048": {
+      "facility_id": "56-116048",
+      "feeder_id": "BUA07",
+      "lat": 18.347594,
+      "lon": 103.664157,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "57-008565": {
+      "facility_id": "57-008565",
+      "feeder_id": "BUA08",
+      "lat": 18.34189,
+      "lon": 103.637948,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "57-012308": {
+      "facility_id": "57-012308",
+      "feeder_id": "BUA07",
+      "lat": 18.358112,
+      "lon": 103.644696,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "57-107867": {
+      "facility_id": "57-107867",
+      "feeder_id": "BUB07",
+      "lat": 18.361192,
+      "lon": 103.662858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "57-112998": {
+      "facility_id": "57-112998",
+      "feeder_id": "BUA04",
+      "lat": 18.352355,
+      "lon": 103.630923,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "58-007685": {
+      "facility_id": "58-007685",
+      "feeder_id": "BUB07",
+      "lat": 18.36399,
+      "lon": 103.657917,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "58-017784": {
+      "facility_id": "58-017784",
+      "feeder_id": "BUA07",
+      "lat": 18.358603,
+      "lon": 103.650929,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "58-106987": {
+      "facility_id": "58-106987",
+      "feeder_id": "BUA04",
+      "lat": 18.348898,
+      "lon": 103.637029,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "58-107523": {
+      "facility_id": "58-107523",
+      "feeder_id": "BUA07",
+      "lat": 18.339773,
+      "lon": 103.682967,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "58-108591": {
+      "facility_id": "58-108591",
+      "feeder_id": "BUA04",
+      "lat": 18.3541,
+      "lon": 103.629848,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "59-013964": {
+      "facility_id": "59-013964",
+      "feeder_id": "BUA03",
+      "lat": 18.333663,
+      "lon": 103.706242,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "59-028945": {
+      "facility_id": "59-028945",
+      "feeder_id": "BUA07",
+      "lat": 18.354613,
+      "lon": 103.660829,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "59-109318": {
+      "facility_id": "59-109318",
+      "feeder_id": "BUA07",
+      "lat": 18.351142,
+      "lon": 103.659642,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "60-002145": {
+      "facility_id": "60-002145",
+      "feeder_id": "BUA07",
+      "lat": 18.346263,
+      "lon": 103.665871,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "60-005603": {
+      "facility_id": "60-005603",
+      "feeder_id": "BUA07",
+      "lat": 18.335409,
+      "lon": 103.646051,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "60-021162": {
+      "facility_id": "60-021162",
+      "feeder_id": "BUA01",
+      "lat": 18.31653,
+      "lon": 103.631533,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "60-037069": {
+      "facility_id": "60-037069",
+      "feeder_id": "BUA07",
+      "lat": 18.337097,
+      "lon": 103.722734,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "61-011967": {
+      "facility_id": "61-011967",
+      "feeder_id": "BUA08",
+      "lat": 18.322829,
+      "lon": 103.633056,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "62-004534": {
+      "facility_id": "62-004534",
+      "feeder_id": "BUA04",
+      "lat": 18.352753,
+      "lon": 103.632892,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "62-104270": {
+      "facility_id": "62-104270",
+      "feeder_id": "BUA07",
+      "lat": 18.337194,
+      "lon": 103.634478,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-001954": {
+      "facility_id": "63-001954",
+      "feeder_id": "BUA03",
+      "lat": 18.341663,
+      "lon": 103.675139,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006167": {
+      "facility_id": "63-006167",
+      "feeder_id": "BUA07",
+      "lat": 18.344696,
+      "lon": 103.645061,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006168": {
+      "facility_id": "63-006168",
+      "feeder_id": "BUA03",
+      "lat": 18.346528,
+      "lon": 103.638867,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006169": {
+      "facility_id": "63-006169",
+      "feeder_id": "BUB07",
+      "lat": 18.357254,
+      "lon": 103.65892,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006170": {
+      "facility_id": "63-006170",
+      "feeder_id": "BUB07",
+      "lat": 18.351632,
+      "lon": 103.666225,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006344": {
+      "facility_id": "63-006344",
+      "feeder_id": "BUA03",
+      "lat": 18.32222,
+      "lon": 103.713046,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-006345": {
+      "facility_id": "63-006345",
+      "feeder_id": "BUA07",
+      "lat": 18.343538,
+      "lon": 103.672063,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-010203": {
+      "facility_id": "63-010203",
+      "feeder_id": "BUA07",
+      "lat": 18.332598,
+      "lon": 103.656061,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-014612": {
+      "facility_id": "63-014612",
+      "feeder_id": "BUA03",
+      "lat": 18.353413,
+      "lon": 103.655461,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-014613": {
+      "facility_id": "63-014613",
+      "feeder_id": "BUA07",
+      "lat": 18.35322,
+      "lon": 103.656789,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-031973": {
+      "facility_id": "63-031973",
+      "feeder_id": "BUA07",
+      "lat": 18.341483,
+      "lon": 103.646303,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-031998": {
+      "facility_id": "63-031998",
+      "feeder_id": "BUA03",
+      "lat": 18.339559,
+      "lon": 103.680882,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-032388": {
+      "facility_id": "63-032388",
+      "feeder_id": "BUA08",
+      "lat": 18.36004,
+      "lon": 103.637851,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-100453": {
+      "facility_id": "63-100453",
+      "feeder_id": "BUA03",
+      "lat": 18.333753,
+      "lon": 103.714274,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "63-107452": {
+      "facility_id": "63-107452",
+      "feeder_id": "BUA07",
+      "lat": 18.334502,
+      "lon": 103.637726,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "64-004652": {
+      "facility_id": "64-004652",
+      "feeder_id": "BUA03",
+      "lat": 18.340315,
+      "lon": 103.639656,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "64-018467": {
+      "facility_id": "64-018467",
+      "feeder_id": "BUA04",
+      "lat": 18.326772,
+      "lon": 103.631377,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "64-103430": {
+      "facility_id": "64-103430",
+      "feeder_id": "BUA03",
+      "lat": 18.339272,
+      "lon": 103.635306,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "64-109601": {
+      "facility_id": "64-109601",
+      "feeder_id": "BUA03",
+      "lat": 18.342602,
+      "lon": 103.671846,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-003214": {
+      "facility_id": "65-003214",
+      "feeder_id": "BUA03",
+      "lat": 18.330514,
+      "lon": 103.631857,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-006228": {
+      "facility_id": "65-006228",
+      "feeder_id": "BUB07",
+      "lat": 18.362664,
+      "lon": 103.653068,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-010992": {
+      "facility_id": "65-010992",
+      "feeder_id": "BUA07",
+      "lat": 18.353079,
+      "lon": 103.670773,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-015695": {
+      "facility_id": "65-015695",
+      "feeder_id": "BUA03",
+      "lat": 18.333577,
+      "lon": 103.721278,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-027998": {
+      "facility_id": "65-027998",
+      "feeder_id": "BUA07",
+      "lat": 18.338815,
+      "lon": 103.644956,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-107451": {
+      "facility_id": "65-107451",
+      "feeder_id": "BUA07",
+      "lat": 18.34715,
+      "lon": 103.672825,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "65-109538": {
+      "facility_id": "65-109538",
+      "feeder_id": "BUA07",
+      "lat": 18.354329,
+      "lon": 103.659803,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-004050": {
+      "facility_id": "66-004050",
+      "feeder_id": "BUA04",
+      "lat": 18.349432,
+      "lon": 103.632321,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-012004": {
+      "facility_id": "66-012004",
+      "feeder_id": "BUB07",
+      "lat": 18.364752,
+      "lon": 103.65903,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-014523": {
+      "facility_id": "66-014523",
+      "feeder_id": "BUA07",
+      "lat": 18.354664,
+      "lon": 103.654945,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-014525": {
+      "facility_id": "66-014525",
+      "feeder_id": "BUB07",
+      "lat": 18.365433,
+      "lon": 103.658081,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-015201": {
+      "facility_id": "66-015201",
+      "feeder_id": "BUA07",
+      "lat": 18.354583,
+      "lon": 103.655503,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-016324": {
+      "facility_id": "66-016324",
+      "feeder_id": "BUB07",
+      "lat": 18.356578,
+      "lon": 103.642922,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-019434": {
+      "facility_id": "66-019434",
+      "feeder_id": "BUB07",
+      "lat": 18.359064,
+      "lon": 103.666214,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "66-107030": {
+      "facility_id": "66-107030",
+      "feeder_id": "BUB07",
+      "lat": 18.354744,
+      "lon": 103.659685,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "67-006308": {
+      "facility_id": "67-006308",
+      "feeder_id": "BUA04",
+      "lat": 18.354758,
+      "lon": 103.628839,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "67-007077": {
+      "facility_id": "67-007077",
+      "feeder_id": "BUA03",
+      "lat": 18.35436,
+      "lon": 103.63801,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "67-023116": {
+      "facility_id": "67-023116",
+      "feeder_id": "BUA03",
+      "lat": 18.344488,
+      "lon": 103.667003,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "67-027576": {
+      "facility_id": "67-027576",
+      "feeder_id": "BUA03",
+      "lat": 18.343284,
+      "lon": 103.670711,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "67-027578": {
+      "facility_id": "67-027578",
+      "feeder_id": "BUA07",
+      "lat": 18.337641,
+      "lon": 103.705233,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "69-005337": {
+      "facility_id": "69-005337",
+      "feeder_id": "BUA07",
+      "lat": 18.326916,
+      "lon": 103.662412,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    },
+    "99-999928": {
+      "facility_id": "99-999928",
+      "feeder_id": "BUA03",
+      "lat": 18.345623,
+      "lon": 103.639471,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17"
+    }
+  }
+}

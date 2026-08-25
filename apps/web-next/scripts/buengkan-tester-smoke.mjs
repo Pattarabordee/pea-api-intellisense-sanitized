@@ -42,12 +42,18 @@ for (const item of cases) {
   if (!response.ok) throw new Error(`${item.text}: HTTP ${response.status}`);
   const selected = body.selectedTransformerCandidates || [];
   const core = body.villageTransformerCandidates || [];
+  const selectedDetails = body.selectedTransformerDetails || [];
+  const coreDetails = body.villageTransformerDetails || [];
   const grouped = (body.villageTransformerGroups || []).flatMap((group) => group.transformers || []);
+  const coordsOk = coreDetails.length === item.core && coreDetails.every((tx) => Number(tx.lat) !== 0 && Number(tx.lon) !== 0 && tx.crs === "EPSG:4326");
+  const selectedCoordsOk = selectedDetails.length === item.selected && selectedDetails.every((tx) => Number(tx.lat) !== 0 && Number(tx.lon) !== 0);
   const ok =
     body.status === item.status &&
     (body.selectedFeeder ?? null) === item.feeder &&
     selected.length === item.selected &&
     core.length === item.core &&
+    coordsOk &&
+    selectedCoordsOk &&
     new Set(grouped).size === item.core &&
     (!item.selectedIds || JSON.stringify(selected) === JSON.stringify(item.selectedIds)) &&
     body.mode === "shadow" &&
@@ -67,6 +73,7 @@ console.log(JSON.stringify({
   baseUrl,
   canonicalCases: cases.length,
   traceConfirmedVillageTxGate: "PASS",
+  transformerCoordinateGate: "PASS",
   accessGate: "PASS",
   mode: "shadow",
   production_send: "blocked"

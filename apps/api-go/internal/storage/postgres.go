@@ -259,6 +259,47 @@ func (s *PostgresStore) BuengKanTesterFeedbackCounts(ctx context.Context) (*Buen
 	return &counts, nil
 }
 
+func (s *PostgresStore) InsertBuengKanOutageResolution(ctx context.Context, resolution BuengKanOutageResolution) (bool, error) {
+	payload := resolution.ResultJSON
+	if len(payload) == 0 {
+		payload = json.RawMessage(`{}`)
+	}
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO buengkan_outage_resolutions (
+			request_id, recorded_at, occurred_at, source_channel, source_event_hash, message_hash,
+			reporter_ref_hash, conversation_ref_hash, result_json, mode, production_send
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'shadow','blocked')
+		ON CONFLICT (request_id) DO NOTHING
+	`, resolution.RequestID, resolution.RecordedAt, resolution.OccurredAt, resolution.SourceChannel,
+		resolution.SourceEventHash, resolution.MessageHash, resolution.ReporterRefHash,
+		resolution.ConversationRefHash, payload)
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() == 0, nil
+}
+
+func (s *PostgresStore) GetBuengKanOutageResolution(ctx context.Context, requestID string) (*BuengKanOutageResolution, error) {
+	var item BuengKanOutageResolution
+	err := s.pool.QueryRow(ctx, `
+		SELECT request_id, recorded_at, occurred_at, source_channel, source_event_hash, message_hash,
+			reporter_ref_hash, conversation_ref_hash, result_json, mode, production_send
+		FROM buengkan_outage_resolutions
+		WHERE request_id = $1
+	`, requestID).Scan(
+		&item.RequestID, &item.RecordedAt, &item.OccurredAt, &item.SourceChannel,
+		&item.SourceEventHash, &item.MessageHash, &item.ReporterRefHash,
+		&item.ConversationRefHash, &item.ResultJSON, &item.Mode, &item.ProductionSend,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
 func (s *PostgresStore) GetStatus(ctx context.Context, requestID string) (*RequestStatus, error) {
 	rows, err := s.queryStatuses(ctx, `WHERE r.request_id = $1`, 1, requestID)
 	if err != nil {

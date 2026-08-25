@@ -15,6 +15,14 @@ type TopologyPrior = {
   topology_share: number;
 };
 
+type TransformerDetail = {
+  facilityId: string;
+  feederId: string;
+  lat: number;
+  lon: number;
+  crs: string;
+};
+
 type ResolveResult = {
   status: string;
   mode: "shadow";
@@ -25,7 +33,9 @@ type ResolveResult = {
   message: string;
   selectedFeeder?: string | null;
   selectedTransformerCandidates: string[];
+  selectedTransformerDetails: TransformerDetail[];
   villageTransformerCandidates: string[];
+  villageTransformerDetails: TransformerDetail[];
   villageTransformerGroups: Array<{ feeder: string; transformers: string[] }>;
   footprintConfidence?: "HIGH" | "MEDIUM" | "LOW";
   topologyPrior: TopologyPrior[];
@@ -63,6 +73,16 @@ const confidenceCopy = {
 function percent(value?: number | null) {
   if (value == null || Number.isNaN(value)) return "—";
   return `${(value * 100).toFixed(value >= 0.995 ? 0 : 1)}%`;
+}
+
+function coordText(detail?: TransformerDetail) {
+  if (!detail || !detail.lat || !detail.lon) return "";
+  return `Lat ${detail.lat.toFixed(6)} · Lon ${detail.lon.toFixed(6)}`;
+}
+
+function findTxDetail(result: ResolveResult, facilityId: string) {
+  return result.selectedTransformerDetails.find((item) => item.facilityId === facilityId)
+    ?? result.villageTransformerDetails.find((item) => item.facilityId === facilityId);
 }
 
 function zoneLabel(gate?: string) {
@@ -108,11 +128,11 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
 
   const resultText = useMemo(() => {
     if (!result) return "";
-    const tx = result.selectedTransformerCandidates.length
-      ? result.selectedTransformerCandidates.join(", ")
+    const tx = result.selectedTransformerDetails.length
+      ? result.selectedTransformerDetails.map((item) => `${item.facilityId} [${item.lat.toFixed(6)}, ${item.lon.toFixed(6)}]`).join(", ")
       : "ยังไม่ได้ narrow จากข้อความ";
-    const villageTx = result.villageTransformerCandidates.length
-      ? result.villageTransformerCandidates.join(", ")
+    const villageTx = result.villageTransformerDetails.length
+      ? result.villageTransformerDetails.map((item) => `${item.facilityId} [${item.lat.toFixed(6)}, ${item.lon.toFixed(6)}]`).join(", ")
       : "ยังไม่มี trace-confirmed core TX";
     const devices = result.protectionZone?.devices?.length
       ? result.protectionZone.devices.join(", ")
@@ -374,7 +394,10 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                 {result.selectedTransformerCandidates.map((tx, index) => (
                   <div className={styles.txItem} key={tx}>
                     <span className={styles.txIndex}>{index + 1}</span>
-                    <code>{tx}</code>
+                    <div className={styles.txBody}>
+                      <code>{tx}</code>
+                      <span>{coordText(findTxDetail(result, tx))}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -399,7 +422,10 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                       {group.transformers.map((tx, index) => (
                         <div className={styles.txItem} key={`${group.feeder}-${tx}`}>
                           <span className={styles.txIndex}>{index + 1}</span>
-                          <code>{tx}</code>
+                          <div className={styles.txBody}>
+                            <code>{tx}</code>
+                            <span>{coordText(findTxDetail(result, tx))}</span>
+                          </div>
                         </div>
                       ))}
                     </div>

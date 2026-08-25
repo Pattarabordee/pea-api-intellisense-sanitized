@@ -747,10 +747,11 @@ type fakeStore struct {
 	requestRefLookups   [][]string
 	inserted            int
 	feedback            []storage.BuengKanTesterFeedback
+	outageResolutions   map[string]storage.BuengKanOutageResolution
 }
 
 func newFakeStore() *fakeStore {
-	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}}
+	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}, outageResolutions: map[string]storage.BuengKanOutageResolution{}}
 }
 
 func (f *fakeStore) Init(context.Context) error { return nil }
@@ -851,6 +852,26 @@ func (f *fakeStore) GetStatus(ctx context.Context, requestID string) (*storage.R
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[requestID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+	return &row, nil
+}
+
+func (f *fakeStore) InsertBuengKanOutageResolution(ctx context.Context, resolution storage.BuengKanOutageResolution) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if _, ok := f.outageResolutions[resolution.RequestID]; ok {
+		return true, nil
+	}
+	f.outageResolutions[resolution.RequestID] = resolution
+	return false, nil
+}
+
+func (f *fakeStore) GetBuengKanOutageResolution(ctx context.Context, requestID string) (*storage.BuengKanOutageResolution, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.outageResolutions[requestID]
 	if !ok {
 		return nil, storage.ErrNotFound
 	}

@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Port               int
 	APIKey             string
+	OutageIntegrationAPIKey string
 	DatabaseURL        string
 	RateLimitPerMinute int
 	AllowedOrigin      string
@@ -22,6 +23,7 @@ func Load() Config {
 	return Config{
 		Port:               envInt("PORT", 8090),
 		APIKey:             os.Getenv("AIS_INBOUND_API_KEY"),
+		OutageIntegrationAPIKey: os.Getenv("OUTAGE_INTEGRATION_API_KEY"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		RateLimitPerMinute: envInt("RATE_LIMIT_PER_MINUTE", 120),
 		AllowedOrigin:      os.Getenv("ALLOWED_ORIGIN"),
