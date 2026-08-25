@@ -122,3 +122,37 @@ func TestOutageResolveRejectsRawReporterIdentifierShape(t *testing.T) {
 		t.Fatalf("expected pseudonymous ref validation 400, got %d: %s", res.Code, res.Body.String())
 	}
 }
+
+func TestOutageResolveUsesSharedGPSWithoutPersistingRawCoordinates(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"schema_version":"outage-report.v1","source":{"channel":"LINE","event_id":"gps-event-1","occurred_at":"2026-08-25T20:01:05+07:00"},"message":{"text":"ไฟดับ"},"location":{"lat":18.316689433697476,"lon":103.71130803535446,"accuracy_m":5,"source":"user_shared_location"}}`
+	req := httptest.NewRequest(http.MethodPost, outageResolvePath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String())
+	}
+	payload := decodeBody(t, res)
+	inputEvidence := payload["input_evidence"].(map[string]any)
+	if inputEvidence["location_received"] != true || inputEvidence["location_used_for_topology"] != true {
+		t.Fatalf("GPS evidence was not applied: %#v", inputEvidence)
+	}
+	resolution := payload["resolution"].(map[string]any)
+	if resolution["status"] != "RESOLVED_GPS_FOOTPRINT" || resolution["outage_state"] != "UNDETERMINED" {
+		t.Fatalf("unexpected GPS resolution: %#v", resolution)
+	}
+	selected := resolution["selected_transformers"].([]any)
+	if len(selected) != 1 || selected[0].(map[string]any)["facility_id"] != "63-006344" {
+		t.Fatalf("GPS did not narrow to expected TX: %#v", selected)
+	}
+	requestID := payload["request_id"].(string)
+	stored := string(store.outageResolutions[requestID].ResultJSON)
+	for _, raw := range []string{"18.316689433697476", "103.71130803535446"} {
+		if strings.Contains(stored, raw) {
+			t.Fatalf("raw user GPS must not be persisted: %s", stored)
+		}
+	}
+}

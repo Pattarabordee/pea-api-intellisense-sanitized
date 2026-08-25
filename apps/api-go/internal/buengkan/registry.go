@@ -124,6 +124,7 @@ type ResolveResult struct {
 	OutageState              string                 `json:"outage_state"`
 	NeedsMoreInformation     []string               `json:"needs_more_information"`
 	RequiredConfirmation     []string               `json:"required_confirmation"`
+	LocationEvidence         *LocationEvidenceResult `json:"location_evidence,omitempty"`
 }
 
 type ServiceVillage struct {
