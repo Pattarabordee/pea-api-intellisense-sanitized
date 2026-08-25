@@ -1,0 +1,3527 @@
+{
+  "schema_version": "field-validation-catalog.v1",
+  "registry_version": 5,
+  "scope": "Tambol Bueng Kan / shadow field validation",
+  "item_count": 91,
+  "source_counts": {
+    "POI": 78,
+    "ROAD_SOI": 13
+  },
+  "priority_counts": {
+    "P0_CONFLICT": 1,
+    "P1_HIGH_VALUE_SINGLE": 10,
+    "P1_LOCAL_SINGLE_TX": 2,
+    "P2_SINGLE_REVIEW": 24,
+    "P2_ROAD_SINGLE_TX": 2,
+    "P3_AMBIGUOUS": 10,
+    "P3_MULTI_TX_CORRIDOR": 3,
+    "P4_NO_COVERAGE": 39
+  },
+  "promotion_policy": "Field validation does not auto-promote. Promotion is a separate explicit reviewed build step.",
+  "items": [
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33250",
+      "label": "โรงเรียนบ้านท่าโพธิ์",
+      "category": "สถานศึกษา",
+      "priority": "P0_CONFLICT",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": true,
+      "prior_evidence": {
+        "check": "CONFLICT_REVIEW",
+        "transformers": [
+          "56-003922"
+        ],
+        "rules": [
+          "thapho_front_school"
+        ]
+      },
+      "source_location": {
+        "lat": 18.332062,
+        "lon": 103.72119,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-015695",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.333577,
+            "lon": 103.721278,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 43.6
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34511",
+      "label": "จิราพรเกสท์เฮ้าส์",
+      "category": "โรงแรม",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.343109,
+        "lon": 103.638285,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "57-008565",
+          "feeder_id": "BUA08",
+          "location": {
+            "lat": 18.34189,
+            "lon": 103.637948,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 21.3
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32989",
+      "label": "ที่ทำการไปรษณีย์บึงกาฬ",
+      "category": "ที่ทำการไปรษณีย์",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.364534,
+        "lon": 103.652499,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 54.2
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33954",
+      "label": "บึงกาฬซุปเปอร์สโตร์",
+      "category": "ห้างสรรพสินค้า/ศูนย์การค้า",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.36551,
+        "lon": 103.653649,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 51.7
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34279",
+      "label": "สถานีตำรวจทางหลวงบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.359879,
+        "lon": 103.647788,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 38.3
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:25189",
+      "label": "สถานีตำรวจภูธรบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.361695,
+        "lon": 103.652768,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 42.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:25119",
+      "label": "สำนักงานการไฟฟ้าส่วนภูมิภาคอำเภอบึงกาฬ",
+      "category": "สำนักงาน กฟภ.",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.323386,
+        "lon": 103.633472,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-022857",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.323431,
+            "lon": 103.633367,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 7.1
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32566",
+      "label": "สำนักงานที่ดินจังหวัดหนองคาย สาขาบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.359771,
+        "lon": 103.655353,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "54-007943",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.360531,
+            "lon": 103.654858,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 29.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:24762",
+      "label": "สำนักงานเทศบาลตำบลบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366982,
+        "lon": 103.655367,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 38.9
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34499",
+      "label": "โรงพยาบาลบึงกาฬ",
+      "category": "โรงพยาบาล",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.363937,
+        "lon": 103.651881,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 15.5
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33514",
+      "label": "โรงแรมเป็นหนึ่ง",
+      "category": "โรงแรม",
+      "priority": "P1_HIGH_VALUE_SINGLE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.353656,
+        "lon": 103.637973,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "67-007077",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.35436,
+            "lon": 103.63801,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 44.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:098a8fe5679b12d9",
+      "label": "ถนนประสาทชัย",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P1_LOCAL_SINGLE_TX",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_SINGLE_TX_ONLY",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366516,
+        "lon": 103.652601,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 18.3
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:a92946a9a1520f48",
+      "label": "ถนนมีชัย",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P1_LOCAL_SINGLE_TX",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_SINGLE_TX_ONLY",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367225,
+        "lon": 103.654059,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.2
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33940",
+      "label": "ตลาดสดสุขาภิบาลบึงกาฬ",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.365603,
+        "lon": 103.653188,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 92.9
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33225",
+      "label": "ที่ว่าการอำเภอบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.357221,
+        "lon": 103.651433,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 95.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32426",
+      "label": "ธนาคารออมสิน",
+      "category": "ธนาคาร/สถาบันการเงิน",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366227,
+        "lon": 103.653824,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 35.3
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35435",
+      "label": "บริษัทมิตรแท้ประกันภัย จำกัด",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366602,
+        "lon": 103.654431,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 13.2
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34914",
+      "label": "บริษัทลิเบอร์ตี้ประกันภัย จำกัด",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366466,
+        "lon": 103.654278,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 8.9
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34944",
+      "label": "บริษัทลิเบอร์ตี้ประกันภัย จำกัด",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.36617,
+        "lon": 103.651271,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 83.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35317",
+      "label": "บริษัทไทยสมุทรประกันชีวิต จำกัด",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366405,
+        "lon": 103.654088,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 14.4
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34004",
+      "label": "บึงกาฬคอนกรีต",
+      "category": "โรงงานอุตสาหกรรม",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.355417,
+        "lon": 103.640883,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.8
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32517",
+      "label": "วัดบุพพราชสโมสร",
+      "category": "วัด",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367628,
+        "lon": 103.654918,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 54.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34834",
+      "label": "วัดวิริยะทองจำปาวณาราม",
+      "category": "วัด",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.320884,
+        "lon": 103.712067,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "63-006344",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.32222,
+            "lon": 103.713046,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 72.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33252",
+      "label": "วัดศรีแก้ววนาราม",
+      "category": "วัด",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.354074,
+        "lon": 103.628819,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "67-006308",
+          "feeder_id": "BUA04",
+          "location": {
+            "lat": 18.354758,
+            "lon": 103.628839,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 27.6
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33931",
+      "label": "วัดศรีโสภณธรมทาน",
+      "category": "วัด",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.365732,
+        "lon": 103.655949,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 19.4
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35522",
+      "label": "วัดสิริสมคารานาราม",
+      "category": "วัด",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.348601,
+        "lon": 103.66168,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "53-001409",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.348508,
+            "lon": 103.661609,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 15.7
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33648",
+      "label": "สถานีบริการน้ำมันพีที",
+      "category": "สถานีบริการน้ำมัน",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.349331,
+        "lon": 103.637352,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "58-106987",
+          "feeder_id": "BUA04",
+          "location": {
+            "lat": 18.348898,
+            "lon": 103.637029,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 67.3
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34893",
+      "label": "สำนักงานพัฒนาชุมชนอำเภอบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.357226,
+        "lon": 103.651339,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 84.5
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34894",
+      "label": "สำนักงานสรรพสามิตพื้นที่หนองคายสาขาบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.357145,
+        "lon": 103.651483,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 101.6
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34876",
+      "label": "สำนักงานสรรพากรพื้นที่สาขาบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.357186,
+        "lon": 103.65152,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 105.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35346",
+      "label": "หอพักทรัพย์ประเสริฐ",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.354548,
+        "lon": 103.630757,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "67-006308",
+          "feeder_id": "BUA04",
+          "location": {
+            "lat": 18.354758,
+            "lon": 103.628839,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 52.1
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35424",
+      "label": "หอพักหญิงเพชนตาแสง",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.353463,
+        "lon": 103.635363,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "42-004789",
+          "feeder_id": "BUA04",
+          "location": {
+            "lat": 18.35304,
+            "lon": 103.633952,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 16.0
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34929",
+      "label": "เซเว่นอีเลฟเว่น",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.364986,
+        "lon": 103.6529,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 107.6
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34695",
+      "label": "โรงพิพม์พัฒนาพิมพ์",
+      "category": "โรงงานอุตสาหกรรม",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.364479,
+        "lon": 103.652712,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 78.6
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32369",
+      "label": "โรงเรียนบ้านแสนสำราญ",
+      "category": "สถานศึกษา",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.342072,
+        "lon": 103.635313,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "57-008565",
+          "feeder_id": "BUA08",
+          "location": {
+            "lat": 18.34189,
+            "lon": 103.637948,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 110.5
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32981",
+      "label": "โรงเรียนเทคโนโลยีบริหารธุรกิจรักไทย",
+      "category": "สถานศึกษา",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.324859,
+        "lon": 103.634535,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-022857",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.323431,
+            "lon": 103.633367,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 101.5
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:24895",
+      "label": "โรงแรมสำราญ",
+      "category": "โรงแรม",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367541,
+        "lon": 103.653933,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 107.2
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:f6b3b3c78a070bf6",
+      "label": "5th friendship bridge access road",
+      "category": "ROAD",
+      "priority": "P2_ROAD_SINGLE_TX",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_SINGLE_TX_ONLY",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.333879,
+        "lon": 103.614803,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-003214",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.330514,
+            "lon": 103.631857,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 24.7
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:993ec7ab09f05e0d",
+      "label": "วงเวียนหอนาฬิกาเทศบาลเมืองบึงกาฬ",
+      "category": "ROAD",
+      "priority": "P2_ROAD_SINGLE_TX",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_SINGLE_TX_ONLY",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.365859,
+        "lon": 103.651148,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-006228",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.362664,
+            "lon": 103.653068,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 39.8
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33666",
+      "label": "กองร้อยตำรวจตระเวนชายแดนที่ 244",
+      "category": "สถานที่ราชการ",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.34529,
+        "lon": 103.639981,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "54-940175",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.342242,
+            "lon": 103.638472,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 39.4
+        },
+        {
+          "facility_id": "49-118695",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.345371,
+            "lon": 103.639523,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 40.3
+        },
+        {
+          "facility_id": "99-999928",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.345623,
+            "lon": 103.639471,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 60.9
+        },
+        {
+          "facility_id": "63-006168",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.346528,
+            "lon": 103.638867,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 65.3
+        }
+      ],
+      "candidate_count": 4,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33566",
+      "label": "ทรายเงินรีสอร์ท",
+      "category": "โรงแรม",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "CONSISTENT_OR_NONCOMPARABLE",
+        "transformers": [
+          "43-113173",
+          "63-032388"
+        ],
+        "rules": [
+          "sai_ngoen_resort"
+        ]
+      },
+      "source_location": {
+        "lat": 18.355572,
+        "lon": 103.640024,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "66-016324",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356578,
+            "lon": 103.642922,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 15.3
+        },
+        {
+          "facility_id": "43-113173",
+          "feeder_id": "BUA08",
+          "location": {
+            "lat": 18.355452,
+            "lon": 103.639914,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 20.5
+        },
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 40.2
+        }
+      ],
+      "candidate_count": 3,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33980",
+      "label": "บึงสวรรค์รีสอร์ท",
+      "category": "โรงแรม",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.347346,
+        "lon": 103.664048,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "53-001409",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.348508,
+            "lon": 103.661609,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 5.0
+        },
+        {
+          "facility_id": "56-116048",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.347594,
+            "lon": 103.664157,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 24.9
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34506",
+      "label": "วัดโชติรสธรรมากร",
+      "category": "วัด",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.354811,
+        "lon": 103.65452,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "55-014569",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356366,
+            "lon": 103.656347,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 23.6
+        },
+        {
+          "facility_id": "66-014523",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.354664,
+            "lon": 103.654945,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 23.6
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34551",
+      "label": "สถานีขนส่งจังหวัดหนองคาย สาขาอำเภอบึงกาฬ",
+      "category": "ท่าเรือ/สถานีขนส่ง",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.357943,
+        "lon": 103.650547,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 78.1
+        },
+        {
+          "facility_id": "58-017784",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.358603,
+            "lon": 103.650929,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 93.0
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33513",
+      "label": "สถานีบริการน้ำมันบางจาก",
+      "category": "สถานีบริการน้ำมัน",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.34776,
+        "lon": 103.638248,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "63-006168",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.346528,
+            "lon": 103.638867,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 7.9
+        },
+        {
+          "facility_id": "54-013354",
+          "feeder_id": "BUA08",
+          "location": {
+            "lat": 18.347658,
+            "lon": 103.637947,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 27.2
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32964",
+      "label": "สำนักงานอัยการประจำศาลจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.358206,
+        "lon": 103.650297,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "58-017784",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.358603,
+            "lon": 103.650929,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 88.2
+        },
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 113.3
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:33274",
+      "label": "โรงกลึงธงชัยกลการ",
+      "category": "โรงงานอุตสาหกรรม",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.355565,
+        "lon": 103.641147,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 9.7
+        },
+        {
+          "facility_id": "66-016324",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356578,
+            "lon": 103.642922,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 23.1
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35148",
+      "label": "โรงกลึงไทยสมบูรณ์กลการ",
+      "category": "โรงงานอุตสาหกรรม",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.356548,
+        "lon": 103.642695,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "66-016324",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356578,
+            "lon": 103.642922,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 14.5
+        },
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 38.8
+        }
+      ],
+      "candidate_count": 2,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35328",
+      "label": "โรงบรรจุก๊าซจารุวงศ์ก๊าซบึงกาฬ",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P3_AMBIGUOUS",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.348448,
+        "lon": 103.6379,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "54-004633",
+          "feeder_id": "BUA04",
+          "location": {
+            "lat": 18.348443,
+            "lon": 103.637406,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 48.4
+        },
+        {
+          "facility_id": "54-013354",
+          "feeder_id": "BUA08",
+          "location": {
+            "lat": 18.347658,
+            "lon": 103.637947,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 52.5
+        },
+        {
+          "facility_id": "63-006168",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.346528,
+            "lon": 103.638867,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 54.6
+        }
+      ],
+      "candidate_count": 3,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:8d9802342f73bc2f",
+      "label": "ถนนข้าวเม่า",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P3_MULTI_TX_CORRIDOR",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.366886,
+        "lon": 103.656095,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "46-007645",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.360722,
+            "lon": 103.663858,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.6
+        },
+        {
+          "facility_id": "66-012004",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.364752,
+            "lon": 103.65903,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.7
+        },
+        {
+          "facility_id": "66-014525",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.365433,
+            "lon": 103.658081,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.7
+        },
+        {
+          "facility_id": "58-007685",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.36399,
+            "lon": 103.657917,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 10.1
+        },
+        {
+          "facility_id": "57-107867",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.361192,
+            "lon": 103.662858,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        }
+      ],
+      "candidate_count": 6,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:8a72ec1dd23c5fc3",
+      "label": "ถนนชยางกูร",
+      "category": "ROAD",
+      "priority": "P3_MULTI_TX_CORRIDOR",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.331584,
+        "lon": 103.721725,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "56-003922",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.334405,
+            "lon": 103.727783,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.1
+        },
+        {
+          "facility_id": "59-013964",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.333663,
+            "lon": 103.706242,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 4.4
+        },
+        {
+          "facility_id": "56-003924",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.350252,
+            "lon": 103.659305,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 5.4
+        },
+        {
+          "facility_id": "53-001409",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.348508,
+            "lon": 103.661609,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 5.5
+        },
+        {
+          "facility_id": "63-031998",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.339559,
+            "lon": 103.680882,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 5.7
+        },
+        {
+          "facility_id": "67-027576",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.343284,
+            "lon": 103.670711,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 6.4
+        },
+        {
+          "facility_id": "63-014612",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.353413,
+            "lon": 103.655461,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 17.8
+        },
+        {
+          "facility_id": "63-001954",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.341663,
+            "lon": 103.675139,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 19.0
+        },
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 20.7
+        },
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "66-014523",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.354664,
+            "lon": 103.654945,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "66-015201",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.354583,
+            "lon": 103.655503,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "63-014613",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.35322,
+            "lon": 103.656789,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "63-006345",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.343538,
+            "lon": 103.672063,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "22-999912",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.335121,
+            "lon": 103.729056,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "60-037069",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.337097,
+            "lon": 103.722734,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "65-015695",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.333577,
+            "lon": 103.721278,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "55-014569",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356366,
+            "lon": 103.656347,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        },
+        {
+          "facility_id": "56-011601",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.343535,
+            "lon": 103.669204,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": null
+        }
+      ],
+      "candidate_count": 19,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:b1f0579774674d66",
+      "label": "ทางคู่ขนานถนนชยางกูร",
+      "category": "ROAD",
+      "priority": "P3_MULTI_TX_CORRIDOR",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "ROAD_AMBIGUOUS_MULTI_TX",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.35958,
+        "lon": 103.648558,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-004107",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.356749,
+            "lon": 103.643447,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.6
+        },
+        {
+          "facility_id": "63-014612",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.353413,
+            "lon": 103.655461,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 1.6
+        },
+        {
+          "facility_id": "38-000631",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.357286,
+            "lon": 103.650539,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 3.9
+        },
+        {
+          "facility_id": "66-014523",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.354664,
+            "lon": 103.654945,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 5.2
+        },
+        {
+          "facility_id": "66-015201",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.354583,
+            "lon": 103.655503,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 6.0
+        },
+        {
+          "facility_id": "53-001409",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.348508,
+            "lon": 103.661609,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 12.3
+        },
+        {
+          "facility_id": "63-014613",
+          "feeder_id": "BUA07",
+          "location": {
+            "lat": 18.35322,
+            "lon": 103.656789,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 15.1
+        },
+        {
+          "facility_id": "55-014569",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.356366,
+            "lon": 103.656347,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 15.8
+        }
+      ],
+      "candidate_count": 8,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129959",
+      "label": "กองร้อยอาสารักษาดินแดน",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.328015,
+        "lon": 103.690203,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129637",
+      "label": "จวนผู้ว่าราชการจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.331509,
+        "lon": 103.691377,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35447",
+      "label": "ชุมสายโทรศัพท์ทางไกลสถานีปลายทางบึงกาฬ",
+      "category": "รัฐวิสาหกิจ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.362067,
+        "lon": 103.647353,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34191",
+      "label": "ด่านตรวจคนเข้าเมืองบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.368927,
+        "lon": 103.653437,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:24761",
+      "label": "ธนาคารกรุงไทย",
+      "category": "ธนาคาร/สถาบันการเงิน",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.368006,
+        "lon": 103.653381,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:52226",
+      "label": "บริษัททีโอที จำกัด (มหาชน) สำนักงานบึงกาฬ",
+      "category": "รัฐวิสาหกิจ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.362012,
+        "lon": 103.647351,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35109",
+      "label": "วัดท่าไคร้",
+      "category": "วัด",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.339591,
+        "lon": 103.691333,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34237",
+      "label": "วัดป่าศิริมโนธรรม",
+      "category": "วัด",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "POI_SINGLE_TX_CANDIDATE",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.332507,
+        "lon": 103.719467,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [
+        {
+          "facility_id": "65-015695",
+          "feeder_id": "BUA03",
+          "location": {
+            "lat": 18.333577,
+            "lon": 103.721278,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 134.5
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:52224",
+      "label": "ศาลจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.359618,
+        "lon": 103.6493,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129635",
+      "label": "ศาลจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.332543,
+        "lon": 103.689095,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129320",
+      "label": "ศาลากลางจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.334431,
+        "lon": 103.685063,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129328",
+      "label": "ศูนย์ไกล่เกลี่ยข้อพิพาท จังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.334224,
+        "lon": 103.684269,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32954",
+      "label": "สถานีไฟฟ้าแรงสูงบึงกาฬ",
+      "category": "รัฐวิสาหกิจ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.317595,
+        "lon": 103.634777,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:35442",
+      "label": "สนามกีฬาอำเภอบึงกาฬ",
+      "category": "สถานที่สำคัญอื่นๆ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.364176,
+        "lon": 103.649377,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129956",
+      "label": "สำนักงานการท่องเที่ยวและกีฬาจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.331366,
+        "lon": 103.68591,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129316",
+      "label": "สำนักงานตรวจบัญชีสหกรณ์บึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.335336,
+        "lon": 103.682615,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129325",
+      "label": "สำนักงานประกันสังคมจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.333815,
+        "lon": 103.684502,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129322",
+      "label": "สำนักงานประชาสัมพันธ์",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.33441,
+        "lon": 103.68526,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129326",
+      "label": "สำนักงานพัฒนาชุมชนจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.33372,
+        "lon": 103.684792,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129633",
+      "label": "สำนักงานพัฒนาสังคมและความมั่นคง จังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.33365,
+        "lon": 103.685015,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129957",
+      "label": "สำนักงานพาษิชย์จังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.331249,
+        "lon": 103.686507,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129321",
+      "label": "สำนักงานยุติธรรมจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.334541,
+        "lon": 103.684856,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129327",
+      "label": "สำนักงานศึกษาธิการจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.33394,
+        "lon": 103.684076,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129958",
+      "label": "สำนักงานสวัสดิการและคุ้มครองแรงงาน",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.329073,
+        "lon": 103.689145,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129319",
+      "label": "สำนักงานสหกรณ์จังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.334971,
+        "lon": 103.683669,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129324",
+      "label": "สำนักงานอุตสาหกรรมจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.333229,
+        "lon": 103.684294,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129639",
+      "label": "สำนักงานเหล่ากาชาดจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.331411,
+        "lon": 103.691872,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:129634",
+      "label": "หอประชุมศูนย์ราชการจังหวัดบึงกาฬ",
+      "category": "สถานที่ราชการ",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.333423,
+        "lon": 103.686976,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34993",
+      "label": "โรงงานคอนกรีตผสมเสร็จซีแพค",
+      "category": "โรงงานอุตสาหกรรม",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.355332,
+        "lon": 103.653284,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34112",
+      "label": "โรงเรียนบึงกาฬ",
+      "category": "สถานศึกษา",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.362914,
+        "lon": 103.648122,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34624",
+      "label": "โรงเรียนบ้านท่าไคร้",
+      "category": "สถานศึกษา",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.336636,
+        "lon": 103.687688,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:32872",
+      "label": "โรงแรมสมานมิตร",
+      "category": "โรงแรม",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367169,
+        "lon": 103.65256,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
+      "source_ref": "poi:34508",
+      "label": "โรงแรมสันติสุขธานี",
+      "category": "โรงแรม",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_CELL_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "NO_PRIOR_RULE",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.36678,
+        "lon": 103.65283,
+        "crs": "EPSG:4326",
+        "source": "PEA_GIS_LAYER43"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:1b2b3347f335d619",
+      "label": "ถนนประสบสุข",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.368985,
+        "lon": 103.649729,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:e4845999c780e6aa",
+      "label": "ถนนพ้นทุกข์ภัย",
+      "category": "ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367783,
+        "lon": 103.645559,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:3a9f4dfe178a5ab2",
+      "label": "ถนนรักสงบ",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.365662,
+        "lon": 103.648581,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:753f0e18400030e7",
+      "label": "ถนนสาย บ้านโนนสา - บ้านท่าอินทร์แปลง",
+      "category": "ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.310576,
+        "lon": 103.769882,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:3888760f05535e49",
+      "label": "ถนนสายบ้านโนนสา หมู่ 2 - วัดป่าบ้านโนนสา",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.308098,
+        "lon": 103.741002,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "ROAD_SOI",
+      "source_ref": "road:f672f060362b0b65",
+      "label": "ถนนไทยสมัคร",
+      "category": "SOI_OR_LOCAL_ROAD",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367193,
+        "lon": 103.65013,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    }
+  ],
+  "guardrails": {
+    "raw_peano_persisted": false,
+    "meter_account_customer_identity_persisted": false,
+    "raw_road_geometry_persisted": false,
+    "source_proximity_confirms_supply": false,
+    "field_feedback_auto_promotes": false,
+    "mode": "shadow",
+    "production_send": "blocked"
+  }
+}

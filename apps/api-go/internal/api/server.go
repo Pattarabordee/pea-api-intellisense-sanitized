@@ -96,6 +96,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleBuengKanTesterFeedbackList(w, r)
 	case r.URL.Path == buengKanTesterFeedbackPath && r.Method == http.MethodPost:
 		s.handleBuengKanTesterFeedbackPost(w, r)
+	case r.URL.Path == buengKanSecondaryValidationCatalogPath && r.Method == http.MethodGet:
+		s.handleBuengKanSecondaryValidationCatalog(w, r)
+	case r.URL.Path == buengKanSecondaryValidationPath && r.Method == http.MethodGet:
+		s.handleBuengKanSecondaryValidationList(w, r)
+	case r.URL.Path == buengKanSecondaryValidationPath && r.Method == http.MethodPost:
+		s.handleBuengKanSecondaryValidationPost(w, r)
 	case r.URL.Path == outageResolvePath && r.Method == http.MethodPost:
 		s.handleBuengKanOutageResolve(w, r)
 	case strings.HasPrefix(r.URL.Path, outageResultPathPrefix) && r.Method == http.MethodGet:

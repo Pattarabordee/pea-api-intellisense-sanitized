@@ -747,6 +747,7 @@ type fakeStore struct {
 	requestRefLookups   [][]string
 	inserted            int
 	feedback            []storage.BuengKanTesterFeedback
+	secondaryValidation []storage.BuengKanSecondaryValidation
 	outageResolutions   map[string]storage.BuengKanOutageResolution
 }
 
@@ -906,6 +907,38 @@ func (f *fakeStore) BuengKanTesterFeedbackCounts(ctx context.Context) (*storage.
 	counts := &storage.BuengKanTesterFeedbackCounts{Total: int64(len(f.feedback))}
 	for i := range f.feedback {
 		row := f.feedback[i]
+		switch row.Verdict { case "CORRECT": counts.Correct++; case "INCORRECT": counts.Incorrect++; case "UNSURE": counts.Unsure++ }
+		if counts.LatestAt == nil || row.RecordedAt.After(*counts.LatestAt) { value := row.RecordedAt; counts.LatestAt = &value }
+	}
+	return counts, nil
+}
+
+func (f *fakeStore) InsertBuengKanSecondaryValidation(ctx context.Context, validation storage.BuengKanSecondaryValidation) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, existing := range f.secondaryValidation {
+		if existing.ReceiptID == validation.ReceiptID { return true, nil }
+	}
+	f.secondaryValidation = append(f.secondaryValidation, validation)
+	return false, nil
+}
+
+func (f *fakeStore) ListBuengKanSecondaryValidation(ctx context.Context, limit int) ([]storage.BuengKanSecondaryValidation, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if limit <= 0 || limit > 2000 { limit = 500 }
+	result := append([]storage.BuengKanSecondaryValidation{}, f.secondaryValidation...)
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 { result[i], result[j] = result[j], result[i] }
+	if len(result) > limit { result = result[:limit] }
+	return result, nil
+}
+
+func (f *fakeStore) BuengKanSecondaryValidationCounts(ctx context.Context) (*storage.BuengKanSecondaryValidationCounts, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	counts := &storage.BuengKanSecondaryValidationCounts{Total: int64(len(f.secondaryValidation))}
+	for i := range f.secondaryValidation {
+		row := f.secondaryValidation[i]
 		switch row.Verdict { case "CORRECT": counts.Correct++; case "INCORRECT": counts.Incorrect++; case "UNSURE": counts.Unsure++ }
 		if counts.LatestAt == nil || row.RecordedAt.After(*counts.LatestAt) { value := row.RecordedAt; counts.LatestAt = &value }
 	}

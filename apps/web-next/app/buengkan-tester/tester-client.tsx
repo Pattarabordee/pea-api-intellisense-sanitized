@@ -326,6 +326,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
         </a>
         <nav className={styles.nav} aria-label="Bueng Kan tester navigation">
           <span className={styles.navActive}>TESTER</span>
+          <a href="/buengkan-tester/validate">VALIDATE</a>
           <a href="/buengkan-tester/dashboard">FEEDBACK</a>
         </nav>
         <span className={styles.shadowBadge}><i /> SHADOW / TEST</span>

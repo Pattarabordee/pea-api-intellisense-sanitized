@@ -23,6 +23,9 @@ type Store interface {
 	InsertBuengKanTesterFeedback(ctx context.Context, feedback BuengKanTesterFeedback) (duplicate bool, err error)
 	ListBuengKanTesterFeedback(ctx context.Context, limit int) ([]BuengKanTesterFeedback, error)
 	BuengKanTesterFeedbackCounts(ctx context.Context) (*BuengKanTesterFeedbackCounts, error)
+	InsertBuengKanSecondaryValidation(ctx context.Context, validation BuengKanSecondaryValidation) (duplicate bool, err error)
+	ListBuengKanSecondaryValidation(ctx context.Context, limit int) ([]BuengKanSecondaryValidation, error)
+	BuengKanSecondaryValidationCounts(ctx context.Context) (*BuengKanSecondaryValidationCounts, error)
 	InsertBuengKanOutageResolution(ctx context.Context, resolution BuengKanOutageResolution) (duplicate bool, err error)
 	GetBuengKanOutageResolution(ctx context.Context, requestID string) (*BuengKanOutageResolution, error)
 }
@@ -59,6 +62,31 @@ type BuengKanTesterFeedback struct {
 }
 
 type BuengKanTesterFeedbackCounts struct {
+	Total     int64
+	Correct   int64
+	Incorrect int64
+	Unsure    int64
+	LatestAt  *time.Time
+}
+
+type BuengKanSecondaryValidation struct {
+	ReceiptID             string
+	RecordedAt            time.Time
+	SourceType            string
+	SourceRef             string
+	SourceLabel           string
+	ValidatorRef          string
+	Priority              string
+	Verdict               string
+	CandidateTransformers json.RawMessage
+	SelectedTransformer   string
+	CorrectionTransformer string
+	CorrectionFeeder      string
+	Mode                  string
+	ProductionSend        string
+}
+
+type BuengKanSecondaryValidationCounts struct {
 	Total     int64
 	Correct   int64
 	Incorrect int64

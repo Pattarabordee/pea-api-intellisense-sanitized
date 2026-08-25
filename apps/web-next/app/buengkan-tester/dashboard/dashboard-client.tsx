@@ -154,6 +154,7 @@ export function BuengKanFeedbackDashboard({ catalog }: { catalog: Catalog }) {
         </a>
         <nav className={styles.nav} aria-label="Bueng Kan tester navigation">
           <a href="/buengkan-tester">TESTER</a>
+          <a href="/buengkan-tester/validate">VALIDATE</a>
           <span className={styles.navActive}>FEEDBACK</span>
         </nav>
         <span className={styles.live}><i /> SHADOW / LIVE</span>

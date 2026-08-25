@@ -259,6 +259,63 @@ func (s *PostgresStore) BuengKanTesterFeedbackCounts(ctx context.Context) (*Buen
 	return &counts, nil
 }
 
+func (s *PostgresStore) InsertBuengKanSecondaryValidation(ctx context.Context, validation BuengKanSecondaryValidation) (bool, error) {
+	candidates := validation.CandidateTransformers
+	if len(candidates) == 0 { candidates = json.RawMessage(`[]`) }
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO buengkan_secondary_validation (
+			receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, priority, verdict,
+			candidate_transformers, selected_transformer, correction_transformer, correction_feeder,
+			mode, production_send
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'shadow','blocked')
+		ON CONFLICT (receipt_id) DO NOTHING
+	`, validation.ReceiptID, validation.RecordedAt, validation.SourceType, validation.SourceRef,
+		validation.SourceLabel, validation.ValidatorRef, validation.Priority, validation.Verdict, candidates,
+		validation.SelectedTransformer, validation.CorrectionTransformer, validation.CorrectionFeeder)
+	if err != nil { return false, err }
+	return tag.RowsAffected() == 0, nil
+}
+
+func (s *PostgresStore) ListBuengKanSecondaryValidation(ctx context.Context, limit int) ([]BuengKanSecondaryValidation, error) {
+	if limit <= 0 || limit > 2000 { limit = 500 }
+	rows, err := s.pool.Query(ctx, `
+		SELECT receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, priority, verdict,
+			candidate_transformers, selected_transformer, correction_transformer, correction_feeder,
+			mode, production_send
+		FROM buengkan_secondary_validation
+		ORDER BY recorded_at DESC, receipt_id DESC
+		LIMIT $1
+	`, limit)
+	if err != nil { return nil, err }
+	defer rows.Close()
+	result := []BuengKanSecondaryValidation{}
+	for rows.Next() {
+		var item BuengKanSecondaryValidation
+		if err := rows.Scan(&item.ReceiptID, &item.RecordedAt, &item.SourceType, &item.SourceRef,
+			&item.SourceLabel, &item.ValidatorRef, &item.Priority, &item.Verdict, &item.CandidateTransformers,
+			&item.SelectedTransformer, &item.CorrectionTransformer, &item.CorrectionFeeder,
+			&item.Mode, &item.ProductionSend); err != nil { return nil, err }
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
+func (s *PostgresStore) BuengKanSecondaryValidationCounts(ctx context.Context) (*BuengKanSecondaryValidationCounts, error) {
+	var counts BuengKanSecondaryValidationCounts
+	var latest time.Time
+	err := s.pool.QueryRow(ctx, `
+		SELECT count(*)::bigint,
+			count(*) FILTER (WHERE verdict='CORRECT')::bigint,
+			count(*) FILTER (WHERE verdict='INCORRECT')::bigint,
+			count(*) FILTER (WHERE verdict='UNSURE')::bigint,
+			coalesce(max(recorded_at), '1970-01-01T00:00:00Z'::timestamptz)
+		FROM buengkan_secondary_validation
+	`).Scan(&counts.Total, &counts.Correct, &counts.Incorrect, &counts.Unsure, &latest)
+	if err != nil { return nil, err }
+	if counts.Total > 0 { counts.LatestAt = &latest }
+	return &counts, nil
+}
+
 func (s *PostgresStore) InsertBuengKanOutageResolution(ctx context.Context, resolution BuengKanOutageResolution) (bool, error) {
 	payload := resolution.ResultJSON
 	if len(payload) == 0 {
