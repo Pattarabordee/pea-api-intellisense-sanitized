@@ -1,4 +1,4 @@
-﻿import crypto from "node:crypto";
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { normaliseApiBaseUrl } from "../../../../lib/api";
 import {

@@ -1,4 +1,4 @@
-﻿import { getBuengKanTesterCatalog } from "../../../lib/buengkan-resolver";
+import { getBuengKanTesterCatalog } from "../../../lib/buengkan-resolver";
 import { BuengKanFeedbackDashboard } from "./dashboard-client";
 
 export const dynamic = "force-static";

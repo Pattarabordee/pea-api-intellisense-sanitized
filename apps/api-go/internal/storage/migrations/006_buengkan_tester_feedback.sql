@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS buengkan_tester_feedback (
+CREATE TABLE IF NOT EXISTS buengkan_tester_feedback (
     receipt_id text PRIMARY KEY,
     recorded_at timestamptz NOT NULL DEFAULT now(),
     query_hash text NOT NULL,

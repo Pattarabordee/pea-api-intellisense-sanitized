@@ -1,4 +1,4 @@
-﻿.shell {
+.shell {
   --bg:#f1f1ef; --surface:#fff; --ink:#111; --muted:#4a4a47; --soft:#deded9; --line:#b8b8b2;
   --pea:#6b2d90; --pea-dark:#4c1f6a; --green:#16834c; --red:#e2231a; --amber:#b97900;
   min-height:100vh;
