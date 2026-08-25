@@ -24,11 +24,11 @@ if (wrong.response.status !== 401) {
 }
 
 const cases = [
-  { text: "บ้านศรีโสภณไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUB07", selected: 4, core: 4 },
+  { text: "บ้านศรีโสภณไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUB07", selected: 0, core: 4 },
   { text: "บ้านบึงกาฬใต้ไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 8 },
   { text: "บ้านนาโนนไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 18 },
   { text: "บ้านท่าโพธิ์ไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 9 },
-  { text: "บ้านดงหมากยางไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUA03", selected: 1, core: 1 },
+  { text: "บ้านดงหมากยางไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUA03", selected: 0, core: 1 },
   { text: "บ้านแสนประเสริฐไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 18 },
   { text: "บ้านแสนสุขไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 13 },
   { text: "บ้านแสนประเสริฐ ซอยเทคนิค ไฟดับ", status: "RESOLVED_FOOTPRINT", feeder: "BUA04", selected: 1, selectedIds: ["67-006308"], core: 18 },
