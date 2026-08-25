@@ -220,6 +220,10 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
 
   function requestLocation() {
     setLocationError("");
+    if (!window.isSecureContext) {
+      setLocationError("ต้องใช้งานผ่าน HTTPS เพื่อใช้ GPS");
+      return;
+    }
     if (!("geolocation" in navigator)) {
       setLocationError("อุปกรณ์/เบราว์เซอร์นี้ไม่รองรับ Location");
       return;
@@ -255,6 +259,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
 
   function clearLocation() {
     setTesterLocation(null);
+    if (query.trim() === "ไฟดับบริเวณนี้") setQuery("");
     setLocationError("");
     setResult(null);
     setResolvedQuery("");
@@ -323,7 +328,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
           <span className={styles.navActive}>TESTER</span>
           <a href="/buengkan-tester/dashboard">FEEDBACK</a>
         </nav>
-        <span className={styles.shadowBadge}><i /> SHADOW / LIVE</span>
+        <span className={styles.shadowBadge}><i /> SHADOW / TEST</span>
       </header>
 
       <section className={styles.hero}>
@@ -412,9 +417,9 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             {locationError && <p className={styles.locationWarn}>{locationError}</p>}
           </div>
 
-          <button className={styles.primaryButton} type="submit" disabled={loading}>
-            {loading ? <span className={styles.spinner} aria-hidden="true" /> : <span aria-hidden="true">⌕</span>}
-            {loading ? "กำลังตรวจ GIS topology…" : "ตรวจสอบหม้อแปลง Candidate"}
+          <button className={styles.primaryButton} type="submit" disabled={loading || locationBusy}>
+            {(loading || locationBusy) ? <span className={styles.spinner} aria-hidden="true" /> : <span aria-hidden="true">⌕</span>}
+            {locationBusy ? "กำลังรอพิกัด GPS…" : loading ? "กำลังตรวจ GIS topology…" : "ตรวจสอบหม้อแปลง Candidate"}
           </button>
           {error && <p className={styles.error} role="alert">{error}</p>}
         </form>
@@ -622,11 +627,11 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             <div className={styles.correctionBox}>
               <p className={styles.privacyNote}><strong>ห้ามใส่</strong> ชื่อผู้ใช้ไฟ, เบอร์โทร, เลขผู้ใช้ไฟ, PEANO หรือข้อมูลส่วนบุคคล</p>
               <div className={styles.twoCols}>
-                <label>Feeder ที่ถูกต้อง (ถ้าทราบ)
-                  <input className={styles.input} maxLength={24} value={correctFeeder} onChange={(e) => setCorrectFeeder(e.target.value)} placeholder="เช่น BUA07" />
+                <label htmlFor="correct-feeder">Feeder ที่ถูกต้อง (ถ้าทราบ)
+                  <input id="correct-feeder" className={styles.input} maxLength={24} value={correctFeeder} onChange={(e) => setCorrectFeeder(e.target.value)} placeholder="เช่น BUA07" />
                 </label>
-                <label>หม้อแปลงที่ถูกต้อง (ถ้าทราบ)
-                  <input className={styles.input} maxLength={32} value={correctTransformer} onChange={(e) => setCorrectTransformer(e.target.value)} placeholder="เช่น 60-037069" />
+                <label htmlFor="correct-tx">หม้อแปลงที่ถูกต้อง (ถ้าทราบ)
+                  <input id="correct-tx" className={styles.input} maxLength={32} value={correctTransformer} onChange={(e) => setCorrectTransformer(e.target.value)} placeholder="เช่น 60-037069" />
                 </label>
               </div>
               <p className={styles.privacyNote}>ระบบบันทึกเฉพาะผลทดสอบและ Feeder/TX ที่แก้ไข ไม่บันทึกข้อความหมายเหตุอิสระหรือข้อมูลผู้ใช้ไฟ</p>
