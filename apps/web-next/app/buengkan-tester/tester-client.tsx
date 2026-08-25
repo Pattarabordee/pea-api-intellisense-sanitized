@@ -23,6 +23,15 @@ type TransformerDetail = {
   crs: string;
 };
 
+type LocationEvidence = {
+  status?: string;
+  usedForTopology: boolean;
+  source?: string;
+  accuracyM?: number;
+  searchRadiusM?: number;
+  candidateCount?: number;
+};
+
 type ResolveResult = {
   status: string;
   mode: "shadow";
@@ -50,12 +59,15 @@ type ResolveResult = {
   coreCoverage?: number | null;
   outageLevel: "UNDETERMINED";
   requiredConfirmation: string[];
+  locationEvidence?: LocationEvidence | null;
 };
 
 type Verdict = "CORRECT" | "INCORRECT" | "UNSURE";
 
 const statusCopy: Record<string, { label: string; tone: "ok" | "warn" | "stop" | "info" }> = {
   RESOLVED_FOOTPRINT: { label: "พบตำแหน่ง Candidate", tone: "ok" },
+  RESOLVED_GPS_FOOTPRINT: { label: "GPS narrow ได้", tone: "ok" },
+  EVIDENCE_CONFLICT: { label: "หลักฐานขัดกัน", tone: "stop" },
   VILLAGE_ONLY_SINGLE_FEEDER: { label: "พบ Feeder / มีหลาย Candidate", tone: "info" },
   VILLAGE_ONLY_MULTI_FEEDER: { label: "ต้องระบุจุดสังเกตเพิ่ม", tone: "warn" },
   AMBIGUOUS_FOOTPRINT: { label: "ข้อมูลยังไม่พอ", tone: "warn" },
@@ -117,6 +129,9 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackReceipt, setFeedbackReceipt] = useState("");
   const [copyState, setCopyState] = useState("");
+  const [testerLocation, setTesterLocation] = useState<{ lat: number; lon: number; accuracyM: number } | null>(null);
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationError, setLocationError] = useState("");
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem("bkTesterAccessCode");
@@ -146,6 +161,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
       `หม้อแปลงใน Core หมู่บ้าน (TraceDown): ${villageTx}`,
       `Protection: ${devices}`,
       `Confidence: ${result.footprintConfidence ? confidenceCopy[result.footprintConfidence] : "—"}`,
+      result.locationEvidence ? `GPS evidence: ${result.locationEvidence.status ?? "—"} · accuracy ${result.locationEvidence.accuracyM?.toFixed(0) ?? "—"} m · used=${result.locationEvidence.usedForTopology}` : "GPS evidence: —",
       "หมายเหตุ: เป็น GIS topology candidate ไม่ใช่การยืนยันว่าไฟดับจริง ต้องเทียบ ReportPO/ETR/OMS/SCADA/หน้างาน"
     ].join("\n");
   }, [result, status]);
@@ -158,7 +174,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
       return;
     }
     if (!text) {
-      setError("กรุณาระบุชื่อหมู่บ้านหรือข้อความแจ้งไฟดับ");
+      setError("กรุณาระบุข้อความแจ้งไฟดับ หรือกดใช้ตำแหน่งปัจจุบัน");
       return;
     }
     setLoading(true);
@@ -170,7 +186,18 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-        body: JSON.stringify({ accessCode: accessCode.trim(), text })
+        body: JSON.stringify({
+          accessCode: accessCode.trim(),
+          text,
+          ...(testerLocation ? {
+            location: {
+              lat: testerLocation.lat,
+              lon: testerLocation.lon,
+              accuracyM: testerLocation.accuracyM,
+              source: "web_tester_shared_location"
+            }
+          } : {})
+        })
       });
       if (response.status === 401) {
         setError("Tester Access Code ไม่ถูกต้อง");
@@ -189,6 +216,50 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function requestLocation() {
+    setLocationError("");
+    if (!("geolocation" in navigator)) {
+      setLocationError("อุปกรณ์/เบราว์เซอร์นี้ไม่รองรับ Location");
+      return;
+    }
+    setLocationBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const accuracyM = Math.max(0, Number(position.coords.accuracy || 0));
+        setTesterLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          accuracyM
+        });
+        if (!query.trim()) setQuery("ไฟดับบริเวณนี้");
+        setResult(null);
+        setResolvedQuery("");
+        setFeedbackReceipt("");
+        setVerdict(null);
+        setLocationBusy(false);
+      },
+      (geoError) => {
+        const message = geoError.code === 1
+          ? "ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง"
+          : geoError.code === 3
+            ? "ขอพิกัดไม่สำเร็จภายในเวลาที่กำหนด"
+            : "ไม่สามารถอ่านตำแหน่งปัจจุบันได้";
+        setLocationError(message);
+        setLocationBusy(false);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+    );
+  }
+
+  function clearLocation() {
+    setTesterLocation(null);
+    setLocationError("");
+    setResult(null);
+    setResolvedQuery("");
+    setFeedbackReceipt("");
+    setVerdict(null);
   }
 
   function chooseVillage(name: string) {
@@ -321,6 +392,26 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             placeholder="เช่น บ้านแสนประเสริฐ ซอยเทคนิค ไฟดับ"
           />
 
+          <div className={styles.locationPanel}>
+            <div>
+              <strong>พิกัดผู้แจ้ง (ถ้ามี)</strong>
+              <span>ใช้เพื่อ narrow LV service footprint · ระบบไม่ persist raw GPS</span>
+            </div>
+            <div className={styles.locationActions}>
+              <button className={styles.locationButton} type="button" onClick={requestLocation} disabled={locationBusy}>
+                {locationBusy ? "กำลังอ่านตำแหน่ง…" : testerLocation ? "อัปเดตตำแหน่ง" : "ใช้ตำแหน่งปัจจุบัน"}
+              </button>
+              {testerLocation && <button className={styles.locationClear} type="button" onClick={clearLocation}>ล้าง</button>}
+            </div>
+            {testerLocation && (
+              <p className={testerLocation.accuracyM <= 150 ? styles.locationOk : styles.locationWarn}>
+                ได้ตำแหน่งแล้ว · accuracy ≈ {testerLocation.accuracyM.toFixed(0)} m
+                {testerLocation.accuracyM > 150 ? " · ระบบจะไม่ใช้ narrow เพราะความคลาดเคลื่อนสูง" : " · พร้อมใช้เป็น evidence"}
+              </p>
+            )}
+            {locationError && <p className={styles.locationWarn}>{locationError}</p>}
+          </div>
+
           <button className={styles.primaryButton} type="submit" disabled={loading}>
             {loading ? <span className={styles.spinner} aria-hidden="true" /> : <span aria-hidden="true">⌕</span>}
             {loading ? "กำลังตรวจ GIS topology…" : "ตรวจสอบหม้อแปลง Candidate"}
@@ -356,8 +447,8 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
           </div>
 
           <div className={styles.villageTitle}>
-            <span>หมู่บ้าน</span>
-            <strong>{result.villageName ?? "ยังไม่พบในชุดทดสอบ"}</strong>
+            <span>{result.villageName ? "หมู่บ้าน" : result.locationEvidence ? "พื้นที่อ้างอิง" : "หมู่บ้าน"}</span>
+            <strong>{result.villageName ?? (result.locationEvidence ? "GPS / พิกัดผู้ใช้" : "ยังไม่พบในชุดทดสอบ")}</strong>
           </div>
 
           <div className={styles.flow} aria-label="Topology result">
@@ -367,8 +458,8 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             </div>
             <div className={styles.flowArrow} aria-hidden="true">→</div>
             <div className={styles.flowNode}>
-              <span>{result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length ? "หม้อแปลง Candidate จากข้อความ" : "หม้อแปลงใน Core หมู่บ้าน"}</span>
-              <strong>{result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length
+              <span>{result.selectedTransformerCandidates.length ? "หม้อแปลง Candidate ที่ narrow ได้" : "หม้อแปลงใน Core หมู่บ้าน"}</span>
+              <strong>{result.selectedTransformerCandidates.length
                 ? `${result.selectedTransformerCandidates.length} ลูก`
                 : result.villageTransformerCandidates.length
                   ? `${result.villageTransformerCandidates.length} ลูก`
@@ -381,13 +472,22 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             </div>
           </div>
 
+          {result.locationEvidence && (
+            <div className={styles.locationEvidence}>
+              <div><span>GPS evidence</span><strong>{result.locationEvidence.status ?? "—"}</strong></div>
+              <div><span>Accuracy</span><strong>{result.locationEvidence.accuracyM != null ? `${result.locationEvidence.accuracyM.toFixed(0)} m` : "—"}</strong></div>
+              <div><span>Search radius</span><strong>{result.locationEvidence.searchRadiusM != null ? `${result.locationEvidence.searchRadiusM.toFixed(0)} m` : "—"}</strong></div>
+              <div><span>Used for topology</span><strong>{result.locationEvidence.usedForTopology ? "YES" : "NO / FAIL CLOSED"}</strong></div>
+            </div>
+          )}
+
           <p className={styles.resultMessage}>{result.message}</p>
           {result.footprintConfidence && <p className={styles.confidenceNote}>ความมั่นใจนี้หมายถึงความชัดเจนของการจับคู่ GIS topology ไม่ใช่ความน่าจะเป็นที่ไฟกำลังดับ</p>}
 
-          {result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length > 0 && (
+          {result.selectedTransformerCandidates.length > 0 && (
             <div className={styles.resultBlock}>
               <div className={styles.blockHead}>
-                <h3>หม้อแปลง Candidate ที่ narrow ได้จากข้อความ</h3>
+                <h3>หม้อแปลง Candidate ที่ narrow ได้จาก evidence</h3>
                 <span className={styles.smallBadge}>{result.selectedTransformerCandidates.length} ลูก</span>
               </div>
               <div className={styles.txList}>
@@ -465,6 +565,13 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                 <div><dt>Coverage</dt><dd>{percent(result.protectionZone.coverage)}</dd></div>
                 <div><dt>Downstream meters</dt><dd>{result.protectionZone.downstreamMeterCount?.toLocaleString("th-TH") ?? "—"}</dd></div>
               </dl>
+            </div>
+          )}
+
+          {result.status === "EVIDENCE_CONFLICT" && (
+            <div className={styles.stopPanel}>
+              <strong>Fail closed — GPS กับข้อความชี้คนละ topology</strong>
+              <p>ระบบไม่เลือก Feeder/TX จนกว่าจะมีข้อมูลที่สอดคล้องกันหรือมีการยืนยันจากหน้างาน</p>
             </div>
           )}
 
