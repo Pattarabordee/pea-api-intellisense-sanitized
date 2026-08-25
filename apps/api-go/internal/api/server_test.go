@@ -681,6 +681,54 @@ func TestProductionSendModeNeverEnablesRealSendWithoutGates(t *testing.T) {
 	}
 }
 
+func TestBuengKanTesterFeedbackRequiresAuthAndStoresOnlyStructuredFields(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"receipt_id":"BKT-TEST-001","query_hash":"0123456789abcdefabcd","verdict":"INCORRECT","village_key":"38-01-01-M07","resolver_status":"VILLAGE_ONLY_SINGLE_FEEDER","selected_feeder":"BUA03","transformer_candidates":["63-006344"],"correction_feeder":"BUA03","correction_transformer":"63-006344"}`
+
+	unauth := httptest.NewRequest(http.MethodPost, buengKanTesterFeedbackPath, bytes.NewBufferString(body))
+	unauthRes := httptest.NewRecorder()
+	handler.ServeHTTP(unauthRes, unauth)
+	if unauthRes.Code != http.StatusUnauthorized { t.Fatalf("expected auth, got %d", unauthRes.Code) }
+
+	req := httptest.NewRequest(http.MethodPost, buengKanTesterFeedbackPath, bytes.NewBufferString(body))
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated { t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String()) }
+	if len(store.feedback) != 1 { t.Fatalf("feedback not stored: %#v", store.feedback) }
+	row := store.feedback[0]
+	if row.Mode != "shadow" || row.ProductionSend != "blocked" || row.QueryHash != "0123456789abcdefabcd" {
+		t.Fatalf("unsafe feedback row: %#v", row)
+	}
+	if strings.Contains(res.Body.String(), "63-006344") || strings.Contains(res.Body.String(), "0123456789abcdefabcd") {
+		t.Fatalf("write response leaked feedback details: %s", res.Body.String())
+	}
+}
+
+func TestBuengKanTesterFeedbackListReturnsAggregateWithoutRawQuery(t *testing.T) {
+	store := newFakeStore()
+	now := time.Date(2026, 8, 25, 10, 0, 0, 0, time.UTC)
+	store.feedback = []storage.BuengKanTesterFeedback{
+		{ReceiptID:"BKT-A", RecordedAt:now, QueryHash:"aaaaaaaaaaaaaaaaaaaa", Verdict:"CORRECT", VillageKey:"38-01-01-M07", ResolverStatus:"RESOLVED_FOOTPRINT", SelectedFeeder:"BUA03", TransformerCandidates:json.RawMessage(`["63-006344"]`), Mode:"shadow", ProductionSend:"blocked"},
+		{ReceiptID:"BKT-B", RecordedAt:now.Add(time.Minute), QueryHash:"bbbbbbbbbbbbbbbbbbbb", Verdict:"UNSURE", VillageKey:"38-01-01-M09", ResolverStatus:"AMBIGUOUS_FOOTPRINT", Mode:"shadow", ProductionSend:"blocked"},
+	}
+	handler := NewServer(ServerConfig{APIKey:"pilot-key"}, store)
+	req := httptest.NewRequest(http.MethodGet, buengKanTesterFeedbackPath+"?limit=20", nil)
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusOK { t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String()) }
+	payload := decodeBody(t, res)
+	summary := payload["summary"].(map[string]any)
+	if summary["total"].(float64) != 2 || summary["correct"].(float64) != 1 || summary["unsure"].(float64) != 1 {
+		t.Fatalf("bad summary: %#v", summary)
+	}
+	if strings.Contains(res.Body.String(), "raw query") || payload["production_send"] != "blocked" || payload["mode"] != "shadow" {
+		t.Fatalf("unsafe list payload: %s", res.Body.String())
+	}
+}
+
 func decodeBody(t *testing.T, res *httptest.ResponseRecorder) map[string]any {
 	t.Helper()
 	payload := map[string]any{}
@@ -698,6 +746,7 @@ type fakeStore struct {
 	requestRefRows      []storage.RequestStatus
 	requestRefLookups   [][]string
 	inserted            int
+	feedback            []storage.BuengKanTesterFeedback
 }
 
 func newFakeStore() *fakeStore {
@@ -806,6 +855,40 @@ func (f *fakeStore) GetStatus(ctx context.Context, requestID string) (*storage.R
 		return nil, storage.ErrNotFound
 	}
 	return &row, nil
+}
+
+func (f *fakeStore) InsertBuengKanTesterFeedback(ctx context.Context, feedback storage.BuengKanTesterFeedback) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, existing := range f.feedback {
+		if existing.ReceiptID == feedback.ReceiptID {
+			return true, nil
+		}
+	}
+	f.feedback = append(f.feedback, feedback)
+	return false, nil
+}
+
+func (f *fakeStore) ListBuengKanTesterFeedback(ctx context.Context, limit int) ([]storage.BuengKanTesterFeedback, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if limit <= 0 || limit > 1000 { limit = 200 }
+	result := append([]storage.BuengKanTesterFeedback{}, f.feedback...)
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 { result[i], result[j] = result[j], result[i] }
+	if len(result) > limit { result = result[:limit] }
+	return result, nil
+}
+
+func (f *fakeStore) BuengKanTesterFeedbackCounts(ctx context.Context) (*storage.BuengKanTesterFeedbackCounts, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	counts := &storage.BuengKanTesterFeedbackCounts{Total: int64(len(f.feedback))}
+	for i := range f.feedback {
+		row := f.feedback[i]
+		switch row.Verdict { case "CORRECT": counts.Correct++; case "INCORRECT": counts.Incorrect++; case "UNSURE": counts.Unsure++ }
+		if counts.LatestAt == nil || row.RecordedAt.After(*counts.LatestAt) { value := row.RecordedAt; counts.LatestAt = &value }
+	}
+	return counts, nil
 }
 
 func (f *fakeStore) Metrics(ctx context.Context) (*storage.MetricsSnapshot, error) {

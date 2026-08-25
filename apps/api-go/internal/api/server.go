@@ -35,10 +35,12 @@ const (
 	ShadowBaselineP50Minutes = 60.0
 	inboundPath          = "/api/v1/ais/outage-verifications"
 	truthIntervalsPath   = "/api/v1/ais/truth-intervals"
+	buengKanTesterFeedbackPath = "/api/v1/buengkan/tester-feedback"
 	maxBodyBytes   int64 = 1_000_000
 )
 
 var safeID = regexp.MustCompile(`^[A-Za-z0-9_.:@-]+$`)
+var testerQueryHash = regexp.MustCompile(`^[a-f0-9]{20,64}$`)
 var safeRequestReference = regexp.MustCompile(`^request_[a-f0-9]{16}$`)
 
 type ServerConfig struct {
@@ -89,6 +91,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleMetrics(w, r)
 	case r.URL.Path == truthIntervalsPath && r.Method == http.MethodGet:
 		s.handleTruthIntervals(w, r)
+	case r.URL.Path == buengKanTesterFeedbackPath && r.Method == http.MethodGet:
+		s.handleBuengKanTesterFeedbackList(w, r)
+	case r.URL.Path == buengKanTesterFeedbackPath && r.Method == http.MethodPost:
+		s.handleBuengKanTesterFeedbackPost(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodGet:
 		s.handleContract(w, r)
 	case r.URL.Path == inboundPath && r.Method == http.MethodPost:
@@ -147,6 +153,155 @@ func (s *Server) handleTruthIntervals(w http.ResponseWriter, r *http.Request) {
 		"items":           items,
 		"next_cursor":     nextCursor,
 		"generated_at":    nowISO(),
+	})
+}
+
+type buengKanTesterFeedbackRequest struct {
+	ReceiptID             string   `json:"receipt_id"`
+	QueryHash             string   `json:"query_hash"`
+	Verdict               string   `json:"verdict"`
+	VillageKey            string   `json:"village_key"`
+	ResolverStatus        string   `json:"resolver_status"`
+	SelectedFeeder        string   `json:"selected_feeder"`
+	TransformerCandidates []string `json:"transformer_candidates"`
+	CorrectionFeeder      string   `json:"correction_feeder"`
+	CorrectionTransformer string   `json:"correction_transformer"`
+}
+
+func (s *Server) handleBuengKanTesterFeedbackPost(w http.ResponseWriter, r *http.Request) {
+	if !s.authorized(r) {
+		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
+		return
+	}
+	defer r.Body.Close()
+	decoder := json.NewDecoder(io.LimitReader(r.Body, 64_000))
+	decoder.DisallowUnknownFields()
+	var input buengKanTesterFeedbackRequest
+	if err := decoder.Decode(&input); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_FEEDBACK", "Invalid tester feedback payload", ""))
+		return
+	}
+	input.ReceiptID = strings.TrimSpace(input.ReceiptID)
+	input.QueryHash = strings.ToLower(strings.TrimSpace(input.QueryHash))
+	input.Verdict = strings.ToUpper(strings.TrimSpace(input.Verdict))
+	input.VillageKey = strings.TrimSpace(input.VillageKey)
+	input.ResolverStatus = strings.TrimSpace(input.ResolverStatus)
+	input.SelectedFeeder = strings.ToUpper(strings.TrimSpace(input.SelectedFeeder))
+	input.CorrectionFeeder = strings.ToUpper(strings.TrimSpace(input.CorrectionFeeder))
+	input.CorrectionTransformer = strings.ToUpper(strings.TrimSpace(input.CorrectionTransformer))
+	if !safeID.MatchString(input.ReceiptID) || !testerQueryHash.MatchString(input.QueryHash) {
+		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_FEEDBACK_ID", "receipt_id or query_hash is invalid", ""))
+		return
+	}
+	if input.Verdict != "CORRECT" && input.Verdict != "INCORRECT" && input.Verdict != "UNSURE" {
+		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_VERDICT", "verdict must be CORRECT, INCORRECT, or UNSURE", ""))
+		return
+	}
+	for _, value := range []string{input.VillageKey, input.ResolverStatus, input.SelectedFeeder, input.CorrectionFeeder, input.CorrectionTransformer} {
+		if value != "" && !safeID.MatchString(value) {
+			writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_FEEDBACK_FIELD", "feedback identifier contains unsupported characters", ""))
+			return
+		}
+	}
+	if len(input.TransformerCandidates) > 12 {
+		writeJSON(w, http.StatusBadRequest, errorPayload("TOO_MANY_TRANSFORMERS", "transformer_candidates supports at most 12 values", ""))
+		return
+	}
+	cleanCandidates := make([]string, 0, len(input.TransformerCandidates))
+	for _, candidate := range input.TransformerCandidates {
+		candidate = strings.ToUpper(strings.TrimSpace(candidate))
+		if candidate == "" || !safeID.MatchString(candidate) {
+			writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_TRANSFORMER", "transformer candidate is invalid", ""))
+			return
+		}
+		cleanCandidates = append(cleanCandidates, candidate)
+	}
+	candidateJSON, _ := json.Marshal(cleanCandidates)
+	duplicate, err := s.store.InsertBuengKanTesterFeedback(r.Context(), storage.BuengKanTesterFeedback{
+		ReceiptID: input.ReceiptID, RecordedAt: time.Now().UTC(), QueryHash: input.QueryHash,
+		Verdict: input.Verdict, VillageKey: input.VillageKey, ResolverStatus: input.ResolverStatus,
+		SelectedFeeder: input.SelectedFeeder, TransformerCandidates: candidateJSON,
+		CorrectionFeeder: input.CorrectionFeeder, CorrectionTransformer: input.CorrectionTransformer,
+		Mode: Mode, ProductionSend: ProductionSend,
+	})
+	if err != nil {
+		s.cfg.Logger.Error("buengkan tester feedback insert failed", "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not persist tester feedback", ""))
+		return
+	}
+	status := http.StatusCreated
+	if duplicate {
+		status = http.StatusOK
+	}
+	writeJSON(w, status, map[string]any{
+		"api_version": APIVersion,
+		"schema_version": SchemaVersion,
+		"mode": Mode,
+		"production_send": ProductionSend,
+		"status": "STORED",
+		"receipt_id": input.ReceiptID,
+		"duplicate": duplicate,
+		"generated_at": nowISO(),
+	})
+}
+
+func (s *Server) handleBuengKanTesterFeedbackList(w http.ResponseWriter, r *http.Request) {
+	if !s.authorized(r) {
+		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
+		return
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 || limit > 1000 {
+		limit = 500
+	}
+	rows, err := s.store.ListBuengKanTesterFeedback(r.Context(), limit)
+	if err != nil {
+		s.cfg.Logger.Error("buengkan tester feedback list failed", "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load tester feedback", ""))
+		return
+	}
+	counts, err := s.store.BuengKanTesterFeedbackCounts(r.Context())
+	if err != nil {
+		s.cfg.Logger.Error("buengkan tester feedback counts failed", "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load tester feedback counts", ""))
+		return
+	}
+	items := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		candidates := []string{}
+		_ = json.Unmarshal(row.TransformerCandidates, &candidates)
+		items = append(items, map[string]any{
+			"receipt_id": row.ReceiptID,
+			"recorded_at": row.RecordedAt.UTC().Format(time.RFC3339),
+			"query_hash": row.QueryHash,
+			"verdict": row.Verdict,
+			"village_key": row.VillageKey,
+			"resolver_status": row.ResolverStatus,
+			"selected_feeder": row.SelectedFeeder,
+			"transformer_candidates": candidates,
+			"correction_feeder": row.CorrectionFeeder,
+			"correction_transformer": row.CorrectionTransformer,
+		})
+	}
+	latest := ""
+	if counts.LatestAt != nil {
+		latest = counts.LatestAt.UTC().Format(time.RFC3339)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"api_version": APIVersion,
+		"schema_version": SchemaVersion,
+		"mode": Mode,
+		"production_send": ProductionSend,
+		"count": len(items),
+		"items": items,
+		"summary": map[string]any{
+			"total": counts.Total,
+			"correct": counts.Correct,
+			"incorrect": counts.Incorrect,
+			"unsure": counts.Unsure,
+			"latest_at": latest,
+		},
+		"generated_at": nowISO(),
 	})
 }
 

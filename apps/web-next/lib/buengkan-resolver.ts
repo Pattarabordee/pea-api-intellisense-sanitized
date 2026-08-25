@@ -3,6 +3,7 @@ import "server-only";
 import crypto from "node:crypto";
 import registryData from "./buengkan-registry-v4.json";
 
+const DASHBOARD_ACCESS_CODE_HASH = "bd20d696971124bb9c050d47e0c309f0d8fcd49ecbbe582d4f1d21b045dc72a3";
 const ACCESS_CODE_HASH = "e0ca8ce0d2a2aa8a3d050cadef0f7cc5831de8c56032d68f2a8f8bcd12fc9188";
 const STRONG_ZONE_GATES = new Set([
   "STRONG_LOCAL_ZONE_CANDIDATE",
@@ -103,6 +104,15 @@ export type ResolveResult = {
   outageLevel: "UNDETERMINED";
   requiredConfirmation: string[];
 };
+
+export function verifyDashboardAccessCode(input: unknown): boolean {
+  const code = String(input ?? "").trim();
+  if (!code) return false;
+  const actual = crypto.createHash("sha256").update(code, "utf8").digest("hex");
+  const expected = Buffer.from(DASHBOARD_ACCESS_CODE_HASH, "hex");
+  const received = Buffer.from(actual, "hex");
+  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+}
 
 export function verifyTesterAccessCode(input: unknown): boolean {
   const code = String(input ?? "").trim();

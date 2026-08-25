@@ -185,6 +185,80 @@ func (s *PostgresStore) InsertCallback(ctx context.Context, callback Callback) e
 	return err
 }
 
+func (s *PostgresStore) InsertBuengKanTesterFeedback(ctx context.Context, feedback BuengKanTesterFeedback) (bool, error) {
+	candidates := feedback.TransformerCandidates
+	if len(candidates) == 0 {
+		candidates = json.RawMessage(`[]`)
+	}
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO buengkan_tester_feedback (
+			receipt_id, recorded_at, query_hash, verdict, village_key, resolver_status,
+			selected_feeder, transformer_candidates, correction_feeder, correction_transformer,
+			mode, production_send
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'shadow','blocked')
+		ON CONFLICT (receipt_id) DO NOTHING
+	`, feedback.ReceiptID, feedback.RecordedAt, feedback.QueryHash, feedback.Verdict,
+		feedback.VillageKey, feedback.ResolverStatus, feedback.SelectedFeeder, candidates,
+		feedback.CorrectionFeeder, feedback.CorrectionTransformer)
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() == 0, nil
+}
+
+func (s *PostgresStore) ListBuengKanTesterFeedback(ctx context.Context, limit int) ([]BuengKanTesterFeedback, error) {
+	if limit <= 0 || limit > 1000 {
+		limit = 200
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT receipt_id, recorded_at, query_hash, verdict, village_key, resolver_status,
+			selected_feeder, transformer_candidates, correction_feeder, correction_transformer,
+			mode, production_send
+		FROM buengkan_tester_feedback
+		ORDER BY recorded_at DESC, receipt_id DESC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []BuengKanTesterFeedback{}
+	for rows.Next() {
+		var item BuengKanTesterFeedback
+		if err := rows.Scan(
+			&item.ReceiptID, &item.RecordedAt, &item.QueryHash, &item.Verdict,
+			&item.VillageKey, &item.ResolverStatus, &item.SelectedFeeder,
+			&item.TransformerCandidates, &item.CorrectionFeeder, &item.CorrectionTransformer,
+			&item.Mode, &item.ProductionSend,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
+func (s *PostgresStore) BuengKanTesterFeedbackCounts(ctx context.Context) (*BuengKanTesterFeedbackCounts, error) {
+	var counts BuengKanTesterFeedbackCounts
+	var latest time.Time
+	err := s.pool.QueryRow(ctx, `
+		SELECT
+			count(*)::bigint,
+			count(*) FILTER (WHERE verdict='CORRECT')::bigint,
+			count(*) FILTER (WHERE verdict='INCORRECT')::bigint,
+			count(*) FILTER (WHERE verdict='UNSURE')::bigint,
+			coalesce(max(recorded_at), '1970-01-01T00:00:00Z'::timestamptz)
+		FROM buengkan_tester_feedback
+	`).Scan(&counts.Total, &counts.Correct, &counts.Incorrect, &counts.Unsure, &latest)
+	if err != nil {
+		return nil, err
+	}
+	if counts.Total > 0 {
+		counts.LatestAt = &latest
+	}
+	return &counts, nil
+}
+
 func (s *PostgresStore) GetStatus(ctx context.Context, requestID string) (*RequestStatus, error) {
 	rows, err := s.queryStatuses(ctx, `WHERE r.request_id = $1`, 1, requestID)
 	if err != nil {

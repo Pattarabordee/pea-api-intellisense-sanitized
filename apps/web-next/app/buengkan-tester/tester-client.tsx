@@ -218,20 +218,32 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
   return (
     <main className={styles.shell} lang="th">
       <header className={styles.topbar}>
-        <div className={styles.brandMark}>PEA</div>
-        <div className={styles.brandText}>
-          <strong>Intellisense</strong>
-          <span>Bueng Kan GIS Tester</span>
-        </div>
-        <span className={styles.shadowBadge}>SHADOW</span>
+        <a className={styles.brandLink} href="/buengkan-tester">
+          <span className={styles.brandMark}>PEA</span>
+          <span className={styles.brandText}><strong>INTELLISENSE</strong><small>BUENG KAN / GIS TESTER</small></span>
+        </a>
+        <nav className={styles.nav} aria-label="Bueng Kan tester navigation">
+          <span className={styles.navActive}>TESTER</span>
+          <a href="/buengkan-tester/dashboard">FEEDBACK</a>
+        </nav>
+        <span className={styles.shadowBadge}><i /> SHADOW / LIVE</span>
       </header>
 
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>ทดสอบกับข้อมูล GIS จริง · ต.บึงกาฬ อ.เมืองบึงกาฬ</p>
-        <h1>บอกจุดที่ไฟดับ แล้วตรวจว่า GIS ชี้ถูกหรือไม่</h1>
-        <p className={styles.lead}>
-          ระบบจะค้นหา <strong>Feeder → หม้อแปลง Candidate → Protection Zone</strong> จาก topology ที่ผ่าน QA แล้ว
-        </p>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>FIELD TEST / 001 · BUENG KAN GIS</p>
+          <h1>Outage report,<br />meet GIS topology.</h1>
+          <p className={styles.lead}>พิมพ์ชื่อหมู่บ้านหรือจุดสังเกต แล้วระบบจะคืน <strong>Feeder → หม้อแปลง Candidate → Protection Zone</strong> จาก topology ที่ผ่าน QA</p>
+        </div>
+        <aside className={styles.heroPanel}>
+          <span>REGISTRY / V{catalog.schemaVersion}</span>
+          <strong>{catalog.supported.length.toString().padStart(2, "0")}</strong>
+          <p>SUPPORTED VILLAGES</p>
+          <div />
+          <small>GIS TOPOLOGY / STATIC EVIDENCE</small>
+          <small>OUTAGE TRUTH / UNDETERMINED</small>
+          <small>PRODUCTION SEND / BLOCKED</small>
+        </aside>
         <div className={styles.safetyBanner} role="note">
           <span className={styles.safetyIcon}>!</span>
           <div>
@@ -244,7 +256,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
       <section className={styles.card} aria-labelledby="search-heading">
         <div className={styles.sectionHead}>
           <div>
-            <p className={styles.step}>ขั้นตอน 1</p>
+            <p className={styles.step}>001 / INPUT</p>
             <h2 id="search-heading">ใส่ข้อความที่ได้รับแจ้ง</h2>
           </div>
           <span className={styles.version}>Registry v{catalog.schemaVersion}</span>
@@ -260,7 +272,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             autoCapitalize="characters"
             placeholder="วาง Tester Access Code ที่ได้รับ"
             value={accessCode}
-            maxLength={20}
+            maxLength={64}
             onChange={(event) => setAccessCode(event.target.value)}
           />
 
@@ -311,7 +323,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
         <section id="bk-result" className={`${styles.card} ${styles.resultCard}`} aria-live="polite">
           <div className={styles.sectionHead}>
             <div>
-              <p className={styles.step}>ขั้นตอน 2</p>
+              <p className={styles.step}>002 / TOPOLOGY</p>
               <h2>ผลจาก GIS Topology</h2>
             </div>
             <span className={`${styles.statusPill} ${styles[`tone_${status?.tone ?? "info"}`]}`}>{status?.label}</span>
@@ -334,7 +346,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             </div>
             <div className={styles.flowArrow} aria-hidden="true">→</div>
             <div className={styles.flowNode}>
-              <span>ความมั่นใจ GIS</span>
+              <span>ความมั่นใจ GIS · ไม่ใช่สถานะดับ</span>
               <strong>{result.footprintConfidence ? confidenceCopy[result.footprintConfidence] : "—"}</strong>
             </div>
           </div>
@@ -415,7 +427,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
         <section className={styles.card}>
           <div className={styles.sectionHead}>
             <div>
-              <p className={styles.step}>ขั้นตอน 3</p>
+              <p className={styles.step}>003 / FIELD TRUTH</p>
               <h2>Tester เห็นว่าผลนี้ถูกไหม?</h2>
             </div>
           </div>

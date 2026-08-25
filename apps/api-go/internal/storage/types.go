@@ -20,6 +20,34 @@ type Store interface {
 	ListTruthIntervals(ctx context.Context, status string, limit int) ([]TruthInterval, error)
 	ListTruthIntervalsPage(ctx context.Context, status string, cursor *TruthIntervalCursor, limit int) ([]TruthInterval, error)
 	Metrics(ctx context.Context) (*MetricsSnapshot, error)
+	InsertBuengKanTesterFeedback(ctx context.Context, feedback BuengKanTesterFeedback) (duplicate bool, err error)
+	ListBuengKanTesterFeedback(ctx context.Context, limit int) ([]BuengKanTesterFeedback, error)
+	BuengKanTesterFeedbackCounts(ctx context.Context) (*BuengKanTesterFeedbackCounts, error)
+}
+
+
+
+type BuengKanTesterFeedback struct {
+	ReceiptID              string
+	RecordedAt             time.Time
+	QueryHash              string
+	Verdict                string
+	VillageKey             string
+	ResolverStatus         string
+	SelectedFeeder         string
+	TransformerCandidates  json.RawMessage
+	CorrectionFeeder       string
+	CorrectionTransformer  string
+	Mode                   string
+	ProductionSend         string
+}
+
+type BuengKanTesterFeedbackCounts struct {
+	Total     int64
+	Correct   int64
+	Incorrect int64
+	Unsure    int64
+	LatestAt  *time.Time
 }
 
 type InboundRequest struct {
