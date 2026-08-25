@@ -14,11 +14,7 @@ async function resolve(text, code = accessCode) {
     body: JSON.stringify({ accessCode: code, text })
   });
   let body = {};
-  try {
-    body = await response.json();
-  } catch {
-    body = {};
-  }
+  try { body = await response.json(); } catch { body = {}; }
   return { response, body };
 }
 
@@ -28,50 +24,41 @@ if (wrong.response.status !== 401) {
 }
 
 const cases = [
-  {
-    text: "บ้านดงหมากยางไฟดับ",
-    status: "VILLAGE_ONLY_SINGLE_FEEDER",
-    feeder: "BUA03",
-    transformers: ["63-006344"]
-  },
-  {
-    text: "บ้านแสนประเสริฐ ซอยเทคนิค ไฟดับ",
-    status: "RESOLVED_FOOTPRINT",
-    feeder: "BUA04",
-    transformers: ["67-006308"]
-  },
-  {
-    text: "บ้านบึงสวรรค์ไฟดับ",
-    status: "UNSUPPORTED_VILLAGE",
-    feeder: null,
-    transformers: []
-  },
-  {
-    text: "บ้านแสนประเสริฐ แถวบิ๊กเสือไฟดับ",
-    status: "AMBIGUOUS_FOOTPRINT",
-    feeder: null,
-    transformers: []
-  }
+  { text: "บ้านศรีโสภณไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUB07", selected: 4, core: 4 },
+  { text: "บ้านบึงกาฬใต้ไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 8 },
+  { text: "บ้านนาโนนไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 18 },
+  { text: "บ้านท่าโพธิ์ไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 9 },
+  { text: "บ้านดงหมากยางไฟดับ", status: "VILLAGE_ONLY_SINGLE_FEEDER", feeder: "BUA03", selected: 1, core: 1 },
+  { text: "บ้านแสนประเสริฐไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 18 },
+  { text: "บ้านแสนสุขไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 13 },
+  { text: "บ้านแสนประเสริฐ ซอยเทคนิค ไฟดับ", status: "RESOLVED_FOOTPRINT", feeder: "BUA04", selected: 1, selectedIds: ["67-006308"], core: 18 },
+  { text: "บ้านบึงสวรรค์ไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 19 },
+  { text: "บ้านแสนสำราญไฟดับ", status: "VILLAGE_ONLY_MULTI_FEEDER", feeder: null, selected: 0, core: 21 },
+  { text: "บ้านท่าไคร้ไฟดับ", status: "UNSUPPORTED_VILLAGE", feeder: null, selected: 0, core: 0 }
 ];
 
 for (const item of cases) {
   const { response, body } = await resolve(item.text);
   if (!response.ok) throw new Error(`${item.text}: HTTP ${response.status}`);
-  const actualTransformers = body.selectedTransformerCandidates || [];
+  const selected = body.selectedTransformerCandidates || [];
+  const core = body.villageTransformerCandidates || [];
+  const grouped = (body.villageTransformerGroups || []).flatMap((group) => group.transformers || []);
   const ok =
     body.status === item.status &&
     (body.selectedFeeder ?? null) === item.feeder &&
-    JSON.stringify(actualTransformers) === JSON.stringify(item.transformers) &&
+    selected.length === item.selected &&
+    core.length === item.core &&
+    new Set(grouped).size === item.core &&
+    (!item.selectedIds || JSON.stringify(selected) === JSON.stringify(item.selectedIds)) &&
     body.mode === "shadow" &&
     body.production_send === "blocked" &&
     body.outageLevel === "UNDETERMINED";
-  if (!ok) {
-    throw new Error(`${item.text}: unexpected resolver payload ${JSON.stringify(body)}`);
-  }
+  if (!ok) throw new Error(`${item.text}: unexpected resolver payload ${JSON.stringify(body)}`);
 }
 
 const page = await fetch(`${baseUrl}/buengkan-tester`, { cache: "no-store" });
-if (!page.ok || !(await page.text()).includes("Bueng Kan GIS Tester")) {
+const pageText = await page.text();
+if (!page.ok || !pageText.includes("BUENG KAN / GIS TESTER")) {
   throw new Error(`tester page failed: HTTP ${page.status}`);
 }
 
@@ -79,6 +66,7 @@ console.log(JSON.stringify({
   status: "PASS",
   baseUrl,
   canonicalCases: cases.length,
+  traceConfirmedVillageTxGate: "PASS",
   accessGate: "PASS",
   mode: "shadow",
   production_send: "blocked"

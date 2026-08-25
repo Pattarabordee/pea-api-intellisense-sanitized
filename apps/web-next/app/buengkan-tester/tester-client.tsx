@@ -25,6 +25,8 @@ type ResolveResult = {
   message: string;
   selectedFeeder?: string | null;
   selectedTransformerCandidates: string[];
+  villageTransformerCandidates: string[];
+  villageTransformerGroups: Array<{ feeder: string; transformers: string[] }>;
   footprintConfidence?: "HIGH" | "MEDIUM" | "LOW";
   topologyPrior: TopologyPrior[];
   protectionZone?: {
@@ -108,7 +110,10 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
     if (!result) return "";
     const tx = result.selectedTransformerCandidates.length
       ? result.selectedTransformerCandidates.join(", ")
-      : "ยังระบุไม่ได้";
+      : "ยังไม่ได้ narrow จากข้อความ";
+    const villageTx = result.villageTransformerCandidates.length
+      ? result.villageTransformerCandidates.join(", ")
+      : "ยังไม่มี trace-confirmed core TX";
     const devices = result.protectionZone?.devices?.length
       ? result.protectionZone.devices.join(", ")
       : "ยังระบุไม่ได้";
@@ -117,7 +122,8 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
       `หมู่บ้าน: ${result.villageName ?? "—"}`,
       `สถานะ: ${status?.label ?? result.status}`,
       `Feeder: ${result.selectedFeeder ?? "ยังระบุไม่ได้"}`,
-      `หม้อแปลง Candidate: ${tx}`,
+      `หม้อแปลงที่ narrow จากข้อความ: ${tx}`,
+      `หม้อแปลงใน Core หมู่บ้าน (TraceDown): ${villageTx}`,
       `Protection: ${devices}`,
       `Confidence: ${result.footprintConfidence ? confidenceCopy[result.footprintConfidence] : "—"}`,
       "หมายเหตุ: เป็น GIS topology candidate ไม่ใช่การยืนยันว่าไฟดับจริง ต้องเทียบ ReportPO/ETR/OMS/SCADA/หน้างาน"
@@ -341,8 +347,12 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
             </div>
             <div className={styles.flowArrow} aria-hidden="true">→</div>
             <div className={styles.flowNode}>
-              <span>หม้อแปลง Candidate</span>
-              <strong>{result.selectedTransformerCandidates.length ? `${result.selectedTransformerCandidates.length} ลูก` : "ยังระบุไม่ได้"}</strong>
+              <span>{result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length ? "หม้อแปลง Candidate จากข้อความ" : "หม้อแปลงใน Core หมู่บ้าน"}</span>
+              <strong>{result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length
+                ? `${result.selectedTransformerCandidates.length} ลูก`
+                : result.villageTransformerCandidates.length
+                  ? `${result.villageTransformerCandidates.length} ลูก`
+                  : "ยังไม่มีข้อมูล"}</strong>
             </div>
             <div className={styles.flowArrow} aria-hidden="true">→</div>
             <div className={styles.flowNode}>
@@ -354,15 +364,46 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
           <p className={styles.resultMessage}>{result.message}</p>
           {result.footprintConfidence && <p className={styles.confidenceNote}>ความมั่นใจนี้หมายถึงความชัดเจนของการจับคู่ GIS topology ไม่ใช่ความน่าจะเป็นที่ไฟกำลังดับ</p>}
 
-          {result.selectedTransformerCandidates.length > 0 && (
+          {result.status === "RESOLVED_FOOTPRINT" && result.selectedTransformerCandidates.length > 0 && (
             <div className={styles.resultBlock}>
-              <h3>หม้อแปลง Candidate</h3>
+              <div className={styles.blockHead}>
+                <h3>หม้อแปลง Candidate ที่ narrow ได้จากข้อความ</h3>
+                <span className={styles.smallBadge}>{result.selectedTransformerCandidates.length} ลูก</span>
+              </div>
               <div className={styles.txList}>
                 {result.selectedTransformerCandidates.map((tx, index) => (
                   <div className={styles.txItem} key={tx}>
                     <span className={styles.txIndex}>{index + 1}</span>
                     <code>{tx}</code>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.villageTransformerGroups.length > 0 && (
+            <div className={styles.resultBlock}>
+              <div className={styles.blockHead}>
+                <h3>หม้อแปลงที่ TraceDown พบใน Core หมู่บ้าน</h3>
+                <span className={styles.smallBadge}>{result.villageTransformerCandidates.length} ลูก</span>
+              </div>
+              <p className={styles.confidenceNote}>แสดงเลขหม้อแปลง/Facility ID ที่มี core overlap &gt; 0 เท่านั้น เป็น static GIS topology candidate ไม่ใช่การยืนยันว่าหม้อแปลงกำลังดับ</p>
+              <div className={styles.txGroups}>
+                {result.villageTransformerGroups.map((group) => (
+                  <section className={styles.txGroup} key={group.feeder}>
+                    <div className={styles.txGroupHead}>
+                      <strong>{group.feeder}</strong>
+                      <span>{group.transformers.length} ลูก</span>
+                    </div>
+                    <div className={styles.txList}>
+                      {group.transformers.map((tx, index) => (
+                        <div className={styles.txItem} key={`${group.feeder}-${tx}`}>
+                          <span className={styles.txIndex}>{index + 1}</span>
+                          <code>{tx}</code>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </div>

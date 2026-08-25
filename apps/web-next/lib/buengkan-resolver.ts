@@ -1,7 +1,7 @@
 import "server-only";
 
 import crypto from "node:crypto";
-import registryData from "./buengkan-registry-v4.json";
+import registryData from "./buengkan-registry-v5.json";
 
 const DASHBOARD_ACCESS_CODE_HASH = "bd20d696971124bb9c050d47e0c309f0d8fcd49ecbbe582d4f1d21b045dc72a3";
 const ACCESS_CODE_HASH = "e0ca8ce0d2a2aa8a3d050cadef0f7cc5831de8c56032d68f2a8f8bcd12fc9188";
@@ -43,6 +43,8 @@ type Village = {
   aliases: string[];
   topology_prior?: TopologyPrior[];
   village_transformers?: string[];
+  village_transformers_by_feeder?: Record<string, string[]>;
+  village_transformer_evidence?: string;
   landmark_rules?: LandmarkRule[];
   protection_zones?: Record<string, ProtectionZone>;
 };
@@ -90,6 +92,8 @@ export type ResolveResult = {
   message: string;
   selectedFeeder?: string | null;
   selectedTransformerCandidates: string[];
+  villageTransformerCandidates: string[];
+  villageTransformerGroups: Array<{ feeder: string; transformers: string[] }>;
   footprintConfidence?: Confidence;
   topologyPrior: TopologyPrior[];
   protectionZone?: {
@@ -219,8 +223,13 @@ function zoneFor(village: Village, feeder: string): ResolveResult["protectionZon
 }
 
 function base(village?: Village): Pick<ResolveResult,
-  "mode" | "production_send" | "supported" | "selectedTransformerCandidates" | "topologyPrior" | "matchedClues" | "outageLevel" | "requiredConfirmation"
+  "mode" | "production_send" | "supported" | "selectedTransformerCandidates" | "villageTransformerCandidates" | "villageTransformerGroups" | "topologyPrior" | "matchedClues" | "outageLevel" | "requiredConfirmation"
 > & Partial<Pick<ResolveResult, "villageKey" | "villageName">> {
+  const groups = Object.entries(village?.village_transformers_by_feeder ?? {})
+    .map(([feeder, transformers]) => ({ feeder, transformers: [...new Set((transformers ?? []).map(String))].sort() }))
+    .filter((item) => item.transformers.length > 0)
+    .sort((a, b) => a.feeder.localeCompare(b.feeder));
+  const villageTransformers = [...new Set((village?.village_transformers ?? groups.flatMap((item) => item.transformers)).map(String))].sort();
   return {
     mode: "shadow",
     production_send: "blocked",
@@ -228,6 +237,8 @@ function base(village?: Village): Pick<ResolveResult,
     villageKey: village?.village_key,
     villageName: village?.village_name,
     selectedTransformerCandidates: [],
+    villageTransformerCandidates: villageTransformers,
+    villageTransformerGroups: groups,
     topologyPrior: village?.topology_prior ?? [],
     matchedClues: [],
     outageLevel: "UNDETERMINED",
