@@ -156,3 +156,28 @@ func TestOutageResolveUsesSharedGPSWithoutPersistingRawCoordinates(t *testing.T)
 		}
 	}
 }
+
+func TestOutageResolveAcceptsExtendedSecondaryHintsWithoutUsingThem(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"schema_version":"outage-report.v1","source":{"channel":"N8N","event_id":"hint-event-1","occurred_at":"2026-08-26T01:00:00+07:00"},"message":{"text":"บ้านนาโนนไฟดับ"},"hints":{"province":"บึงกาฬ","district":"เมืองบึงกาฬ","subdistrict":"บึงกาฬ","moo":"4","village_candidate":"นาโนน","road":"ถนนชยางกูร","soi":"ซอยตัวอย่าง","landmark":"โรงพยาบาลบึงกาฬ","confidence":0.8,"source":"n8n_extractor"}}`
+	req := httptest.NewRequest(http.MethodPost, outageResolvePath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String())
+	}
+	payload := decodeBody(t, res)
+	evidence := payload["input_evidence"].(map[string]any)
+	if evidence["hints_received"] != true || evidence["hints_used_for_topology"] != false {
+		t.Fatalf("secondary hints must be accepted but remain shadow-only: %#v", evidence)
+	}
+	stored := string(store.outageResolutions[payload["request_id"].(string)].ResultJSON)
+	for _, rawHint := range []string{"ถนนชยางกูร", "ซอยตัวอย่าง", "โรงพยาบาลบึงกาฬ"} {
+		if strings.Contains(stored, rawHint) {
+			t.Fatalf("raw secondary hint leaked into durable result: %q", rawHint)
+		}
+	}
+}

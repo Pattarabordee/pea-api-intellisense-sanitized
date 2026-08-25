@@ -46,12 +46,16 @@ type outageLocationInput struct {
 }
 
 type outageHintsInput struct {
-	Province             string  `json:"province"`
-	District             string  `json:"district"`
-	Subdistrict          string  `json:"subdistrict"`
-	VillageCandidate     string  `json:"village_candidate"`
+	Province             string   `json:"province"`
+	District             string   `json:"district"`
+	Subdistrict          string   `json:"subdistrict"`
+	Moo                  string   `json:"moo"`
+	VillageCandidate     string   `json:"village_candidate"`
+	Road                 string   `json:"road"`
+	Soi                  string   `json:"soi"`
+	Landmark             string   `json:"landmark"`
 	Confidence           *float64 `json:"confidence"`
-	Source               string  `json:"source"`
+	Source               string   `json:"source"`
 }
 
 type outageResolveRequest struct {
@@ -269,7 +273,7 @@ func validateOutageResolveRequest(input *outageResolveRequest) (time.Time, error
 		}
 	}
 	if input.Hints != nil {
-		for _, value := range []string{input.Hints.Province, input.Hints.District, input.Hints.Subdistrict, input.Hints.VillageCandidate, input.Hints.Source} {
+		for _, value := range []string{input.Hints.Province, input.Hints.District, input.Hints.Subdistrict, input.Hints.Moo, input.Hints.VillageCandidate, input.Hints.Road, input.Hints.Soi, input.Hints.Landmark, input.Hints.Source} {
 			if utf8.RuneCountInString(value) > 120 {
 				return time.Time{}, errors.New("hints fields must be <= 120 characters")
 			}
