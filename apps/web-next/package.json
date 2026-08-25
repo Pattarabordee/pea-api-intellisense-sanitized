@@ -6,15 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "smoke:buengkan": "node scripts/buengkan-tester-smoke.mjs"
   },
   "dependencies": {
-    "next": "15.5.19",
+    "next": "15.5.23",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "overrides": {
-    "postcss": "8.5.15"
+    "postcss": "8.5.26",
+    "nanoid": "3.3.18",
+    "sharp": "0.35.0"
   },
   "devDependencies": {
     "@types/node": "22.15.34",
