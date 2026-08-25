@@ -38,6 +38,14 @@ type APIResolution = {
   core_coverage?: number | null;
   outage_state?: string;
   required_confirmation?: string[];
+  location_evidence?: {
+    status?: string;
+    used_for_topology?: boolean;
+    source?: string;
+    accuracy_m?: number;
+    search_radius_m?: number;
+    candidate_count?: number;
+  };
 };
 
 function adaptResolution(resolution: APIResolution) {
@@ -95,13 +103,27 @@ function adaptResolution(resolution: APIResolution) {
     excludedReason: resolution.excluded_reason,
     coreCoverage: resolution.core_coverage,
     outageLevel: resolution.outage_state ?? "UNDETERMINED",
-    requiredConfirmation: resolution.required_confirmation ?? []
+    requiredConfirmation: resolution.required_confirmation ?? [],
+    locationEvidence: resolution.location_evidence
+      ? {
+          status: resolution.location_evidence.status,
+          usedForTopology: Boolean(resolution.location_evidence.used_for_topology),
+          source: resolution.location_evidence.source,
+          accuracyM: resolution.location_evidence.accuracy_m,
+          searchRadiusM: resolution.location_evidence.search_radius_m,
+          candidateCount: resolution.location_evidence.candidate_count
+        }
+      : null
   };
 }
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { accessCode?: string; text?: string };
+    const body = (await request.json()) as {
+      accessCode?: string;
+      text?: string;
+      location?: { lat?: number; lon?: number; accuracyM?: number; source?: string };
+    };
     if (!verifyTesterAccessCode(body.accessCode)) {
       return NextResponse.json({ error: "INVALID_ACCESS_CODE" }, { status: 401 });
     }
@@ -111,6 +133,24 @@ export async function POST(request: Request) {
     }
     if (text.length > 500) {
       return NextResponse.json({ error: "TEXT_TOO_LONG" }, { status: 400 });
+    }
+    let location: { lat: number; lon: number; accuracy_m?: number; source?: string } | undefined;
+    if (body.location) {
+      const lat = Number(body.location.lat);
+      const lon = Number(body.location.lon);
+      const accuracyM = body.location.accuracyM == null ? undefined : Number(body.location.accuracyM);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        return NextResponse.json({ error: "INVALID_LOCATION" }, { status: 400 });
+      }
+      if (accuracyM != null && (!Number.isFinite(accuracyM) || accuracyM < 0 || accuracyM > 100000)) {
+        return NextResponse.json({ error: "INVALID_LOCATION_ACCURACY" }, { status: 400 });
+      }
+      location = {
+        lat,
+        lon,
+        ...(accuracyM == null ? {} : { accuracy_m: accuracyM }),
+        source: String(body.location.source ?? "web_tester_location").slice(0, 64)
+      };
     }
 
     const baseUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -133,7 +173,8 @@ export async function POST(request: Request) {
           event_id: `webtest-${crypto.randomUUID()}`,
           occurred_at: new Date().toISOString()
         },
-        message: { text }
+        message: { text },
+        ...(location ? { location } : {})
       })
     });
     const data = (await response.json().catch(() => ({}))) as { resolution?: APIResolution };
