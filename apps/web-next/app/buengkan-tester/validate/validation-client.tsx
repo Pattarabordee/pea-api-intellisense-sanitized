@@ -24,7 +24,7 @@ type CatalogItem = {
   candidates: Candidate[];
   candidate_count: number;
   provenance: string;
-  candidate_scope: "POI_POINT_FIELD_VALIDATION_ONLY" | "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY" | "RESIDENTIAL_COMPLEX_POINT_FIELD_VALIDATION_ONLY" | "RESIDENTIAL_COMPLEX_FOOTPRINT_FIELD_VALIDATION_ONLY";
+  candidate_scope: "POI_POINT_FIELD_VALIDATION_ONLY" | "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY" | "RESIDENTIAL_COMPLEX_POINT_FIELD_VALIDATION_ONLY" | "RESIDENTIAL_COMPLEX_FOOTPRINT_FIELD_VALIDATION_ONLY" | "COMMERCIAL_RETAIL_POINT_FIELD_VALIDATION_ONLY";
   outage_state: "UNDETERMINED";
 };
 
@@ -69,7 +69,12 @@ const categoryLabels: Record<string, string> = {
   RESIDENTIAL_COMPLEX_CONDOMINIUM: "คอนโดมิเนียม",
   RESIDENTIAL_COMPLEX_APARTMENT: "อพาร์ตเมนต์ / แมนชั่น",
   RESIDENTIAL_COMPLEX_DORMITORY: "หอพัก",
-  RESIDENTIAL_COMPLEX_OTHER: "ที่พักอาศัยรวม"
+  RESIDENTIAL_COMPLEX_OTHER: "ที่พักอาศัยรวม",
+  COMMERCIAL_RETAIL_CONVENIENCE_STORE: "ร้านสะดวกซื้อ / มินิมาร์ท",
+  COMMERCIAL_RETAIL_SUPERMARKET_HYPERMARKET: "ซูเปอร์มาร์เก็ต / ไฮเปอร์มาร์เก็ต",
+  COMMERCIAL_RETAIL_SHOPPING_MALL: "ห้าง / ศูนย์การค้า",
+  COMMERCIAL_RETAIL_MARKET: "ตลาด",
+  COMMERCIAL_RETAIL_OTHER: "ร้านค้า / พาณิชยกรรม"
 };
 
 const priorityLabels: Record<string, string> = {
@@ -159,9 +164,12 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
 
   const sourceMap = mapURL(item.source_location.lat, item.source_location.lon);
   const residential = item.category.startsWith("RESIDENTIAL_COMPLEX_");
+  const retail = item.category.startsWith("COMMERCIAL_RETAIL_");
   const sourceLabel = residential
     ? (item.provenance.startsWith("PEA_GIS") ? "PEA residential POI" : "Residential secondary")
-    : (item.source_type === "POI" ? "PEA POI" : "Road/Soi secondary");
+    : retail
+      ? (item.provenance.startsWith("PEA_GIS") ? "PEA retail POI" : "Retail secondary")
+      : (item.source_type === "POI" ? "PEA POI" : "Road/Soi secondary");
   return (
     <article data-validation-card={item.source_ref} className={`${styles.itemCard} ${item.known_conflict ? styles.conflictCard : ""}`}>
       <div className={styles.itemTop}>
@@ -191,7 +199,9 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
           ? "ยืนยันเฉพาะความสัมพันธ์ ณ จุดตัวแทนที่เปิดบนแผนที่ ไม่ใช่ยืนยันว่าถนน/ซอยทั้งเส้นอยู่ TX เดียว และไม่ใช่หลักฐานว่า TX กำลังดับ"
           : residential
             ? "หมู่บ้านจัดสรร/คอนโด/อพาร์ตเมนต์/หอพักอาจมีหลายอาคารหรือหลาย TX การยืนยันนี้ใช้เฉพาะจุดหรือ footprint ที่แสดง ไม่ได้ยืนยันทั้งโครงการ และไม่ใช่หลักฐานว่า TX กำลังดับ"
-            : "ตำแหน่งใกล้สาย LV ≠ ยืนยันว่าอาคารรับไฟจาก TX นี้ ต้องตรวจจากหน้างานหรือหลักฐาน topology เพิ่มเติม และไม่ใช่หลักฐานว่า TX กำลังดับ"}
+            : retail
+              ? "ร้าน chain เช่น 7-Eleven, CJ, Lotus’s, Big C ต้องยืนยันสาขาหรือพิกัดก่อน ชื่อแบรนด์อย่างเดียวห้ามเลือก TX; ห้าง/ตลาดขนาดใหญ่อาจมีหลาย TX และ proximity ไม่ยืนยัน supply truth"
+              : "ตำแหน่งใกล้สาย LV ≠ ยืนยันว่าอาคารรับไฟจาก TX นี้ ต้องตรวจจากหน้างานหรือหลักฐาน topology เพิ่มเติม และไม่ใช่หลักฐานว่า TX กำลังดับ"}
       </div>
 
       <div className={styles.candidates}>
@@ -294,6 +304,8 @@ export function BuengKanFieldValidation() {
     return (data?.catalog.items ?? []).filter((item) => {
       if (sourceFilter === "RESIDENTIAL_COMPLEX") {
         if (!item.category.startsWith("RESIDENTIAL_COMPLEX_")) return false;
+      } else if (sourceFilter === "COMMERCIAL_RETAIL") {
+        if (!item.category.startsWith("COMMERCIAL_RETAIL_")) return false;
       } else if (sourceFilter !== "ALL" && item.source_type !== sourceFilter) return false;
       if (priorityFilter === "ACTIVE" && (item.priority.startsWith("P3") || item.priority.startsWith("P4"))) return false;
       if (priorityFilter !== "ALL" && priorityFilter !== "ACTIVE" && !item.priority.startsWith(priorityFilter)) return false;
@@ -342,7 +354,7 @@ export function BuengKanFieldValidation() {
       ) : (
         <>
           <section className={styles.stats}>
-            <article><span>CATALOG</span><strong>{data.catalog.item_count}</strong><small>POI {data.catalog.source_counts.POI} · ROAD/SOI {data.catalog.source_counts.ROAD_SOI} · RESIDENTIAL {data.catalog.semantic_counts?.RESIDENTIAL_COMPLEX ?? 0}</small></article>
+            <article><span>CATALOG</span><strong>{data.catalog.item_count}</strong><small>POI {data.catalog.source_counts.POI} · ROAD/SOI {data.catalog.source_counts.ROAD_SOI} · RESIDENTIAL {data.catalog.semantic_counts?.RESIDENTIAL_COMPLEX ?? 0} · RETAIL {data.catalog.semantic_counts?.COMMERCIAL_RETAIL ?? 0}</small></article>
             <article><span>VALIDATIONS</span><strong>{data.summary.total}</strong><small>durable Postgres records</small></article>
             <article className={styles.statGood}><span>CONFIRMED</span><strong>{data.summary.correct}</strong><small>{adjudicated ? `${Math.round(data.summary.correct / adjudicated * 100)}% adjudicated` : "no adjudicated cases"}</small></article>
             <article className={styles.statWarn}><span>NEEDS REVIEW</span><strong>{data.summary.incorrect + data.summary.unsure}</strong><small>incorrect + unsure</small></article>
@@ -351,8 +363,8 @@ export function BuengKanFieldValidation() {
           <section className={styles.controls}>
             <div className={styles.controlHead}><div><p className={styles.sectionIndex}>002 / QUEUE</p><h2>รายการตรวจหน้างาน</h2></div><button onClick={() => void loadCatalog()} disabled={loading}>↻ Refresh</button></div>
             <div className={styles.filters}>
-              <label>ค้นหา<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ชื่อสถานที่ / หมู่บ้านจัดสรร / คอนโด / อพาร์ตเมนต์ / ถนน" /></label>
-              <label>ประเภท<select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}><option value="ALL">ทั้งหมด</option><option value="POI">POI</option><option value="RESIDENTIAL_COMPLEX">ที่พักอาศัยรวม</option><option value="ROAD_SOI">ถนน / ซอย</option></select></label>
+              <label>ค้นหา<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ชื่อสถานที่ / 7-Eleven / CJ / Lotus / Big C / คอนโด / ถนน" /></label>
+              <label>ประเภท<select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}><option value="ALL">ทั้งหมด</option><option value="POI">POI</option><option value="RESIDENTIAL_COMPLEX">ที่พักอาศัยรวม</option><option value="COMMERCIAL_RETAIL">ร้านค้า / ห้าง / ตลาด</option><option value="ROAD_SOI">ถนน / ซอย</option></select></label>
               <label>Priority<select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}><option value="ACTIVE">P0–P2 ก่อน</option><option value="P0">P0 Conflict</option><option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3 Ambiguous</option><option value="P4">P4 No coverage</option><option value="ALL">ทั้งหมด</option></select></label>
               <label className={styles.check}><input type="checkbox" checked={pendingOnly} onChange={(e) => setPendingOnly(e.target.checked)} /> แสดงเฉพาะที่ยังไม่ตรวจ</label>
             </div>

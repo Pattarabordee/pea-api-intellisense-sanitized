@@ -55,6 +55,7 @@ type validationCatalog struct {
 	ItemCount int `json:"item_count"`
 	SourceCounts map[string]int `json:"source_counts"`
 	PriorityCounts map[string]int `json:"priority_counts"`
+	SemanticCounts map[string]int `json:"semantic_counts"`
 	PromotionPolicy string `json:"promotion_policy"`
 	Items []ValidationCatalogItem `json:"items"`
 	Guardrails map[string]any `json:"guardrails"`

@@ -2,23 +2,24 @@
   "schema_version": "field-validation-catalog.v1",
   "registry_version": 5,
   "scope": "Tambol Bueng Kan / shadow field validation",
-  "item_count": 91,
+  "item_count": 93,
   "source_counts": {
-    "POI": 78,
+    "POI": 80,
     "ROAD_SOI": 13
   },
   "priority_counts": {
     "P0_CONFLICT": 1,
     "P1_HIGH_VALUE_SINGLE": 10,
     "P1_LOCAL_SINGLE_TX": 2,
-    "P2_SINGLE_REVIEW": 24,
+    "P2_SINGLE_REVIEW": 25,
     "P2_ROAD_SINGLE_TX": 2,
     "P3_AMBIGUOUS": 10,
     "P3_MULTI_TX_CORRIDOR": 3,
-    "P4_NO_COVERAGE": 39
+    "P4_NO_COVERAGE": 40
   },
   "semantic_counts": {
-    "RESIDENTIAL_COMPLEX": 2
+    "RESIDENTIAL_COMPLEX": 2,
+    "COMMERCIAL_RETAIL": 4
   },
   "promotion_policy": "Field validation does not auto-promote. Promotion is a separate explicit reviewed build step.",
   "items": [
@@ -522,9 +523,47 @@
     },
     {
       "source_type": "POI",
+      "source_ref": "poi:osmret:b7cefdf141dbfabc",
+      "label": "ตลาดต้องชม (ถนนคนเดิน)",
+      "category": "COMMERCIAL_RETAIL_MARKET",
+      "priority": "P2_SINGLE_REVIEW",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "RETAIL_SINGLE_TX_ONLY",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.367732,
+        "lon": 103.655385,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [
+        {
+          "facility_id": "45-015667",
+          "feeder_id": "BUB07",
+          "location": {
+            "lat": 18.366135,
+            "lon": 103.654114,
+            "crs": "EPSG:4326",
+            "source": "PEA_GIS_LAYER17"
+          },
+          "approx_source_to_lv_distance_m": 74.8
+        }
+      ],
+      "candidate_count": 1,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "COMMERCIAL_RETAIL_POINT_FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
       "source_ref": "poi:33940",
       "label": "ตลาดสดสุขาภิบาลบึงกาฬ",
-      "category": "สถานที่สำคัญอื่นๆ",
+      "category": "COMMERCIAL_RETAIL_MARKET",
       "priority": "P2_SINGLE_REVIEW",
       "validation_status": "PENDING_FIELD_VALIDATION",
       "resolver_status": "POI_SINGLE_TX_CANDIDATE",
@@ -555,7 +594,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
+      "candidate_scope": "COMMERCIAL_RETAIL_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1246,7 +1285,7 @@
       "source_type": "POI",
       "source_ref": "poi:34929",
       "label": "เซเว่นอีเลฟเว่น",
-      "category": "สถานที่สำคัญอื่นๆ",
+      "category": "COMMERCIAL_RETAIL_CONVENIENCE_STORE",
       "priority": "P2_SINGLE_REVIEW",
       "validation_status": "PENDING_FIELD_VALIDATION",
       "resolver_status": "POI_SINGLE_TX_CANDIDATE",
@@ -1277,7 +1316,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
+      "candidate_scope": "COMMERCIAL_RETAIL_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2493,6 +2532,32 @@
     },
     {
       "source_type": "POI",
+      "source_ref": "poi:osmret:3dedd222a1145872",
+      "label": "7-Eleven",
+      "category": "COMMERCIAL_RETAIL_CONVENIENCE_STORE",
+      "priority": "P4_NO_COVERAGE",
+      "validation_status": "PENDING_FIELD_VALIDATION",
+      "resolver_status": "NO_LV_SERVICE_WITHIN_RADIUS",
+      "known_conflict": false,
+      "prior_evidence": {
+        "check": "SECONDARY_SOURCE_ONLY",
+        "transformers": [],
+        "rules": []
+      },
+      "source_location": {
+        "lat": 18.365103,
+        "lon": 103.650055,
+        "crs": "EPSG:4326",
+        "source": "OPENSTREETMAP_SECONDARY"
+      },
+      "candidates": [],
+      "candidate_count": 0,
+      "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
+      "candidate_scope": "COMMERCIAL_RETAIL_POINT_FIELD_VALIDATION_ONLY",
+      "outage_state": "UNDETERMINED"
+    },
+    {
+      "source_type": "POI",
       "source_ref": "poi:129959",
       "label": "กองร้อยอาสารักษาดินแดน",
       "category": "สถานที่ราชการ",
@@ -3524,6 +3589,8 @@
     "raw_road_geometry_persisted": false,
     "source_proximity_confirms_supply": false,
     "residential_complex_proximity_confirms_supply": false,
+    "commercial_retail_proximity_confirms_supply": false,
+    "brand_name_alone_selects_branch": false,
     "field_feedback_auto_promotes": false,
     "mode": "shadow",
     "production_send": "blocked"

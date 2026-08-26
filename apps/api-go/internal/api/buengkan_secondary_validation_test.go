@@ -26,7 +26,9 @@ func TestSecondaryValidationCatalogIsProtectedAndSanitized(t *testing.T) {
 	}
 	payload := decodeBody(t, res)
 	catalog := payload["catalog"].(map[string]any)
-	if int(catalog["item_count"].(float64)) != 91 { t.Fatalf("expected 91 catalog items: %#v", catalog["item_count"]) }
+	if int(catalog["item_count"].(float64)) != 93 { t.Fatalf("expected 93 catalog items: %#v", catalog["item_count"]) }
+	semantic := catalog["semantic_counts"].(map[string]any)
+	if semantic["RESIDENTIAL_COMPLEX"].(float64) != 2 || semantic["COMMERCIAL_RETAIL"].(float64) != 4 { t.Fatalf("unexpected semantic counts: %#v", semantic) }
 	if payload["mode"] != "shadow" || payload["production_send"] != "blocked" { t.Fatalf("unsafe envelope: %#v", payload) }
 }
 
