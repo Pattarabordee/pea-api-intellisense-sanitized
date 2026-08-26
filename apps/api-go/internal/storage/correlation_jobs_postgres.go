@@ -382,7 +382,7 @@ func (s *PostgresStore) GetLatestCorrelationJobForReport(ctx context.Context, re
 			last_error_class,created_at,updated_at,completed_at
 		FROM correlation_jobs
 		WHERE report_id=$1
-		ORDER BY created_at DESC, job_id DESC
+		ORDER BY trigger_evidence_revision DESC, created_at DESC, job_id DESC
 		LIMIT 1
 	`, reportID).Scan(
 		&job.JobID, &job.ReportID, &job.JobType, &job.TriggerKey, &job.TriggerEvidenceRevision,
