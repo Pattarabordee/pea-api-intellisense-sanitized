@@ -21,6 +21,17 @@ type TransformerDetail = {
   lat: number;
   lon: number;
   crs: string;
+  downstreamMeterCount?: number | null;
+  potentialImpactSemantics?: string;
+  routeFromPeaBuengKan?: {
+    status?: string;
+    roadDistanceKm?: number;
+    estimatedDriveMinutes?: number;
+    routingSource?: string;
+    routingMethod?: string;
+    trafficAware?: boolean;
+    googleMapsExact?: boolean;
+  } | null;
 };
 
 type LocationEvidence = {
@@ -90,6 +101,25 @@ function percent(value?: number | null) {
 function coordText(detail?: TransformerDetail) {
   if (!detail || !detail.lat || !detail.lon) return "";
   return `Lat ${detail.lat.toFixed(6)} · Lon ${detail.lon.toFixed(6)}`;
+}
+
+
+function downstreamText(detail?: TransformerDetail) {
+  if (!detail || detail.downstreamMeterCount == null) return "มิเตอร์ downstream: —";
+  return `มิเตอร์ downstream: ${detail.downstreamMeterCount.toLocaleString("th-TH")} จุด · potential impact หาก TX นี้ดับ`;
+}
+
+function routeText(detail?: TransformerDetail) {
+  const route = detail?.routeFromPeaBuengKan;
+  if (!route || route.status !== "OK" || route.roadDistanceKm == null || route.estimatedDriveMinutes == null) return "จาก กฟจ.บึงกาฬ: —";
+  return `จาก กฟจ.บึงกาฬ: ${route.roadDistanceKm.toFixed(2)} กม. · ~${route.estimatedDriveMinutes} นาที`;
+}
+
+function googleMapsDirectionsUrl(detail?: TransformerDetail) {
+  if (!detail || !detail.lat || !detail.lon) return "";
+  const origin = "18.323300448481316,103.63348560640729";
+  const destination = `${detail.lat.toFixed(6)},${detail.lon.toFixed(6)}`;
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 }
 
 function findTxDetail(result: ResolveResult, facilityId: string) {
@@ -503,6 +533,9 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                     <div className={styles.txBody}>
                       <code>{tx}</code>
                       <span>{coordText(findTxDetail(result, tx))}</span>
+                      <span>{downstreamText(findTxDetail(result, tx))}</span>
+                      <span>{routeText(findTxDetail(result, tx))}</span>
+                      {googleMapsDirectionsUrl(findTxDetail(result, tx)) && <a className={styles.txRouteLink} href={googleMapsDirectionsUrl(findTxDetail(result, tx))} target="_blank" rel="noreferrer">เปิดนำทาง Google Maps</a>}
                     </div>
                   </div>
                 ))}
@@ -516,7 +549,7 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                 <h3>หม้อแปลงที่ TraceDown พบใน Core หมู่บ้าน</h3>
                 <span className={styles.smallBadge}>{result.villageTransformerCandidates.length} ลูก</span>
               </div>
-              <p className={styles.confidenceNote}>แสดงเลขหม้อแปลง/Facility ID ที่มี core overlap &gt; 0 เท่านั้น เป็น static GIS topology candidate ไม่ใช่การยืนยันว่าหม้อแปลงกำลังดับ</p>
+              <p className={styles.confidenceNote}>แสดงเลขหม้อแปลง/Facility ID ที่มี core overlap &gt; 0 เท่านั้น เป็น static GIS topology candidate ไม่ใช่การยืนยันว่าหม้อแปลงกำลังดับ · จำนวนมิเตอร์คือ potential impact จาก TraceDown · ETA เป็น static road-network estimate ไม่มี live traffic; กด Google Maps เพื่อดูเส้นทาง/เวลาปัจจุบัน</p>
               <div className={styles.txGroups}>
                 {result.villageTransformerGroups.map((group) => (
                   <section className={styles.txGroup} key={group.feeder}>
@@ -531,6 +564,9 @@ export function BuengKanTester({ catalog }: { catalog: Catalog }) {
                           <div className={styles.txBody}>
                             <code>{tx}</code>
                             <span>{coordText(findTxDetail(result, tx))}</span>
+                            <span>{downstreamText(findTxDetail(result, tx))}</span>
+                            <span>{routeText(findTxDetail(result, tx))}</span>
+                            {googleMapsDirectionsUrl(findTxDetail(result, tx)) && <a className={styles.txRouteLink} href={googleMapsDirectionsUrl(findTxDetail(result, tx))} target="_blank" rel="noreferrer">เปิดนำทาง Google Maps</a>}
                           </div>
                         </div>
                       ))}

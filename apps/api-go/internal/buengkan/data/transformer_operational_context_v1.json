@@ -1,0 +1,2689 @@
+{
+  "schema_version": "transformer-operational-context.v1",
+  "generated_at": "2026-08-26T03:47:47.089073+00:00",
+  "asset_count": 95,
+  "origin": {
+    "name": "PEA Bueng Kan Provincial Office",
+    "lat": 18.323300448481316,
+    "lon": 103.63348560640729,
+    "crs": "EPSG:4326"
+  },
+  "assets": {
+    "22-000004": {
+      "facility_id": "22-000004",
+      "feeder_id": "BUA08",
+      "lat": 18.358322,
+      "lon": 103.639179,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.94,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 325,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "22-000012": {
+      "facility_id": "22-000012",
+      "feeder_id": "BUA07",
+      "lat": 18.335025,
+      "lon": 103.715555,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 13.49,
+        "estimated_drive_minutes": 13,
+        "duration_seconds": 760,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "22-999912": {
+      "facility_id": "22-999912",
+      "feeder_id": "BUA07",
+      "lat": 18.335121,
+      "lon": 103.729056,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 14.96,
+        "estimated_drive_minutes": 15,
+        "duration_seconds": 845,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "28-003538": {
+      "facility_id": "28-003538",
+      "feeder_id": "BUA07",
+      "lat": 18.346556,
+      "lon": 103.677421,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 33,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 32,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.65,
+        "estimated_drive_minutes": 11,
+        "duration_seconds": 652,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "38-000631": {
+      "facility_id": "38-000631",
+      "feeder_id": "BUA03",
+      "lat": 18.357286,
+      "lon": 103.650539,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 4,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 4,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.96,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 355,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "38-022857": {
+      "facility_id": "38-022857",
+      "feeder_id": "BUA07",
+      "lat": 18.323431,
+      "lon": 103.633367,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 11,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 11,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 0.14,
+        "estimated_drive_minutes": 1,
+        "duration_seconds": 29,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "40-019042": {
+      "facility_id": "40-019042",
+      "feeder_id": "BUA07",
+      "lat": 18.318697,
+      "lon": 103.672121,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 18,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 18,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 8.27,
+        "estimated_drive_minutes": 15,
+        "duration_seconds": 890,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "42-004789": {
+      "facility_id": "42-004789",
+      "feeder_id": "BUA04",
+      "lat": 18.35304,
+      "lon": 103.633952,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 130,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 128,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.14,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 269,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "43-113173": {
+      "facility_id": "43-113173",
+      "feeder_id": "BUA08",
+      "lat": 18.355452,
+      "lon": 103.639914,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.36,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 252,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "45-004107": {
+      "facility_id": "45-004107",
+      "feeder_id": "BUA07",
+      "lat": 18.356749,
+      "lon": 103.643447,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 87,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 83,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.91,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 341,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "45-007605": {
+      "facility_id": "45-007605",
+      "feeder_id": "BUA07",
+      "lat": 18.344826,
+      "lon": 103.680034,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 35,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 34,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.99,
+        "estimated_drive_minutes": 12,
+        "duration_seconds": 700,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "45-009017": {
+      "facility_id": "45-009017",
+      "feeder_id": "BUA02",
+      "lat": 18.31862,
+      "lon": 103.635842,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 18,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 0.6,
+        "estimated_drive_minutes": 1,
+        "duration_seconds": 48,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "45-015667": {
+      "facility_id": "45-015667",
+      "feeder_id": "BUB07",
+      "lat": 18.366135,
+      "lon": 103.654114,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 144,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.52,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 422,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "45-022403": {
+      "facility_id": "45-022403",
+      "feeder_id": "BUA07",
+      "lat": 18.35063,
+      "lon": 103.67227,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 115,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.51,
+        "estimated_drive_minutes": 11,
+        "duration_seconds": 634,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "46-007645": {
+      "facility_id": "46-007645",
+      "feeder_id": "BUB07",
+      "lat": 18.360722,
+      "lon": 103.663858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 144,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.86,
+        "estimated_drive_minutes": 11,
+        "duration_seconds": 618,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "47-112164": {
+      "facility_id": "47-112164",
+      "feeder_id": "BUA07",
+      "lat": 18.323413,
+      "lon": 103.633104,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 13,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 0.11,
+        "estimated_drive_minutes": 1,
+        "duration_seconds": 23,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "49-118695": {
+      "facility_id": "49-118695",
+      "feeder_id": "BUA07",
+      "lat": 18.345371,
+      "lon": 103.639523,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.55,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 211,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "53-001409": {
+      "facility_id": "53-001409",
+      "feeder_id": "BUA03",
+      "lat": 18.348508,
+      "lon": 103.661609,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 10,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.47,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 435,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "53-002626": {
+      "facility_id": "53-002626",
+      "feeder_id": "BUA04",
+      "lat": 18.355513,
+      "lon": 103.628149,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.85,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 372,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "54-004633": {
+      "facility_id": "54-004633",
+      "feeder_id": "BUA04",
+      "lat": 18.348443,
+      "lon": 103.637406,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.38,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 198,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "54-007943": {
+      "facility_id": "54-007943",
+      "feeder_id": "BUB07",
+      "lat": 18.360531,
+      "lon": 103.654858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 59,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 57,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.82,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 470,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "54-013354": {
+      "facility_id": "54-013354",
+      "feeder_id": "BUA08",
+      "lat": 18.347658,
+      "lon": 103.637947,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 18,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.28,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 192,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "54-111206": {
+      "facility_id": "54-111206",
+      "feeder_id": "BUA03",
+      "lat": 18.348494,
+      "lon": 103.638902,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.62,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 352,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "54-940175": {
+      "facility_id": "54-940175",
+      "feeder_id": "BUA07",
+      "lat": 18.342242,
+      "lon": 103.638472,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 173,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 175,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.93,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 232,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "55-006041": {
+      "facility_id": "55-006041",
+      "feeder_id": "BUB07",
+      "lat": 18.35445,
+      "lon": 103.664042,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 2,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 2,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.68,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 529,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "55-011185": {
+      "facility_id": "55-011185",
+      "feeder_id": "BUA07",
+      "lat": 18.346692,
+      "lon": 103.640561,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.66,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 238,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "55-014569": {
+      "facility_id": "55-014569",
+      "feeder_id": "BUB07",
+      "lat": 18.356366,
+      "lon": 103.656347,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 38,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 38,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.67,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 419,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "55-015489": {
+      "facility_id": "55-015489",
+      "feeder_id": "BUA07",
+      "lat": 18.354441,
+      "lon": 103.660465,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 2,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 2,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.2,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 460,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "55-123223": {
+      "facility_id": "55-123223",
+      "feeder_id": "BUA04",
+      "lat": 18.339885,
+      "lon": 103.633607,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 2.03,
+        "estimated_drive_minutes": 3,
+        "duration_seconds": 123,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-003922": {
+      "facility_id": "56-003922",
+      "feeder_id": "BUA03",
+      "lat": 18.334405,
+      "lon": 103.727783,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 34,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 14.83,
+        "estimated_drive_minutes": 14,
+        "duration_seconds": 839,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-003924": {
+      "facility_id": "56-003924",
+      "feeder_id": "BUA03",
+      "lat": 18.350252,
+      "lon": 103.659305,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.75,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 448,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-009402": {
+      "facility_id": "56-009402",
+      "feeder_id": "BUA03",
+      "lat": 18.344649,
+      "lon": 103.665754,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.81,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 575,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-011601": {
+      "facility_id": "56-011601",
+      "feeder_id": "BUA03",
+      "lat": 18.343535,
+      "lon": 103.669204,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.36,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 555,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-111025": {
+      "facility_id": "56-111025",
+      "feeder_id": "BUA03",
+      "lat": 18.332247,
+      "lon": 103.631859,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 2.78,
+        "estimated_drive_minutes": 3,
+        "duration_seconds": 169,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "56-116048": {
+      "facility_id": "56-116048",
+      "feeder_id": "BUA07",
+      "lat": 18.347594,
+      "lon": 103.664157,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.77,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 464,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "57-008565": {
+      "facility_id": "57-008565",
+      "feeder_id": "BUA08",
+      "lat": 18.34189,
+      "lon": 103.637948,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 102,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 99,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 2.55,
+        "estimated_drive_minutes": 3,
+        "duration_seconds": 152,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "57-012308": {
+      "facility_id": "57-012308",
+      "feeder_id": "BUA07",
+      "lat": 18.358112,
+      "lon": 103.644696,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 9,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.73,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 339,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "57-107867": {
+      "facility_id": "57-107867",
+      "feeder_id": "BUB07",
+      "lat": 18.361192,
+      "lon": 103.662858,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.74,
+        "estimated_drive_minutes": 11,
+        "duration_seconds": 601,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "57-112998": {
+      "facility_id": "57-112998",
+      "feeder_id": "BUA04",
+      "lat": 18.352355,
+      "lon": 103.630923,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.56,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 332,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "58-007685": {
+      "facility_id": "58-007685",
+      "feeder_id": "BUB07",
+      "lat": 18.36399,
+      "lon": 103.657917,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 46,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.0,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 495,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "58-017784": {
+      "facility_id": "58-017784",
+      "feeder_id": "BUA07",
+      "lat": 18.358603,
+      "lon": 103.650929,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 3,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.95,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 367,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "58-106987": {
+      "facility_id": "58-106987",
+      "feeder_id": "BUA04",
+      "lat": 18.348898,
+      "lon": 103.637029,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.44,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 201,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "58-107523": {
+      "facility_id": "58-107523",
+      "feeder_id": "BUA07",
+      "lat": 18.339773,
+      "lon": 103.682967,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.91,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 562,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "58-108591": {
+      "facility_id": "58-108591",
+      "feeder_id": "BUA04",
+      "lat": 18.3541,
+      "lon": 103.629848,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.64,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 348,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "59-013964": {
+      "facility_id": "59-013964",
+      "feeder_id": "BUA03",
+      "lat": 18.333663,
+      "lon": 103.706242,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 20,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 13.03,
+        "estimated_drive_minutes": 13,
+        "duration_seconds": 762,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "59-028945": {
+      "facility_id": "59-028945",
+      "feeder_id": "BUA07",
+      "lat": 18.354613,
+      "lon": 103.660829,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.25,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 466,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "59-109318": {
+      "facility_id": "59-109318",
+      "feeder_id": "BUA07",
+      "lat": 18.351142,
+      "lon": 103.659642,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.1,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 406,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "60-002145": {
+      "facility_id": "60-002145",
+      "feeder_id": "BUA07",
+      "lat": 18.346263,
+      "lon": 103.665871,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.95,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 453,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "60-005603": {
+      "facility_id": "60-005603",
+      "feeder_id": "BUA07",
+      "lat": 18.335409,
+      "lon": 103.646051,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 26,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.34,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 588,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "60-021162": {
+      "facility_id": "60-021162",
+      "feeder_id": "BUA01",
+      "lat": 18.31653,
+      "lon": 103.631533,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 8,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 9,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 1.05,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 224,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "60-037069": {
+      "facility_id": "60-037069",
+      "feeder_id": "BUA07",
+      "lat": 18.337097,
+      "lon": 103.722734,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 265,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 14.51,
+        "estimated_drive_minutes": 15,
+        "duration_seconds": 851,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "61-011967": {
+      "facility_id": "61-011967",
+      "feeder_id": "BUA08",
+      "lat": 18.322829,
+      "lon": 103.633056,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 29,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 28,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 0.07,
+        "estimated_drive_minutes": 1,
+        "duration_seconds": 22,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "62-004534": {
+      "facility_id": "62-004534",
+      "feeder_id": "BUA04",
+      "lat": 18.352753,
+      "lon": 103.632892,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 16,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.31,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 297,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "62-104270": {
+      "facility_id": "62-104270",
+      "feeder_id": "BUA07",
+      "lat": 18.337194,
+      "lon": 103.634478,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.77,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 360,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-001954": {
+      "facility_id": "63-001954",
+      "feeder_id": "BUA03",
+      "lat": 18.341663,
+      "lon": 103.675139,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 28,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 16.47,
+        "estimated_drive_minutes": 16,
+        "duration_seconds": 952,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006167": {
+      "facility_id": "63-006167",
+      "feeder_id": "BUA07",
+      "lat": 18.344696,
+      "lon": 103.645061,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 63,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.2,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 315,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006168": {
+      "facility_id": "63-006168",
+      "feeder_id": "BUA03",
+      "lat": 18.346528,
+      "lon": 103.638867,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 56,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.4,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 203,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006169": {
+      "facility_id": "63-006169",
+      "feeder_id": "BUB07",
+      "lat": 18.357254,
+      "lon": 103.65892,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 139,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 138,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.1,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 487,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006170": {
+      "facility_id": "63-006170",
+      "feeder_id": "BUB07",
+      "lat": 18.351632,
+      "lon": 103.666225,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 126,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 8.07,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 584,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006344": {
+      "facility_id": "63-006344",
+      "feeder_id": "BUA03",
+      "lat": 18.32222,
+      "lon": 103.713046,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 135,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 15.93,
+        "estimated_drive_minutes": 18,
+        "duration_seconds": 1058,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-006345": {
+      "facility_id": "63-006345",
+      "feeder_id": "BUA07",
+      "lat": 18.343538,
+      "lon": 103.672063,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 95,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 8.69,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 494,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-010203": {
+      "facility_id": "63-010203",
+      "feeder_id": "BUA07",
+      "lat": 18.332598,
+      "lon": 103.656061,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 32,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.93,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 553,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-014612": {
+      "facility_id": "63-014612",
+      "feeder_id": "BUA03",
+      "lat": 18.353413,
+      "lon": 103.655461,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 9,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 9,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.63,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 400,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-014613": {
+      "facility_id": "63-014613",
+      "feeder_id": "BUA07",
+      "lat": 18.35322,
+      "lon": 103.656789,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 13,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 13,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.75,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 389,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-031973": {
+      "facility_id": "63-031973",
+      "feeder_id": "BUA07",
+      "lat": 18.341483,
+      "lon": 103.646303,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 11,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.44,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 339,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-031998": {
+      "facility_id": "63-031998",
+      "feeder_id": "BUA03",
+      "lat": 18.339559,
+      "lon": 103.680882,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 27,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 15.82,
+        "estimated_drive_minutes": 16,
+        "duration_seconds": 916,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-032388": {
+      "facility_id": "63-032388",
+      "feeder_id": "BUA08",
+      "lat": 18.36004,
+      "lon": 103.637851,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 50,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.18,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 359,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-100453": {
+      "facility_id": "63-100453",
+      "feeder_id": "BUA03",
+      "lat": 18.333753,
+      "lon": 103.714274,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 13.38,
+        "estimated_drive_minutes": 13,
+        "duration_seconds": 772,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "63-107452": {
+      "facility_id": "63-107452",
+      "feeder_id": "BUA07",
+      "lat": 18.334502,
+      "lon": 103.637726,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 5.18,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 507,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "64-004652": {
+      "facility_id": "64-004652",
+      "feeder_id": "BUA03",
+      "lat": 18.340315,
+      "lon": 103.639656,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 13,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 13,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.28,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 278,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "64-018467": {
+      "facility_id": "64-018467",
+      "feeder_id": "BUA04",
+      "lat": 18.326772,
+      "lon": 103.631377,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 5,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 5,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 0.51,
+        "estimated_drive_minutes": 1,
+        "duration_seconds": 39,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "64-103430": {
+      "facility_id": "64-103430",
+      "feeder_id": "BUA03",
+      "lat": 18.339272,
+      "lon": 103.635306,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.4,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 258,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "64-109601": {
+      "facility_id": "64-109601",
+      "feeder_id": "BUA03",
+      "lat": 18.342602,
+      "lon": 103.671846,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.05,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 520,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-003214": {
+      "facility_id": "65-003214",
+      "feeder_id": "BUA03",
+      "lat": 18.330514,
+      "lon": 103.631857,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 17,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 17,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 2.97,
+        "estimated_drive_minutes": 3,
+        "duration_seconds": 179,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-006228": {
+      "facility_id": "65-006228",
+      "feeder_id": "BUB07",
+      "lat": 18.362664,
+      "lon": 103.653068,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 134,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 133,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.52,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 426,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-010992": {
+      "facility_id": "65-010992",
+      "feeder_id": "BUA07",
+      "lat": 18.353079,
+      "lon": 103.670773,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 69,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.83,
+        "estimated_drive_minutes": 12,
+        "duration_seconds": 683,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-015695": {
+      "facility_id": "65-015695",
+      "feeder_id": "BUA03",
+      "lat": 18.333577,
+      "lon": 103.721278,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 22,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 14.25,
+        "estimated_drive_minutes": 14,
+        "duration_seconds": 817,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-027998": {
+      "facility_id": "65-027998",
+      "feeder_id": "BUA07",
+      "lat": 18.338815,
+      "lon": 103.644956,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 6,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 6,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.72,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 395,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-107451": {
+      "facility_id": "65-107451",
+      "feeder_id": "BUA07",
+      "lat": 18.34715,
+      "lon": 103.672825,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.01,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 557,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "65-109538": {
+      "facility_id": "65-109538",
+      "feeder_id": "BUA07",
+      "lat": 18.354329,
+      "lon": 103.659803,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 1,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.14,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 450,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-004050": {
+      "facility_id": "66-004050",
+      "feeder_id": "BUA04",
+      "lat": 18.349432,
+      "lon": 103.632321,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 2,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.57,
+        "estimated_drive_minutes": 8,
+        "duration_seconds": 434,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-012004": {
+      "facility_id": "66-012004",
+      "feeder_id": "BUB07",
+      "lat": 18.364752,
+      "lon": 103.65903,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 23,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.18,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 520,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-014523": {
+      "facility_id": "66-014523",
+      "feeder_id": "BUA07",
+      "lat": 18.354664,
+      "lon": 103.654945,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 17,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 16,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.47,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 381,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-014525": {
+      "facility_id": "66-014525",
+      "feeder_id": "BUB07",
+      "lat": 18.365433,
+      "lon": 103.658081,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 87,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.05,
+        "estimated_drive_minutes": 9,
+        "duration_seconds": 502,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-015201": {
+      "facility_id": "66-015201",
+      "feeder_id": "BUA07",
+      "lat": 18.354583,
+      "lon": 103.655503,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 12,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 12,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.56,
+        "estimated_drive_minutes": 7,
+        "duration_seconds": 393,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-016324": {
+      "facility_id": "66-016324",
+      "feeder_id": "BUB07",
+      "lat": 18.356578,
+      "lon": 103.642922,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 75,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.71,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 271,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-019434": {
+      "facility_id": "66-019434",
+      "feeder_id": "BUB07",
+      "lat": 18.359064,
+      "lon": 103.666214,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 8.19,
+        "estimated_drive_minutes": 12,
+        "duration_seconds": 676,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "66-107030": {
+      "facility_id": "66-107030",
+      "feeder_id": "BUB07",
+      "lat": 18.354744,
+      "lon": 103.659685,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 2,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": 2,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 7.7,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 543,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "67-006308": {
+      "facility_id": "67-006308",
+      "feeder_id": "BUA04",
+      "lat": 18.354758,
+      "lon": 103.628839,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 113,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.75,
+        "estimated_drive_minutes": 6,
+        "duration_seconds": 358,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "67-007077": {
+      "facility_id": "67-007077",
+      "feeder_id": "BUA03",
+      "lat": 18.35436,
+      "lon": 103.63801,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 53,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 4.72,
+        "estimated_drive_minutes": 5,
+        "duration_seconds": 283,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "67-023116": {
+      "facility_id": "67-023116",
+      "feeder_id": "BUA03",
+      "lat": 18.344488,
+      "lon": 103.667003,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.6,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 551,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "67-027576": {
+      "facility_id": "67-027576",
+      "feeder_id": "BUA03",
+      "lat": 18.343284,
+      "lon": 103.670711,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 39,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 9.23,
+        "estimated_drive_minutes": 10,
+        "duration_seconds": 542,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "67-027578": {
+      "facility_id": "67-027578",
+      "feeder_id": "BUA07",
+      "lat": 18.337641,
+      "lon": 103.705233,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 18,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 12.58,
+        "estimated_drive_minutes": 14,
+        "duration_seconds": 835,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "69-005337": {
+      "facility_id": "69-005337",
+      "feeder_id": "BUA07",
+      "lat": 18.326916,
+      "lon": 103.662412,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 46,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 6.86,
+        "estimated_drive_minutes": 12,
+        "duration_seconds": 688,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    },
+    "99-999928": {
+      "facility_id": "99-999928",
+      "feeder_id": "BUA03",
+      "lat": 18.345623,
+      "lon": 103.639471,
+      "crs": "EPSG:4326",
+      "source": "PEA_GIS_LAYER17",
+      "downstream_meter_count": 1,
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_trace_status": "OK",
+      "gis_number_of_user": null,
+      "route_from_pea_buengkan": {
+        "status": "OK",
+        "road_distance_km": 3.52,
+        "estimated_drive_minutes": 4,
+        "duration_seconds": 210,
+        "origin": {
+          "name": "PEA Bueng Kan Provincial Office",
+          "lat": 18.323300448481316,
+          "lon": 103.63348560640729,
+          "crs": "EPSG:4326"
+        },
+        "routing_source": "OSRM_PUBLIC_DRIVING_TABLE",
+        "routing_method": "ROAD_NETWORK_FASTEST_DRIVING_PROFILE",
+        "traffic_aware": false,
+        "google_maps_exact": false
+      }
+    }
+  },
+  "summary": {
+    "trace_ok_count": 95,
+    "trace_failed_count": 0,
+    "route_ok_count": 95,
+    "route_failed_count": 0,
+    "sum_downstream_meter_count": 3170,
+    "max_abs_trace_vs_layer17_numberofuser_difference": 12
+  },
+  "guardrails": {
+    "raw_meter_ids_persisted": false,
+    "customer_identity_persisted": false,
+    "route_uses_live_traffic": false,
+    "google_maps_exact": false,
+    "mode": "shadow",
+    "production_send": "blocked"
+  }
+}

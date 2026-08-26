@@ -34,6 +34,9 @@ type PlaceTransformerCandidate struct {
 	FeederID                      string               `json:"feeder_id"`
 	Location                      *TransformerLocation `json:"location"`
 	ApproxSourceToLVDistanceM     *float64             `json:"approx_source_to_lv_distance_m"`
+	DownstreamMeterCount          *int                 `json:"downstream_meter_count,omitempty"`
+	PotentialImpactSemantics      string               `json:"potential_impact_semantics,omitempty"`
+	RouteFromPEABuengKan          *TransformerRoute    `json:"route_from_pea_buengkan,omitempty"`
 	EvidenceType                  string               `json:"evidence_type"`
 }
 
@@ -311,10 +314,25 @@ func publicPlaceMatch(place Place, matched []string) PlaceMatch {
 		Scope:           place.Scope,
 		Location:        place.Location,
 		Sources:         append([]PlaceSource{}, place.Sources...),
-		Topology:        place.Topology,
+		Topology:        publicPlaceTopology(place.Topology),
 		Validation:      place.Validation,
 		MatchedAliases:  append([]string{}, matched...),
 	}
+}
+
+func publicPlaceTopology(topology PlaceTopology) PlaceTopology {
+	out := topology
+	out.TransformerCandidates = append([]PlaceTransformerCandidate{}, topology.TransformerCandidates...)
+	for i := range out.TransformerCandidates {
+		candidate := &out.TransformerCandidates[i]
+		if operational, ok := transformerOperationalAsset(candidate.FacilityID); ok {
+			candidate.DownstreamMeterCount = operational.DownstreamMeterCount
+			candidate.PotentialImpactSemantics = "DOWNSTREAM_METER_COUNT_IF_THIS_TRANSFORMER_IS_CONFIRMED_OUT"
+			route := operational.RouteFromPEABuengKan
+			candidate.RouteFromPEABuengKan = &route
+		}
+	}
+	return out
 }
 
 func normalizePlaceSearch(value string) string {

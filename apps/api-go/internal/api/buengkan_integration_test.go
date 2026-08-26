@@ -257,3 +257,20 @@ func TestOutageUnknownPlaceObservationIsIdempotentAndHashOnly(t *testing.T) {
 	place := decodeBody(t, first)["place_resolution"].(map[string]any)
 	if place["discovery_status"] != "QUEUED_HASH_ONLY" { t.Fatalf("expected queued discovery status: %#v", place) }
 }
+
+func TestTransformerLookupIncludesDownstreamMeterPotentialImpactAndRoute(t *testing.T) {
+    h := NewServer(ServerConfig{APIKey: "pilot-key"}, newFakeStore())
+    req := httptest.NewRequest(http.MethodGet, transformerPathPrefix+"63-006344", nil)
+    req.Header.Set("X-API-Key", "pilot-key")
+    res := httptest.NewRecorder()
+    h.ServeHTTP(res, req)
+    if res.Code != http.StatusOK { t.Fatalf("expected 200, got %d: %s", res.Code, res.Body.String()) }
+    payload := decodeBody(t, res)
+    asset := payload["asset"].(map[string]any)
+    if asset["downstream_meter_count"].(float64) != 135 { t.Fatalf("unexpected downstream meter count: %#v", asset) }
+    if asset["potential_impact_semantics"] != "DOWNSTREAM_METER_COUNT_IF_THIS_TRANSFORMER_IS_CONFIRMED_OUT" { t.Fatalf("unsafe impact semantics: %#v", asset) }
+    if asset["outage_state"] != "UNDETERMINED" { t.Fatalf("asset context must not confirm outage: %#v", asset) }
+    route := asset["route_from_pea_buengkan"].(map[string]any)
+    if route["status"] != "OK" || route["traffic_aware"] != false || route["google_maps_exact"] != false { t.Fatalf("unexpected route semantics: %#v", route) }
+    if route["road_distance_km"].(float64) <= 0 || route["estimated_drive_minutes"].(float64) < 1 { t.Fatalf("invalid route metrics: %#v", route) }
+}

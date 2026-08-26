@@ -14,6 +14,17 @@ type APITransformer = {
     crs?: string;
     source?: string;
   };
+  downstream_meter_count?: number | null;
+  potential_impact_semantics?: string;
+  route_from_pea_buengkan?: {
+    status?: string;
+    road_distance_km?: number;
+    estimated_drive_minutes?: number;
+    routing_source?: string;
+    routing_method?: string;
+    traffic_aware?: boolean;
+    google_maps_exact?: boolean;
+  };
 };
 
 type APIResolution = {
@@ -78,7 +89,18 @@ function adaptResolution(resolution: APIResolution) {
       feederId: String(item.feeder_id ?? ""),
       lat: Number(item.location?.lat ?? 0),
       lon: Number(item.location?.lon ?? 0),
-      crs: String(item.location?.crs ?? "EPSG:4326")
+      crs: String(item.location?.crs ?? "EPSG:4326"),
+      downstreamMeterCount: item.downstream_meter_count == null ? null : Number(item.downstream_meter_count),
+      potentialImpactSemantics: item.potential_impact_semantics,
+      routeFromPeaBuengKan: item.route_from_pea_buengkan ? {
+        status: item.route_from_pea_buengkan.status,
+        roadDistanceKm: item.route_from_pea_buengkan.road_distance_km,
+        estimatedDriveMinutes: item.route_from_pea_buengkan.estimated_drive_minutes,
+        routingSource: item.route_from_pea_buengkan.routing_source,
+        routingMethod: item.route_from_pea_buengkan.routing_method,
+        trafficAware: Boolean(item.route_from_pea_buengkan.traffic_aware),
+        googleMapsExact: Boolean(item.route_from_pea_buengkan.google_maps_exact)
+      } : null
     })).filter((item) => item.facilityId),
     villageTransformerCandidates: service.map((item) => String(item.facility_id ?? "")).filter(Boolean).sort(),
     villageTransformerDetails: service.map((item) => ({
@@ -86,7 +108,18 @@ function adaptResolution(resolution: APIResolution) {
       feederId: String(item.feeder_id ?? ""),
       lat: Number(item.location?.lat ?? 0),
       lon: Number(item.location?.lon ?? 0),
-      crs: String(item.location?.crs ?? "EPSG:4326")
+      crs: String(item.location?.crs ?? "EPSG:4326"),
+      downstreamMeterCount: item.downstream_meter_count == null ? null : Number(item.downstream_meter_count),
+      potentialImpactSemantics: item.potential_impact_semantics,
+      routeFromPeaBuengKan: item.route_from_pea_buengkan ? {
+        status: item.route_from_pea_buengkan.status,
+        roadDistanceKm: item.route_from_pea_buengkan.road_distance_km,
+        estimatedDriveMinutes: item.route_from_pea_buengkan.estimated_drive_minutes,
+        routingSource: item.route_from_pea_buengkan.routing_source,
+        routingMethod: item.route_from_pea_buengkan.routing_method,
+        trafficAware: Boolean(item.route_from_pea_buengkan.traffic_aware),
+        googleMapsExact: Boolean(item.route_from_pea_buengkan.google_maps_exact)
+      } : null
     })).filter((item) => item.facilityId),
     villageTransformerGroups,
     footprintConfidence: resolution.topology_confidence,

@@ -92,6 +92,10 @@ type TransformerResult struct {
 	AssetIDType    string             `json:"asset_id_type"`
 	FeederID       string             `json:"feeder_id"`
 	Location       TransformerLocation `json:"location"`
+	DownstreamMeterCount *int         `json:"downstream_meter_count,omitempty"`
+	DownstreamMeterCountSource string  `json:"downstream_meter_count_source,omitempty"`
+	PotentialImpactSemantics string    `json:"potential_impact_semantics,omitempty"`
+	RouteFromPEABuengKan *TransformerRoute `json:"route_from_pea_buengkan,omitempty"`
 	EvidenceType   string             `json:"evidence_type"`
 	CandidateScope string             `json:"candidate_scope"`
 	OutageState    string             `json:"outage_state"`
@@ -378,7 +382,7 @@ func transformerResults(ids []string, scope string) []TransformerResult {
 		seen[id] = true
 		tx, ok := defaultRegistry.TransformerCatalog[id]
 		if !ok { continue }
-		result = append(result, TransformerResult{
+		item := TransformerResult{
 			FacilityID: tx.FacilityID,
 			AssetIDType: "PEA_GIS_FACILITYID",
 			FeederID: tx.FeederID,
@@ -386,7 +390,15 @@ func transformerResults(ids []string, scope string) []TransformerResult {
 			EvidenceType: "LV_SERVICE_TRACE_CONFIRMED",
 			CandidateScope: scope,
 			OutageState: OutageState,
-		})
+		}
+		if operational, found := transformerOperationalAsset(id); found {
+			item.DownstreamMeterCount = operational.DownstreamMeterCount
+			item.DownstreamMeterCountSource = operational.DownstreamMeterCountSource
+			item.PotentialImpactSemantics = "DOWNSTREAM_METER_COUNT_IF_THIS_TRANSFORMER_IS_CONFIRMED_OUT"
+			route := operational.RouteFromPEABuengKan
+			item.RouteFromPEABuengKan = &route
+		}
+		result = append(result, item)
 	}
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].FeederID == result[j].FeederID { return result[i].FacilityID < result[j].FacilityID }
