@@ -407,7 +407,7 @@ func (s *PostgresStore) InsertPlannedOutageDecision(ctx context.Context, decisio
 	if mode == "" { mode = "shadow" }
 	productionSend := decision.ProductionSend
 	if productionSend == "" { productionSend = "blocked" }
-	_, err = tx.Exec(ctx, `
+	tag, err := tx.Exec(ctx, `
 		INSERT INTO planned_outage_decisions (
 			ticket_id, revision, decision_hash, recorded_at, occurred_at, session_ref_hash,
 			province, district, subdistrict, location_text, decision, source_mode,
@@ -415,18 +415,16 @@ func (s *PostgresStore) InsertPlannedOutageDecision(ctx context.Context, decisio
 			notice_revision_hash, evidence_json, raw_snapshot_json, raw_snapshot_expires_at,
 			mode, production_send
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+		ON CONFLICT (decision_hash) DO NOTHING
 	`, decision.TicketID, revision, decision.DecisionHash, decision.RecordedAt, decision.OccurredAt,
 		decision.SessionRefHash, decision.Province, decision.District, decision.Subdistrict,
 		decision.LocationText, decision.Decision, decision.SourceMode, decision.SourceFetchedAt,
 		decision.SourceHash, decision.SourceStale, decision.SourceChanged, decision.NoticeID,
 		decision.NoticeRevisionHash, evidence, raw, decision.RawSnapshotExpiresAt, mode, productionSend)
-	if err != nil {
-		if IsUniqueViolation(err) { return true, tx.Commit(ctx) }
-		return false, err
-	}
-	return false, tx.Commit(ctx)
+	if err != nil { return false, err }
+	duplicate := tag.RowsAffected() == 0
+	return duplicate, tx.Commit(ctx)
 }
-
 func (s *PostgresStore) GetLatestPlannedOutageDecision(ctx context.Context, ticketID string) (*PlannedOutageDecision, error) {
 	var item PlannedOutageDecision
 	err := s.pool.QueryRow(ctx, `
