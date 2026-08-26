@@ -157,3 +157,23 @@ RBAC uses least privilege with separated roles such as Viewer, Operator, Supervi
 7. Shadow evaluation, calibration, side-by-side version comparison, canary and controlled rollout.
 
 No phase may change current customer-facing n8n v1 behavior unless an explicit later capability/version gate is approved.
+
+
+## Phase 2 implementation status — durable async worker
+
+Implemented on feature branch only; not enabled in production by this change.
+
+Runtime feature flag:
+- `INCIDENT_CORRELATION_MODE=off|shadow` (default `off`)
+- `INCIDENT_CORRELATION_MAX_ATTEMPTS` (default 5)
+- `INCIDENT_CORRELATION_POLL_MS` (default 1000)
+- `INCIDENT_CORRELATION_LEASE_SECONDS` (default 30)
+- `INCIDENT_CORRELATION_SNAPSHOT_LIMIT` (default 1000; computational bound, not a temporal eligibility cutoff)
+
+Accepted chatbot reports are captured into a privacy-safe correlation record/evidence revision and durable PostgreSQL job. `NEEDS_MORE_INFO` reports do not enter correlation. The queue write occurs only after the authoritative Core report has been durably accepted; correlation computation is asynchronous and its failure never changes the legacy chatbot ACK semantics. The queue capture is attempted before the HTTP ACK is serialized to minimize the process-crash gap, but capture failure remains non-gating and is recorded only as a safe operational warning.
+
+Job lifecycle is durable: `PENDING -> PROCESSING -> RETRYING -> SUCCEEDED/FAILED`. Workers claim with `FOR UPDATE SKIP LOCKED`, bounded attempts, exponential backoff and a lease. An expired `PROCESSING` lease can be reclaimed after process loss. Job payload contains report/evidence references only, never customer name/phone/raw chat/API secrets.
+
+Concurrency uses an ordered set of scoped PostgreSQL advisory locks derived from feeder, upstream protection, transformer and the administrative fallback scope. Related jobs therefore share at least one deterministic lock even when evidence completeness differs, without taking a whole-system lock. Candidate retrieval is topology-first; known unrelated electrical scopes do not re-enter through administrative similarity. Common upstream protection can keep cross-feeder reports in the same candidate scope. Cluster revisions additionally use optimistic `expected_revision`; stale writers return a revision conflict and are retried from current state. No whole-system correlation lock is used.
+
+Phase 2 persists pairwise relationship revisions, suspected-cluster revisions, versioned report membership and merge/split lineage. It remains Shadow-only: no Operational Incident, Work Order, root-cause confirmation, n8n correlation action, or customer-facing message is created by this worker.

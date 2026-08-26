@@ -193,14 +193,18 @@ func (s *PostgresStore) InsertCorrelationClusterRevision(ctx context.Context, re
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, err
 	}
-	var next int
+	var current int
 	if err := tx.QueryRow(ctx, `
-		SELECT coalesce(max(revision),0)+1
+		SELECT coalesce(max(revision),0)
 		FROM correlation_cluster_revisions
 		WHERE cluster_id=$1
-	`, revision.ClusterID).Scan(&next); err != nil {
+	`, revision.ClusterID).Scan(&current); err != nil {
 		return 0, false, err
 	}
+	if revision.ExpectedRevision != nil && current != *revision.ExpectedRevision {
+		return 0, false, ErrCorrelationRevisionConflict
+	}
+	next := current + 1
 	createdAt := revision.CreatedAt
 	if createdAt.IsZero() {
 		createdAt = time.Now().UTC()

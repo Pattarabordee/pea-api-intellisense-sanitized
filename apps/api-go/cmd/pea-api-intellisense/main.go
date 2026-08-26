@@ -2,16 +2,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"pea-api-intellisense/apps/api-go/internal/api"
 	"pea-api-intellisense/apps/api-go/internal/config"
+	"pea-api-intellisense/apps/api-go/internal/correlation"
 	"pea-api-intellisense/apps/api-go/internal/storage"
 )
 
@@ -39,20 +42,40 @@ func main() {
 	}
 
 	handler := api.NewServer(api.ServerConfig{
-		APIKey:                       cfg.APIKey,
-		OutageIntegrationAPIKey:      cfg.OutageIntegrationAPIKey,
-		RateLimitPerMinute:           cfg.RateLimitPerMinute,
-		AllowedOrigin:                cfg.AllowedOrigin,
-		ProductionSendMode:           cfg.ProductionSendMode,
-		CallbackTransport:            cfg.CallbackTransport,
-		EmergencyOff:                 cfg.EmergencyOff,
-		PlannedOutageMode:            cfg.PlannedOutageMode,
-		PlannedOutageBaseURL:         cfg.PlannedOutageBaseURL,
-		PlannedOutageTTLSeconds:      cfg.PlannedOutageTTLSeconds,
-		PlannedOutageHotTTLSeconds:   cfg.PlannedOutageHotTTLSeconds,
-		PlannedOutageTimeoutMS:       cfg.PlannedOutageTimeoutMS,
-		Logger:                       logger,
+		APIKey:                         cfg.APIKey,
+		OutageIntegrationAPIKey:        cfg.OutageIntegrationAPIKey,
+		RateLimitPerMinute:             cfg.RateLimitPerMinute,
+		AllowedOrigin:                  cfg.AllowedOrigin,
+		ProductionSendMode:             cfg.ProductionSendMode,
+		CallbackTransport:              cfg.CallbackTransport,
+		EmergencyOff:                   cfg.EmergencyOff,
+		PlannedOutageMode:              cfg.PlannedOutageMode,
+		PlannedOutageBaseURL:           cfg.PlannedOutageBaseURL,
+		PlannedOutageTTLSeconds:        cfg.PlannedOutageTTLSeconds,
+		PlannedOutageHotTTLSeconds:     cfg.PlannedOutageHotTTLSeconds,
+		PlannedOutageTimeoutMS:         cfg.PlannedOutageTimeoutMS,
+		IncidentCorrelationMode:        cfg.IncidentCorrelationMode,
+		IncidentCorrelationMaxAttempts: cfg.IncidentCorrelationMaxAttempts,
+		Logger:                         logger,
 	}, store)
+
+	if strings.EqualFold(strings.TrimSpace(cfg.IncidentCorrelationMode), "shadow") {
+		workerID := fmt.Sprintf("correlation-%d", os.Getpid())
+		worker := correlation.NewWorker(store, correlation.WorkerConfig{
+			WorkerID:      workerID,
+			PollInterval:  time.Duration(cfg.IncidentCorrelationPollMS) * time.Millisecond,
+			LeaseDuration: time.Duration(cfg.IncidentCorrelationLeaseSeconds) * time.Second,
+			SnapshotLimit: cfg.IncidentCorrelationSnapshotLimit,
+			EngineConfig:  correlation.DefaultShadowConfig(),
+			Logger:        logger,
+		})
+		go worker.Run(ctx)
+		logger.Info("incident correlation shadow worker enabled",
+			"engine_version", correlation.EngineVersion,
+			"poll_ms", cfg.IncidentCorrelationPollMS,
+			"lease_seconds", cfg.IncidentCorrelationLeaseSeconds,
+			"snapshot_limit", cfg.IncidentCorrelationSnapshotLimit)
+	}
 
 	server := &http.Server{
 		Addr:              ":" + strconv.Itoa(cfg.Port),

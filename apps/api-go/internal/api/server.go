@@ -56,6 +56,8 @@ type ServerConfig struct {
 	PlannedOutageTTLSeconds int
 	PlannedOutageHotTTLSeconds int
 	PlannedOutageTimeoutMS int
+	IncidentCorrelationMode string
+	IncidentCorrelationMaxAttempts int
 	Logger             *slog.Logger
 }
 

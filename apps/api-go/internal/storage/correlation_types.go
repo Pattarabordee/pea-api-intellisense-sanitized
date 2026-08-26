@@ -2,8 +2,11 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 )
+
+var ErrCorrelationRevisionConflict = errors.New("correlation revision conflict")
 
 // CorrelationReport is the durable, privacy-safe identity for one accepted
 // chatbot/outage report. It intentionally excludes customer name/phone/raw text.
@@ -60,6 +63,7 @@ type CorrelationCluster struct {
 type CorrelationClusterRevision struct {
 	ClusterID              string
 	Revision               int
+	ExpectedRevision       *int
 	DecisionHash           string
 	LifecycleState         string
 	CorrelationStatus      string
@@ -95,4 +99,27 @@ type CorrelationClusterLineage struct {
 	Reason          string
 	EngineVersion   string
 	CreatedAt       time.Time
+}
+
+type CorrelationJob struct {
+	JobID                   string
+	ReportID                string
+	JobType                 string
+	TriggerKey              string
+	TriggerEvidenceRevision int
+	State                   string
+	AttemptCount            int
+	MaxAttempts             int
+	AvailableAt             time.Time
+	LeaseUntil              *time.Time
+	ClaimedBy               string
+	LastErrorClass          string
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	CompletedAt             *time.Time
+}
+
+type CorrelationReportSnapshot struct {
+	Report   CorrelationReport
+	Evidence CorrelationEvidenceRevision
 }

@@ -120,8 +120,10 @@ func (s *Server) handleChatbotReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	plannedState := "NOT_CHECKED"
 	if s.plannedOutage != nil {
 		shadow := s.plannedOutage.checkAndPersist(r.Context(), input)
+		plannedState = shadow.Decision
 		s.cfg.Logger.Info("planned outage gate shadow decision",
 			"ticket_ref", hashReference("chatbot_ticket", input.Report.TicketID),
 			"decision", shadow.Decision,
@@ -130,7 +132,6 @@ func (s *Server) handleChatbotReport(w http.ResponseWriter, r *http.Request) {
 			"configured_mode", s.plannedOutage.mode,
 			"enforced", false)
 	}
-
 	requestID := outageRequestID(chatbotInternalChannel, input.Report.TicketID)
 	message := chatbotOutageMessage(input.Report)
 	preflight := buengkan.Resolve(message)
@@ -192,6 +193,7 @@ func (s *Server) handleChatbotReport(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Internal outage resolver returned an invalid response", requestID))
 		return
 	}
+	s.captureCorrelationShadow(r.Context(), input, resolved, plannedState)
 	ack := chatbotAckFromOutageResult(input.Report.TicketID, resolved)
 	writeJSON(w, captured.status, ack)
 }
