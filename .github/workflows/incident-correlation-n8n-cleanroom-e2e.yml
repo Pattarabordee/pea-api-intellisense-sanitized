@@ -1,0 +1,164 @@
+name: Incident Correlation n8n Cleanroom E2E
+
+on:
+  pull_request:
+    branches:
+      - feat/incident-correlation-shadow-v1-20260826
+  workflow_dispatch:
+
+jobs:
+  n8n-cleanroom-e2e:
+    name: n8n 2.33.3 + PostgreSQL + Go API shadow E2E
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pea_n8n_e2e
+          POSTGRES_PASSWORD: pea_n8n_e2e_password
+          POSTGRES_DB: pea_n8n_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U pea_n8n_e2e -d pea_n8n_e2e"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: postgres://pea_n8n_e2e:pea_n8n_e2e_password@127.0.0.1:5432/pea_n8n_e2e?sslmode=disable
+      AIS_INBOUND_API_KEY: synthetic-ais-n8n-e2e-key
+      OUTAGE_INTEGRATION_API_KEY: synthetic-outage-n8n-e2e-key
+      INCIDENT_CORRELATION_MODE: shadow
+      INCIDENT_CORRELATION_POLL_MS: "100"
+      PRODUCTION_SEND_MODE: blocked
+      CALLBACK_TRANSPORT: dry_run
+      EMERGENCY_OFF: "false"
+      PLANNED_OUTAGE_MODE: off
+      RATE_LIMIT_PER_MINUTE: "1000"
+      PORT: "8090"
+      N8N_IMAGE: docker.n8n.io/n8nio/n8n:2.33.3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache-dependency-path: apps/api-go/go.sum
+
+      - name: Validate synthetic n8n workflow fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('tests/fixtures/n8n/incident_correlation_shadow_e2e.workflow.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          assert d['name'] == 'PEA Incident Correlation Shadow Cleanroom E2E', d.get('name')
+          assert len(d['nodes']) == 12, len(d['nodes'])
+          text = p.read_text(encoding='utf-8')
+          assert 'synthetic-outage-n8n-e2e-key' not in text
+          print('n8n fixture validation PASS')
+          PY
+
+      - name: Start integrated Phase-2 shadow API
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/api-go
+          go run ./cmd/pea-api-intellisense > "$RUNNER_TEMP/pea-api-n8n-e2e.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/pea-api-n8n-e2e.pid"
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8090/health > "$RUNNER_TEMP/health.json"; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8090/health > "$RUNNER_TEMP/health.json"
+          python3 - <<'PY'
+          import json, os
+          d = json.load(open(os.environ['RUNNER_TEMP'] + '/health.json', encoding='utf-8'))
+          assert d['status'] == 'ok', d
+          assert d['database'] == 'ok', d
+          assert d['mode'] == 'shadow', d
+          assert d['production_send'] == 'blocked', d
+          sc = d['send_control']
+          assert sc['mode'] == 'blocked', sc
+          assert sc['callback_transport'] == 'dry_run', sc
+          assert sc['production_send'] == 'blocked', sc
+          print('Phase-2 API health/send guardrails PASS')
+          PY
+
+      - name: Run workflow through real n8n 2.33.3 engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$N8N_IMAGE"
+          docker volume create pea-n8n-cleanroom-data >/dev/null
+          mkdir -p "$RUNNER_TEMP/n8n-evidence"
+          chmod 777 "$RUNNER_TEMP/n8n-evidence"
+
+          n8n_run() {
+            docker run --rm --network host \
+              -v pea-n8n-cleanroom-data:/home/node/.n8n \
+              -v "$PWD/tests/fixtures/n8n/incident_correlation_shadow_e2e.workflow.json:/fixtures/workflow.json:ro" \
+              -v "$RUNNER_TEMP/n8n-evidence:/evidence" \
+              -e PEA_API_BASE_URL=http://127.0.0.1:8090 \
+              -e PEA_API_KEY=synthetic-outage-n8n-e2e-key \
+              -e N8N_ENCRYPTION_KEY=synthetic-cleanroom-n8n-e2e-encryption-key \
+              -e N8N_BLOCK_ENV_ACCESS_IN_NODE=false \
+              -e N8N_RUNNERS_ENABLED=false \
+              -e N8N_DIAGNOSTICS_ENABLED=false \
+              -e N8N_VERSION_NOTIFICATIONS_ENABLED=false \
+              -e N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false \
+              "$N8N_IMAGE" "$@"
+          }
+
+          n8n_run import:workflow --input=/fixtures/workflow.json
+          n8n_run export:workflow --all --pretty --output=/evidence/exported-workflows.json
+
+          workflow_id=$(python3 - <<'PY'
+          import json, os
+          p = os.environ['RUNNER_TEMP'] + '/n8n-evidence/exported-workflows.json'
+          d = json.load(open(p, encoding='utf-8'))
+          rows = d if isinstance(d, list) else [d]
+          matches = [x for x in rows if x.get('name') == 'PEA Incident Correlation Shadow Cleanroom E2E']
+          assert len(matches) == 1, matches
+          value = str(matches[0].get('id') or '').strip()
+          assert value, matches[0]
+          print(value)
+          PY
+          )
+          echo "Resolved imported synthetic workflow ID"
+
+          set +e
+          n8n_run execute --id="$workflow_id" 2>&1 | tee "$RUNNER_TEMP/n8n-evidence/n8n-execute.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          test "$rc" = "0"
+          echo "n8n engine execution PASS"
+
+      - name: Assert backend durability after n8n execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          reports=$(PGPASSWORD=pea_n8n_e2e_password psql -h 127.0.0.1 -U pea_n8n_e2e -d pea_n8n_e2e -Atc 'select count(*) from correlation_reports;')
+          test "$reports" = "2"
+          active_memberships=$(PGPASSWORD=pea_n8n_e2e_password psql -h 127.0.0.1 -U pea_n8n_e2e -d pea_n8n_e2e -Atc "select count(*) from (select distinct on (report_id) report_id,membership_state from correlation_cluster_membership_revisions order by report_id,membership_revision desc) x where membership_state='ACTIVE';")
+          test "$active_memberships" = "2"
+          clusters=$(PGPASSWORD=pea_n8n_e2e_password psql -h 127.0.0.1 -U pea_n8n_e2e -d pea_n8n_e2e -Atc 'select count(*) from correlation_clusters;')
+          test "$clusters" -ge 1
+          echo "n8n durability PASS: 2 logical reports, 2 active memberships, cluster persisted"
+
+      - name: Upload redacted evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: incident-correlation-n8n-cleanroom-e2e-failure
+          path: |
+            ${{ runner.temp }}/health.json
+            ${{ runner.temp }}/n8n-evidence/exported-workflows.json
+            ${{ runner.temp }}/n8n-evidence/n8n-execute.log
+            ${{ runner.temp }}/pea-api-n8n-e2e.log
+          retention-days: 3

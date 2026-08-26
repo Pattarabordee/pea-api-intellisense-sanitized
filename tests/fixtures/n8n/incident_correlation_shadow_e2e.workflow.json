@@ -1,0 +1,375 @@
+{
+  "id": "PEACorrE2E000001",
+  "name": "PEA Incident Correlation Shadow Cleanroom E2E",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "cd0256e5-cb1f-4e6c-b1b0-9974f24e6107",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEA_API_BASE_URL + '/api/v1/chatbot-reports' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.PEA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"schema_version\":\"pea-chatbot-report.v1\",\"source\":{\"system\":\"n8n-pea-buengkan\",\"channel\":\"line\",\"event_id\":\"PEA-20260827-A1B2C3\",\"session_ref\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"occurred_at\":\"2026-08-27T00:20:00+07:00\"},\"report\":{\"ticket_id\":\"PEA-20260827-A1B2C3\",\"service_type\":\"power_outage\",\"incident_detail\":\"ไฟดับ synthetic n8n cleanroom e2e\",\"location\":{\"house_or_village\":\"บ้านดงหมากยาง หมู่ 7\",\"subdistrict\":\"บึงกาฬ\",\"district\":\"เมืองบึงกาฬ\",\"province\":\"บึงกาฬ\"},\"customer\":{\"name\":\"SYNTHETIC TEST ONLY\",\"phone\":\"0000000000\"},\"confirmed\":true,\"completed_at\":\"2026-08-26T17:20:00Z\"}}"
+      },
+      "id": "4d191731-3872-4a72-842b-1cdaeb3d9bc5",
+      "name": "POST Report 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.first().json; if(d.accept_status!=='ACCEPTED'||d.bot_action!=='SHOW_ACK'||d.duplicate!==false||d?.context?.outage_state!=='UNDETERMINED') throw new Error('E1 ACK assertion failed: '+JSON.stringify(d)); return [{json:{stage:'E1_PASS'}}];"
+      },
+      "id": "dc1f6cd8-3c64-4d92-a0ae-850b7e40d50b",
+      "name": "Assert Report 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEA_API_BASE_URL + '/api/v1/chatbot-reports' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.PEA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"schema_version\":\"pea-chatbot-report.v1\",\"source\":{\"system\":\"n8n-pea-buengkan\",\"channel\":\"line\",\"event_id\":\"PEA-20260827-A1B2C3\",\"session_ref\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"occurred_at\":\"2026-08-27T00:20:00+07:00\"},\"report\":{\"ticket_id\":\"PEA-20260827-A1B2C3\",\"service_type\":\"power_outage\",\"incident_detail\":\"ไฟดับ synthetic n8n cleanroom e2e\",\"location\":{\"house_or_village\":\"บ้านดงหมากยาง หมู่ 7\",\"subdistrict\":\"บึงกาฬ\",\"district\":\"เมืองบึงกาฬ\",\"province\":\"บึงกาฬ\"},\"customer\":{\"name\":\"SYNTHETIC TEST ONLY\",\"phone\":\"0000000000\"},\"confirmed\":true,\"completed_at\":\"2026-08-26T17:20:00Z\"}}"
+      },
+      "id": "3e9cc55b-918c-4ed1-bcb7-8bc0d3041059",
+      "name": "Retry Report 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.first().json; if(d.accept_status!=='ACCEPTED'||d.duplicate!==true) throw new Error('E2 retry assertion failed: '+JSON.stringify(d)); return [{json:{stage:'E2_PASS'}}];"
+      },
+      "id": "6680315d-01bf-438c-97ec-4e8f5bd9cd7b",
+      "name": "Assert Retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEA_API_BASE_URL + '/api/v1/chatbot-reports' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.PEA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"schema_version\":\"pea-chatbot-report.v1\",\"source\":{\"system\":\"n8n-pea-buengkan\",\"channel\":\"chat\",\"event_id\":\"PEA-20260827-D4E5F6\",\"session_ref\":\"sha256:2222222222222222222222222222222222222222222222222222222222222222\",\"occurred_at\":\"2026-08-27T00:23:00+07:00\"},\"report\":{\"ticket_id\":\"PEA-20260827-D4E5F6\",\"service_type\":\"power_outage\",\"incident_detail\":\"ไฟดับ synthetic n8n cleanroom e2e\",\"location\":{\"house_or_village\":\"บ้านดงหมากยาง หมู่ 7\",\"subdistrict\":\"บึงกาฬ\",\"district\":\"เมืองบึงกาฬ\",\"province\":\"บึงกาฬ\"},\"customer\":{\"name\":\"SYNTHETIC TEST ONLY\",\"phone\":\"0000000000\"},\"confirmed\":true,\"completed_at\":\"2026-08-26T17:23:00Z\"}}"
+      },
+      "id": "f9b8a4e5-7455-4ff6-8681-1c0ad437b9ce",
+      "name": "POST Report 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.first().json; if(d.accept_status!=='ACCEPTED'||d.duplicate!==false||d?.context?.outage_state!=='UNDETERMINED') throw new Error('E3 second ACK assertion failed: '+JSON.stringify(d)); return [{json:{stage:'REPORT2_PASS'}}];"
+      },
+      "id": "dba071aa-db79-4793-bb29-b67d590502ab",
+      "name": "Assert Report 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const until=Date.now()+2500; while(Date.now()<until){}; return [{json:{stage:'WAITED'}}];"
+      },
+      "id": "b21cccb4-a231-4109-9fc4-8f0bf2fca704",
+      "name": "Allow Correlation Worker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEA_API_BASE_URL + '/api/v1/chatbot-reports/PEA-20260827-A1B2C3/correlation' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.PEA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c23d4b9f-684d-4d56-8404-070fa5c4a624",
+      "name": "Correlation Report 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.first().json; const c=d.correlation||{}; if(d.schema_version!=='pea-chatbot-correlation-status.v1'||d.found!==true||c.available!==true||c.state!=='SUSPECTED_RELATED'||c.report_count!==2||d.bot_action!=='NO_CUSTOMER_ACTION'||d.customer_truth_changed!==false||d.operational_incident_confirmed!==false||d.root_cause_confirmed!==false||d.mode!=='shadow'||d.production_send!=='blocked'||('confidence_score' in c)||!String(c.cluster_ref||'').startsWith('correlation_cluster_')) throw new Error('E3 correlation1 assertion failed: '+JSON.stringify(d)); return [{json:{stage:'CORR1_PASS',cluster_ref:c.cluster_ref}}];"
+      },
+      "id": "3a4efc87-9df5-4866-be24-6c113d2e2445",
+      "name": "Assert Correlation 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEA_API_BASE_URL + '/api/v1/chatbot-reports/PEA-20260827-D4E5F6/correlation' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.PEA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "96a503f1-96c7-428a-8796-889d5f848d76",
+      "name": "Correlation Report 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.first().json; const c=d.correlation||{}; const first=$('Correlation Report 1').first().json.correlation||{}; if(c.available!==true||c.state!=='SUSPECTED_RELATED'||c.report_count!==2||d.bot_action!=='NO_CUSTOMER_ACTION'||d.customer_truth_changed!==false||d.operational_incident_confirmed!==false||d.root_cause_confirmed!==false||d.mode!=='shadow'||d.production_send!=='blocked'||('confidence_score' in c)||!String(c.cluster_ref||'').startsWith('correlation_cluster_')||c.cluster_ref!==first.cluster_ref) throw new Error('Final correlation assertion failed: '+JSON.stringify({current:d,first})); return [{json:{status:'N8N_CLEANROOM_E2E_PASS',cluster_ref:c.cluster_ref,report_count:c.report_count}}];"
+      },
+      "id": "f378e4ad-a047-4687-95b7-3f5901a3c44f",
+      "name": "Final Assertions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "POST Report 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Report 1": {
+      "main": [
+        [
+          {
+            "node": "Assert Report 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Report 1": {
+      "main": [
+        [
+          {
+            "node": "Retry Report 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Report 1": {
+      "main": [
+        [
+          {
+            "node": "Assert Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Retry": {
+      "main": [
+        [
+          {
+            "node": "POST Report 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Report 2": {
+      "main": [
+        [
+          {
+            "node": "Assert Report 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Report 2": {
+      "main": [
+        [
+          {
+            "node": "Allow Correlation Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Allow Correlation Worker": {
+      "main": [
+        [
+          {
+            "node": "Correlation Report 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Correlation Report 1": {
+      "main": [
+        [
+          {
+            "node": "Assert Correlation 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Correlation 1": {
+      "main": [
+        [
+          {
+            "node": "Correlation Report 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Correlation Report 2": {
+      "main": [
+        [
+          {
+            "node": "Final Assertions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "d42a088f-f9be-442f-9e84-8a4d8190886b",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
