@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -127,7 +128,7 @@ func TestPlannedOutageUnavailableDoesNotUseStaleCacheAsNoMatch(t *testing.T) {
 		httpClient: &http.Client{Timeout: 500 * time.Millisecond},
 		cache:      plannedOutageCache{snapshot: stale},
 	}
-	result := gate.check(t.Context(), chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"}, time.Now())
+	result := gate.check(context.Background(), chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"}, time.Now())
 	if result.Decision != "UNAVAILABLE" || !result.SourceStale {
 		t.Fatalf("stale source after refresh failure must be UNAVAILABLE, got %#v", result)
 	}
@@ -199,7 +200,7 @@ func TestPlannedOutageSourceChangeCreatesRevision(t *testing.T) {
 	store := newFakeStore()
 	gate := newPlannedOutageGate(ServerConfig{PlannedOutageMode: "shadow", PlannedOutageBaseURL: server.URL, PlannedOutageTimeoutMS: 500}, store)
 	input := plannedOutageTestInput("PEA-20260826-456DEF")
-	first := gate.checkAndPersist(t.Context(), input)
+	first := gate.checkAndPersist(context.Background(), input)
 	if first.Decision != "MATCHED" {
 		t.Fatalf("setup match failed: %#v", first)
 	}
@@ -209,7 +210,7 @@ func TestPlannedOutageSourceChangeCreatesRevision(t *testing.T) {
 	gate.mu.Lock()
 	gate.cache.snapshot.FetchedAt = time.Now().Add(-time.Hour)
 	gate.mu.Unlock()
-	second := gate.checkAndPersist(t.Context(), input)
+	second := gate.checkAndPersist(context.Background(), input)
 	if second.Decision != "MATCHED" {
 		t.Fatalf("revised source should remain matched: %#v", second)
 	}
