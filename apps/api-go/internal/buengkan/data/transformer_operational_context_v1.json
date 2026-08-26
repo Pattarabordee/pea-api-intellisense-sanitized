@@ -17,7 +17,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -45,7 +45,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -73,7 +73,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -101,7 +101,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 33,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 32,
       "route_from_pea_buengkan": {
@@ -129,7 +129,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 4,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 4,
       "route_from_pea_buengkan": {
@@ -157,7 +157,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 11,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 11,
       "route_from_pea_buengkan": {
@@ -185,7 +185,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 18,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 18,
       "route_from_pea_buengkan": {
@@ -213,7 +213,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 130,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 128,
       "route_from_pea_buengkan": {
@@ -241,7 +241,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -269,7 +269,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 87,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 83,
       "route_from_pea_buengkan": {
@@ -297,7 +297,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 35,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 34,
       "route_from_pea_buengkan": {
@@ -325,7 +325,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 18,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -353,7 +353,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 144,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -381,7 +381,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 115,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -409,7 +409,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 144,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -437,7 +437,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 13,
       "route_from_pea_buengkan": {
@@ -465,7 +465,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -493,7 +493,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 10,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -521,7 +521,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -549,7 +549,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -577,7 +577,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 59,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 57,
       "route_from_pea_buengkan": {
@@ -605,7 +605,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 18,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -633,7 +633,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -661,7 +661,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 173,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 175,
       "route_from_pea_buengkan": {
@@ -689,7 +689,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 2,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 2,
       "route_from_pea_buengkan": {
@@ -717,7 +717,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -745,7 +745,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 38,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 38,
       "route_from_pea_buengkan": {
@@ -773,7 +773,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 2,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 2,
       "route_from_pea_buengkan": {
@@ -801,7 +801,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -829,7 +829,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 34,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -857,7 +857,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -885,7 +885,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -913,7 +913,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -941,7 +941,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -969,7 +969,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -997,7 +997,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 102,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 99,
       "route_from_pea_buengkan": {
@@ -1025,7 +1025,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 9,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1053,7 +1053,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1081,7 +1081,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1109,7 +1109,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 46,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1137,7 +1137,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 3,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1165,7 +1165,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1193,7 +1193,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1221,7 +1221,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1249,7 +1249,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 20,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1277,7 +1277,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -1305,7 +1305,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -1333,7 +1333,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1361,7 +1361,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 26,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1389,7 +1389,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 8,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 9,
       "route_from_pea_buengkan": {
@@ -1417,7 +1417,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 265,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1445,7 +1445,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 29,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 28,
       "route_from_pea_buengkan": {
@@ -1473,7 +1473,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 16,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1501,7 +1501,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -1529,7 +1529,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 28,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1557,7 +1557,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 63,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1585,7 +1585,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 56,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1613,7 +1613,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 139,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 138,
       "route_from_pea_buengkan": {
@@ -1641,7 +1641,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 126,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1669,7 +1669,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 135,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1697,7 +1697,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 95,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1725,7 +1725,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 32,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1753,7 +1753,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 9,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 9,
       "route_from_pea_buengkan": {
@@ -1781,7 +1781,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 13,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 13,
       "route_from_pea_buengkan": {
@@ -1809,7 +1809,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 11,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1837,7 +1837,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 27,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1865,7 +1865,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 50,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1893,7 +1893,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -1921,7 +1921,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -1949,7 +1949,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 13,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 13,
       "route_from_pea_buengkan": {
@@ -1977,7 +1977,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 5,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 5,
       "route_from_pea_buengkan": {
@@ -2005,7 +2005,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -2033,7 +2033,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2061,7 +2061,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 17,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 17,
       "route_from_pea_buengkan": {
@@ -2089,7 +2089,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 134,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 133,
       "route_from_pea_buengkan": {
@@ -2117,7 +2117,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 69,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2145,7 +2145,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 22,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2173,7 +2173,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 6,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 6,
       "route_from_pea_buengkan": {
@@ -2201,7 +2201,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2229,7 +2229,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 1,
       "route_from_pea_buengkan": {
@@ -2257,7 +2257,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 2,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2285,7 +2285,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 23,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2313,7 +2313,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 17,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 16,
       "route_from_pea_buengkan": {
@@ -2341,7 +2341,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 87,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2369,7 +2369,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 12,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 12,
       "route_from_pea_buengkan": {
@@ -2397,7 +2397,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 75,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2425,7 +2425,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2453,7 +2453,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 2,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": 2,
       "route_from_pea_buengkan": {
@@ -2481,7 +2481,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 113,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2509,7 +2509,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 53,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2537,7 +2537,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2565,7 +2565,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 39,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2593,7 +2593,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 18,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2621,7 +2621,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 46,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
@@ -2649,7 +2649,7 @@
       "crs": "EPSG:4326",
       "source": "PEA_GIS_LAYER17",
       "downstream_meter_count": 1,
-      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_PEANO",
+      "downstream_meter_count_source": "PEA_NATIVE_TRACEDOWN_DS_LOWVOLTAGE_METER_DISTINCT_METER_ID_COUNT",
       "downstream_meter_trace_status": "OK",
       "gis_number_of_user": null,
       "route_from_pea_buengkan": {
