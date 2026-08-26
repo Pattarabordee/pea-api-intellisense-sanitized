@@ -143,3 +143,46 @@ func TestChatbotCorrelationStatusFailedWorkerIsUnavailableNotOutageFailure(t *te
 		t.Fatalf("worker failure must not rewrite accepted outage receipt: %#v", payload)
 	}
 }
+
+func TestChatbotCorrelationStatusPlannedOutageUsesSeparateSafeLane(t *testing.T) {
+	store, h, reportID := acceptedCorrelationFixture(t, "PEA-20260826-C0B106")
+	job := store.jobs[reportID]
+	job.State = "SUCCEEDED"
+	store.jobs[reportID] = job
+	snapshot := store.snapshots[reportID]
+	snapshot.Evidence.PlannedOutageState = "PLANNED_OUTAGE_MATCHED"
+	store.snapshots[reportID] = snapshot
+
+	res := callChatbotCorrelation(t, h, "PEA-20260826-C0B106", "n8n-key")
+	payload := decodeBody(t, res)
+	corr := payload["correlation"].(map[string]any)
+	if corr["state"] != "PLANNED_OUTAGE_LINKED" {
+		t.Fatalf("expected separate planned-outage lane: %#v", payload)
+	}
+	if payload["bot_action"] != "NO_CUSTOMER_ACTION" || payload["operational_incident_confirmed"] != false {
+		t.Fatalf("planned outage linkage must not become automatic customer/incident truth: %#v", payload)
+	}
+}
+
+func TestChatbotCorrelationStatusCoreAcceptedButCapabilityUnavailableFailsClosed(t *testing.T) {
+	store := newFakeStore()
+	h := NewServer(ServerConfig{
+		OutageIntegrationAPIKey: "n8n-key",
+		IncidentCorrelationMode: "off",
+	}, store)
+	body := chatbotTestBody("PEA-20260826-C0B107", "บ้านดงหมากยาง หมู่ 7", "บึงกาฬ", "บึงกาฬ", "บึงกาฬ", "power_outage")
+	post := callChatbotReport(t, h, body, "n8n-key")
+	if post.Code != http.StatusCreated {
+		t.Fatalf("expected accepted core report, got %d: %s", post.Code, post.Body.String())
+	}
+
+	res := callChatbotCorrelation(t, h, "PEA-20260826-C0B107", "n8n-key")
+	payload := decodeBody(t, res)
+	corr := payload["correlation"].(map[string]any)
+	if corr["state"] != "UNAVAILABLE" || corr["reason_code"] != "CORRELATION_STORE_UNAVAILABLE" {
+		t.Fatalf("expected safe capability unavailability: %#v", payload)
+	}
+	if payload["found"] != true || payload["customer_truth_changed"] != false || payload["production_send"] != "blocked" {
+		t.Fatalf("capability gap must not rewrite accepted core truth: %#v", payload)
+	}
+}
