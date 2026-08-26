@@ -12,8 +12,12 @@ import (
 
 type correlationCaptureStore struct {
 	*fakeStore
-	accepted []correlationCapturedRecord
-	fail     bool
+	accepted    []correlationCapturedRecord
+	fail        bool
+	snapshots   map[string]storage.CorrelationReportSnapshot
+	jobs        map[string]storage.CorrelationJob
+	memberships map[string]storage.CorrelationMembershipRevision
+	clusters    map[string]storage.CorrelationClusterRevision
 }
 
 type correlationCapturedRecord struct {
@@ -23,7 +27,13 @@ type correlationCapturedRecord struct {
 }
 
 func newCorrelationCaptureStore() *correlationCaptureStore {
-	return &correlationCaptureStore{fakeStore: newFakeStore()}
+	return &correlationCaptureStore{
+		fakeStore:   newFakeStore(),
+		snapshots:   map[string]storage.CorrelationReportSnapshot{},
+		jobs:        map[string]storage.CorrelationJob{},
+		memberships: map[string]storage.CorrelationMembershipRevision{},
+		clusters:    map[string]storage.CorrelationClusterRevision{},
+	}
 }
 
 func (s *correlationCaptureStore) AcceptCorrelationReport(_ context.Context, report storage.CorrelationReport, evidence storage.CorrelationEvidenceRevision, job storage.CorrelationJob) (string, int, bool, error) {
@@ -31,7 +41,49 @@ func (s *correlationCaptureStore) AcceptCorrelationReport(_ context.Context, rep
 		return "", 0, false, errors.New("synthetic correlation persistence failure")
 	}
 	s.accepted = append(s.accepted, correlationCapturedRecord{report: report, evidence: evidence, job: job})
+	evidence.ReportID = report.ReportID
+	evidence.Revision = 1
+	job.ReportID = report.ReportID
+	job.TriggerEvidenceRevision = 1
+	s.snapshots[report.ReportID] = storage.CorrelationReportSnapshot{Report: report, Evidence: evidence}
+	s.jobs[report.ReportID] = job
 	return report.ReportID, 1, len(s.accepted) > 1, nil
+}
+
+func (s *correlationCaptureStore) GetCorrelationReportSnapshot(_ context.Context, reportID string) (*storage.CorrelationReportSnapshot, error) {
+	item, ok := s.snapshots[reportID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+	copy := item
+	return &copy, nil
+}
+
+func (s *correlationCaptureStore) GetLatestCorrelationJobForReport(_ context.Context, reportID string) (*storage.CorrelationJob, error) {
+	item, ok := s.jobs[reportID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+	copy := item
+	return &copy, nil
+}
+
+func (s *correlationCaptureStore) GetLatestCorrelationMembership(_ context.Context, reportID string) (*storage.CorrelationMembershipRevision, error) {
+	item, ok := s.memberships[reportID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+	copy := item
+	return &copy, nil
+}
+
+func (s *correlationCaptureStore) GetLatestCorrelationClusterRevision(_ context.Context, clusterID string) (*storage.CorrelationClusterRevision, error) {
+	item, ok := s.clusters[clusterID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+	copy := item
+	return &copy, nil
 }
 
 func TestCorrelationShadowQueuesOnlyAfterAcceptedReport(t *testing.T) {
