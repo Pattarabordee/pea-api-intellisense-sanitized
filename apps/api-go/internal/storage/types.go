@@ -76,6 +76,7 @@ type BuengKanSecondaryValidation struct {
 	SourceRef             string
 	SourceLabel           string
 	ValidatorRef          string
+	ValidationScope       string
 	Priority              string
 	Verdict               string
 	CandidateTransformers json.RawMessage

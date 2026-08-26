@@ -40,11 +40,29 @@ func TestSecondaryValidationSingleCandidatePersistsCatalogTruth(t *testing.T) {
 	h.ServeHTTP(res, req)
 	if res.Code != http.StatusCreated { t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String()) }
 	payload := decodeBody(t, res)
-	if payload["selected_transformer"] != "65-006228" || payload["auto_promoted"] != false { t.Fatalf("unexpected response: %#v", payload) }
+	if payload["selected_transformer"] != "65-006228" || payload["validation_scope"] != "POI_POINT_FIELD_VALIDATION_ONLY" || payload["auto_promoted"] != false { t.Fatalf("unexpected response: %#v", payload) }
 	if len(store.secondaryValidation) != 1 { t.Fatalf("expected one stored validation") }
 	row := store.secondaryValidation[0]
-	if row.SourceLabel != "โรงพยาบาลบึงกาฬ" || row.Priority != "P1_HIGH_VALUE_SINGLE" || row.SelectedTransformer != "65-006228" {
+	if row.SourceLabel != "โรงพยาบาลบึงกาฬ" || row.ValidationScope != "POI_POINT_FIELD_VALIDATION_ONLY" || row.Priority != "P1_HIGH_VALUE_SINGLE" || row.SelectedTransformer != "65-006228" {
 		t.Fatalf("must persist trusted catalog fields: %#v", row)
+	}
+}
+
+func TestSecondaryValidationRoadScopeIsRepresentativePointOnly(t *testing.T) {
+	store := newFakeStore()
+	h := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"receipt_id":"BKV-ROAD-001","source_type":"ROAD_SOI","source_ref":"road:098a8fe5679b12d9","validator_ref":"validator_unit_1","verdict":"CORRECT"}`
+	req := httptest.NewRequest(http.MethodPost, buengKanSecondaryValidationPath, bytes.NewBufferString(body))
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	h.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated { t.Fatalf("road validation expected 201: %d %s", res.Code, res.Body.String()) }
+	payload := decodeBody(t, res)
+	if payload["validation_scope"] != "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY" || payload["auto_promoted"] != false {
+		t.Fatalf("road validation scope must remain representative-point only: %#v", payload)
+	}
+	if len(store.secondaryValidation) != 1 || store.secondaryValidation[0].ValidationScope != "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY" {
+		t.Fatalf("road ledger scope mismatch: %#v", store.secondaryValidation)
 	}
 }
 

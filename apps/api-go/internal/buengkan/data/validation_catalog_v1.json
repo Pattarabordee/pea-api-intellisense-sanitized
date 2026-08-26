@@ -58,7 +58,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -96,7 +96,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -134,7 +134,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -172,7 +172,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -210,7 +210,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -248,7 +248,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -286,7 +286,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -324,7 +324,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -362,7 +362,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -400,7 +400,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -438,7 +438,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -476,7 +476,7 @@
       ],
       "candidate_count": 1,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -514,7 +514,7 @@
       ],
       "candidate_count": 1,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -552,7 +552,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -590,7 +590,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -628,7 +628,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -666,7 +666,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -704,7 +704,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -742,7 +742,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -780,7 +780,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -818,7 +818,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -856,7 +856,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -894,7 +894,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -932,7 +932,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -970,7 +970,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1008,7 +1008,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1046,7 +1046,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1084,7 +1084,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1122,7 +1122,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1160,7 +1160,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1198,7 +1198,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1236,7 +1236,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1274,7 +1274,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1312,7 +1312,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1350,7 +1350,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1388,7 +1388,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1426,7 +1426,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1464,7 +1464,7 @@
       ],
       "candidate_count": 1,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1502,7 +1502,7 @@
       ],
       "candidate_count": 1,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1573,7 +1573,7 @@
       ],
       "candidate_count": 4,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1638,7 +1638,7 @@
       ],
       "candidate_count": 3,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1687,7 +1687,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1736,7 +1736,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1785,7 +1785,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1834,7 +1834,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1883,7 +1883,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1932,7 +1932,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -1981,7 +1981,7 @@
       ],
       "candidate_count": 2,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2041,7 +2041,7 @@
       ],
       "candidate_count": 3,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2134,7 +2134,7 @@
       ],
       "candidate_count": 6,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2370,7 +2370,7 @@
       ],
       "candidate_count": 19,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2485,7 +2485,7 @@
       ],
       "candidate_count": 8,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2511,7 +2511,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2537,7 +2537,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2563,7 +2563,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2589,7 +2589,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2615,7 +2615,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2641,7 +2641,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2667,7 +2667,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2705,7 +2705,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2731,7 +2731,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2757,7 +2757,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2783,7 +2783,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2809,7 +2809,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2835,7 +2835,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2861,7 +2861,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2887,7 +2887,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2913,7 +2913,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2939,7 +2939,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2965,7 +2965,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -2991,7 +2991,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3017,7 +3017,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3043,7 +3043,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3069,7 +3069,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3095,7 +3095,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3121,7 +3121,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3147,7 +3147,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3173,7 +3173,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3199,7 +3199,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3225,7 +3225,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3251,7 +3251,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3277,7 +3277,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3303,7 +3303,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3329,7 +3329,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3355,7 +3355,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3381,7 +3381,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3407,7 +3407,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3433,7 +3433,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3459,7 +3459,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3485,7 +3485,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3511,7 +3511,7 @@
       "candidates": [],
       "candidate_count": 0,
       "provenance": "OPENSTREETMAP_SECONDARY + LV_SERVICE_GRID_V1",
-      "candidate_scope": "FIELD_VALIDATION_ONLY",
+      "candidate_scope": "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     }
   ],

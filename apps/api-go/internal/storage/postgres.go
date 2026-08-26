@@ -264,13 +264,13 @@ func (s *PostgresStore) InsertBuengKanSecondaryValidation(ctx context.Context, v
 	if len(candidates) == 0 { candidates = json.RawMessage(`[]`) }
 	tag, err := s.pool.Exec(ctx, `
 		INSERT INTO buengkan_secondary_validation (
-			receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, priority, verdict,
+			receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, validation_scope, priority, verdict,
 			candidate_transformers, selected_transformer, correction_transformer, correction_feeder,
 			mode, production_send
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'shadow','blocked')
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'shadow','blocked')
 		ON CONFLICT (receipt_id) DO NOTHING
 	`, validation.ReceiptID, validation.RecordedAt, validation.SourceType, validation.SourceRef,
-		validation.SourceLabel, validation.ValidatorRef, validation.Priority, validation.Verdict, candidates,
+		validation.SourceLabel, validation.ValidatorRef, validation.ValidationScope, validation.Priority, validation.Verdict, candidates,
 		validation.SelectedTransformer, validation.CorrectionTransformer, validation.CorrectionFeeder)
 	if err != nil { return false, err }
 	return tag.RowsAffected() == 0, nil
@@ -279,7 +279,7 @@ func (s *PostgresStore) InsertBuengKanSecondaryValidation(ctx context.Context, v
 func (s *PostgresStore) ListBuengKanSecondaryValidation(ctx context.Context, limit int) ([]BuengKanSecondaryValidation, error) {
 	if limit <= 0 || limit > 2000 { limit = 500 }
 	rows, err := s.pool.Query(ctx, `
-		SELECT receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, priority, verdict,
+		SELECT receipt_id, recorded_at, source_type, source_ref, source_label, validator_ref, validation_scope, priority, verdict,
 			candidate_transformers, selected_transformer, correction_transformer, correction_feeder,
 			mode, production_send
 		FROM buengkan_secondary_validation
@@ -292,7 +292,7 @@ func (s *PostgresStore) ListBuengKanSecondaryValidation(ctx context.Context, lim
 	for rows.Next() {
 		var item BuengKanSecondaryValidation
 		if err := rows.Scan(&item.ReceiptID, &item.RecordedAt, &item.SourceType, &item.SourceRef,
-			&item.SourceLabel, &item.ValidatorRef, &item.Priority, &item.Verdict, &item.CandidateTransformers,
+			&item.SourceLabel, &item.ValidatorRef, &item.ValidationScope, &item.Priority, &item.Verdict, &item.CandidateTransformers,
 			&item.SelectedTransformer, &item.CorrectionTransformer, &item.CorrectionFeeder,
 			&item.Mode, &item.ProductionSend); err != nil { return nil, err }
 		result = append(result, item)

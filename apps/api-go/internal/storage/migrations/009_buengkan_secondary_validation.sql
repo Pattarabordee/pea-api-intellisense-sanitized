@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS buengkan_secondary_validation (
     source_ref TEXT NOT NULL,
     source_label TEXT NOT NULL,
     validator_ref TEXT NOT NULL DEFAULT '',
+    validation_scope TEXT NOT NULL DEFAULT 'FIELD_VALIDATION_ONLY',
     priority TEXT NOT NULL,
     verdict TEXT NOT NULL CHECK (verdict IN ('CORRECT','INCORRECT','UNSURE')),
     candidate_transformers JSONB NOT NULL DEFAULT '[]'::jsonb,

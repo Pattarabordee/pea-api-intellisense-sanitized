@@ -24,7 +24,7 @@ type CatalogItem = {
   candidates: Candidate[];
   candidate_count: number;
   provenance: string;
-  candidate_scope: string;
+  candidate_scope: "POI_POINT_FIELD_VALIDATION_ONLY" | "ROAD_REPRESENTATIVE_POINT_FIELD_VALIDATION_ONLY";
   outage_state: "UNDETERMINED";
 };
 
@@ -51,6 +51,7 @@ type ValidationRecord = {
   selected_transformer: string;
   correction_transformer: string;
   correction_feeder: string;
+  validation_scope?: string;
 };
 
 type ValidationData = {
@@ -149,7 +150,7 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
 
   const sourceMap = mapURL(item.source_location.lat, item.source_location.lon);
   return (
-    <article className={`${styles.itemCard} ${item.known_conflict ? styles.conflictCard : ""}`}>
+    <article data-validation-card={item.source_ref} className={`${styles.itemCard} ${item.known_conflict ? styles.conflictCard : ""}`}>
       <div className={styles.itemTop}>
         <div>
           <span className={styles.priority}>{priorityLabels[item.priority] ?? item.priority}</span>
@@ -173,7 +174,9 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
       </div>
 
       <div className={styles.truthWarning}>
-        ตำแหน่งใกล้สาย LV ≠ ยืนยันว่าอาคาร/ถนนรับไฟจาก TX นี้ ต้องตรวจจากหน้างานหรือหลักฐาน topology เพิ่มเติม
+        {item.source_type === "ROAD_SOI"
+          ? "ยืนยันเฉพาะความสัมพันธ์ ณ จุดตัวแทนที่เปิดบนแผนที่ ไม่ใช่ยืนยันว่าถนน/ซอยทั้งเส้นอยู่ TX เดียว และไม่ใช่หลักฐานว่า TX กำลังดับ"
+          : "ตำแหน่งใกล้สาย LV ≠ ยืนยันว่าอาคารรับไฟจาก TX นี้ ต้องตรวจจากหน้างานหรือหลักฐาน topology เพิ่มเติม และไม่ใช่หลักฐานว่า TX กำลังดับ"}
       </div>
 
       <div className={styles.candidates}>
@@ -183,19 +186,21 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
           const txMap = mapURL(candidate.location.lat, candidate.location.lon);
           const checked = selected === candidate.facility_id;
           return (
-            <label key={candidate.facility_id} className={`${styles.candidateCard} ${checked ? styles.candidateSelected : ""}`}>
-              {item.candidates.length > 1 && (
-                <input type="radio" name={`tx-${item.source_ref}`} value={candidate.facility_id} checked={checked} onChange={() => setSelected(candidate.facility_id)} />
-              )}
-              <span className={styles.candidateIndex}>{String(index + 1).padStart(2, "0")}</span>
-              <div className={styles.candidateBody}>
-                <strong>{candidate.facility_id}</strong>
-                <span>Feeder {candidate.feeder_id || "—"}</span>
-                <span>TX: {candidate.location.lat?.toFixed(6) ?? "—"}, {candidate.location.lon?.toFixed(6) ?? "—"}</span>
-                <span>source→LV ≈ {candidate.approx_source_to_lv_distance_m == null ? "—" : `${candidate.approx_source_to_lv_distance_m.toFixed(1)} m`}</span>
-              </div>
-              {txMap && <a className={styles.txMap} href={txMap} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>TX map ↗</a>}
-            </label>
+            <div key={candidate.facility_id} data-candidate-card={candidate.facility_id} className={`${styles.candidateCard} ${checked ? styles.candidateSelected : ""}`}>
+              <label className={styles.candidateChoice}>
+                {item.candidates.length > 1 && (
+                  <input type="radio" name={`tx-${item.source_ref}`} value={candidate.facility_id} checked={checked} onChange={() => setSelected(candidate.facility_id)} />
+                )}
+                <span className={styles.candidateIndex}>{String(index + 1).padStart(2, "0")}</span>
+                <span className={styles.candidateBody}>
+                  <strong>{candidate.facility_id}</strong>
+                  <span>Feeder {candidate.feeder_id || "—"}</span>
+                  <span>TX: {candidate.location.lat?.toFixed(6) ?? "—"}, {candidate.location.lon?.toFixed(6) ?? "—"}</span>
+                  <span>source→LV ≈ {candidate.approx_source_to_lv_distance_m == null ? "—" : `${candidate.approx_source_to_lv_distance_m.toFixed(1)} m`}</span>
+                </span>
+              </label>
+              {txMap && <a className={styles.txMap} href={txMap} target="_blank" rel="noreferrer">TX map ↗</a>}
+            </div>
           );
         })}
       </div>
@@ -213,7 +218,7 @@ function ValidationCard({ item, latest, accessCode, validatorRef, onStored }: {
       </details>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.correct} disabled={busy || item.candidates.length === 0 || (item.candidates.length > 1 && !selected)} onClick={() => submit("CORRECT")}>✓ ถูก / ยืนยัน TX</button>
+        <button type="button" className={styles.correct} disabled={busy || item.candidates.length === 0 || (item.candidates.length > 1 && !selected)} onClick={() => submit("CORRECT")}>{item.source_type === "ROAD_SOI" ? "✓ ถูก ณ จุดตรวจ" : "✓ ถูก / ยืนยัน TX"}</button>
         <button type="button" className={styles.incorrect} disabled={busy} onClick={() => submit("INCORRECT")}>× ไม่ถูก</button>
         <button type="button" className={styles.unsure} disabled={busy} onClick={() => submit("UNSURE")}>? ไม่แน่ใจ</button>
       </div>
@@ -289,7 +294,7 @@ export function BuengKanFieldValidation() {
         <a className={styles.brand} href="/buengkan-tester"><span className={styles.brandMark}>PEA</span><span><strong>INTELLISENSE</strong><small>BUENG KAN / FIELD VALIDATION</small></span></a>
         <nav className={styles.nav} aria-label="Bueng Kan navigation">
           <a href="/buengkan-tester">TESTER</a>
-          <span className={styles.navActive}>VALIDATE</span>
+          <span className={styles.navActive} aria-current="page">VALIDATE</span>
           <a href="/buengkan-tester/dashboard">FEEDBACK</a>
         </nav>
         <span className={styles.live}><i /> SHADOW / TEST</span>
