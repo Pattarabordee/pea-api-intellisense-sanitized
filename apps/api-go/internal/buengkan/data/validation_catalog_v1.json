@@ -17,6 +17,9 @@
     "P3_MULTI_TX_CORRIDOR": 3,
     "P4_NO_COVERAGE": 39
   },
+  "semantic_counts": {
+    "RESIDENTIAL_COMPLEX": 2
+  },
   "promotion_policy": "Field validation does not auto-promote. Promotion is a separate explicit reviewed build step.",
   "items": [
     {
@@ -1167,7 +1170,7 @@
       "source_type": "POI",
       "source_ref": "poi:35346",
       "label": "หอพักทรัพย์ประเสริฐ",
-      "category": "สถานที่สำคัญอื่นๆ",
+      "category": "RESIDENTIAL_COMPLEX_DORMITORY",
       "priority": "P2_SINGLE_REVIEW",
       "validation_status": "PENDING_FIELD_VALIDATION",
       "resolver_status": "POI_SINGLE_TX_CANDIDATE",
@@ -1198,14 +1201,14 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
+      "candidate_scope": "RESIDENTIAL_COMPLEX_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
       "source_type": "POI",
       "source_ref": "poi:35424",
       "label": "หอพักหญิงเพชนตาแสง",
-      "category": "สถานที่สำคัญอื่นๆ",
+      "category": "RESIDENTIAL_COMPLEX_DORMITORY",
       "priority": "P2_SINGLE_REVIEW",
       "validation_status": "PENDING_FIELD_VALIDATION",
       "resolver_status": "POI_SINGLE_TX_CANDIDATE",
@@ -1236,7 +1239,7 @@
       ],
       "candidate_count": 1,
       "provenance": "PEA_GIS_LAYER43 + LV_SERVICE_GRID_V1",
-      "candidate_scope": "POI_POINT_FIELD_VALIDATION_ONLY",
+      "candidate_scope": "RESIDENTIAL_COMPLEX_POINT_FIELD_VALIDATION_ONLY",
       "outage_state": "UNDETERMINED"
     },
     {
@@ -3520,6 +3523,7 @@
     "meter_account_customer_identity_persisted": false,
     "raw_road_geometry_persisted": false,
     "source_proximity_confirms_supply": false,
+    "residential_complex_proximity_confirms_supply": false,
     "field_feedback_auto_promotes": false,
     "mode": "shadow",
     "production_send": "blocked"
