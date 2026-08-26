@@ -39,14 +39,19 @@ func main() {
 	}
 
 	handler := api.NewServer(api.ServerConfig{
-		APIKey:             cfg.APIKey,
-		OutageIntegrationAPIKey: cfg.OutageIntegrationAPIKey,
-		RateLimitPerMinute: cfg.RateLimitPerMinute,
-		AllowedOrigin:      cfg.AllowedOrigin,
-		ProductionSendMode: cfg.ProductionSendMode,
-		CallbackTransport:  cfg.CallbackTransport,
-		EmergencyOff:        cfg.EmergencyOff,
-		Logger:             logger,
+		APIKey:                       cfg.APIKey,
+		OutageIntegrationAPIKey:      cfg.OutageIntegrationAPIKey,
+		RateLimitPerMinute:           cfg.RateLimitPerMinute,
+		AllowedOrigin:                cfg.AllowedOrigin,
+		ProductionSendMode:           cfg.ProductionSendMode,
+		CallbackTransport:            cfg.CallbackTransport,
+		EmergencyOff:                 cfg.EmergencyOff,
+		PlannedOutageMode:            cfg.PlannedOutageMode,
+		PlannedOutageBaseURL:         cfg.PlannedOutageBaseURL,
+		PlannedOutageTTLSeconds:      cfg.PlannedOutageTTLSeconds,
+		PlannedOutageHotTTLSeconds:   cfg.PlannedOutageHotTTLSeconds,
+		PlannedOutageTimeoutMS:       cfg.PlannedOutageTimeoutMS,
+		Logger:                       logger,
 	}, store)
 
 	server := &http.Server{

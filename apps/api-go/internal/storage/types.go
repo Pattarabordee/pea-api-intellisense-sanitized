@@ -30,9 +30,37 @@ type Store interface {
 	GetBuengKanOutageResolution(ctx context.Context, requestID string) (*BuengKanOutageResolution, error)
 	RecordBuengKanUnknownPlaceObservation(ctx context.Context, observation BuengKanUnknownPlaceObservation) (duplicate bool, err error)
 	ListBuengKanUnknownPlaceQueue(ctx context.Context, limit int) ([]BuengKanUnknownPlaceQueueItem, error)
+	InsertPlannedOutageDecision(ctx context.Context, decision PlannedOutageDecision) (duplicate bool, err error)
+	GetLatestPlannedOutageDecision(ctx context.Context, ticketID string) (*PlannedOutageDecision, error)
 }
 
 
+
+type PlannedOutageDecision struct {
+	TicketID string
+	Revision int
+	DecisionHash string
+	RecordedAt time.Time
+	OccurredAt time.Time
+	SessionRefHash string
+	Province string
+	District string
+	Subdistrict string
+	LocationText string
+	Decision string
+	SourceMode string
+	SourceFetchedAt *time.Time
+	SourceHash string
+	SourceStale bool
+	SourceChanged bool
+	NoticeID string
+	NoticeRevisionHash string
+	EvidenceJSON json.RawMessage
+	RawSnapshotJSON json.RawMessage
+	RawSnapshotExpiresAt *time.Time
+	Mode string
+	ProductionSend string
+}
 
 type BuengKanUnknownPlaceObservation struct {
 	ObservationHash string

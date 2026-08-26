@@ -51,13 +51,20 @@ type ServerConfig struct {
 	ProductionSendMode string
 	CallbackTransport  string
 	EmergencyOff        bool
+	PlannedOutageMode string
+	PlannedOutageBaseURL string
+	PlannedOutageTTLSeconds int
+	PlannedOutageHotTTLSeconds int
+	PlannedOutageTimeoutMS int
 	Logger             *slog.Logger
 }
 
 type Server struct {
-	cfg     ServerConfig
-	store   storage.Store
+	cfg ServerConfig
+	store storage.Store
 	limiter *rateLimiter
+	chatbotLimiter *rateLimiter
+	plannedOutage *plannedOutageGate
 }
 
 func NewServer(cfg ServerConfig, store storage.Store) http.Handler {
@@ -67,11 +74,14 @@ func NewServer(cfg ServerConfig, store storage.Store) http.Handler {
 	if cfg.RateLimitPerMinute < 0 {
 		cfg.RateLimitPerMinute = 0
 	}
-	return &Server{
-		cfg:     cfg,
-		store:   store,
+	server := &Server{
+		cfg: cfg,
+		store: store,
 		limiter: newRateLimiter(cfg.RateLimitPerMinute),
+		chatbotLimiter: newRateLimiter(cfg.RateLimitPerMinute),
 	}
+	server.plannedOutage = newPlannedOutageGate(cfg, store)
+	return server
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

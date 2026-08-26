@@ -388,6 +388,68 @@ func (s *PostgresStore) ListBuengKanUnknownPlaceQueue(ctx context.Context, limit
 	return result, rows.Err()
 }
 
+func (s *PostgresStore) InsertPlannedOutageDecision(ctx context.Context, decision PlannedOutageDecision) (bool, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil { return false, err }
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, "planned-outage|"+decision.TicketID); err != nil { return false, err }
+	var existingRevision int
+	err = tx.QueryRow(ctx, `SELECT revision FROM planned_outage_decisions WHERE decision_hash=$1`, decision.DecisionHash).Scan(&existingRevision)
+	if err == nil { return true, tx.Commit(ctx) }
+	if !errors.Is(err, pgx.ErrNoRows) { return false, err }
+	var revision int
+	if err := tx.QueryRow(ctx, `SELECT coalesce(max(revision),0)+1 FROM planned_outage_decisions WHERE ticket_id=$1`, decision.TicketID).Scan(&revision); err != nil { return false, err }
+	evidence := decision.EvidenceJSON
+	if len(evidence) == 0 { evidence = json.RawMessage(`{}`) }
+	var raw any
+	if len(decision.RawSnapshotJSON) > 0 { raw = decision.RawSnapshotJSON }
+	mode := decision.Mode
+	if mode == "" { mode = "shadow" }
+	productionSend := decision.ProductionSend
+	if productionSend == "" { productionSend = "blocked" }
+	_, err = tx.Exec(ctx, `
+		INSERT INTO planned_outage_decisions (
+			ticket_id, revision, decision_hash, recorded_at, occurred_at, session_ref_hash,
+			province, district, subdistrict, location_text, decision, source_mode,
+			source_fetched_at, source_hash, source_stale, source_changed, notice_id,
+			notice_revision_hash, evidence_json, raw_snapshot_json, raw_snapshot_expires_at,
+			mode, production_send
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+	`, decision.TicketID, revision, decision.DecisionHash, decision.RecordedAt, decision.OccurredAt,
+		decision.SessionRefHash, decision.Province, decision.District, decision.Subdistrict,
+		decision.LocationText, decision.Decision, decision.SourceMode, decision.SourceFetchedAt,
+		decision.SourceHash, decision.SourceStale, decision.SourceChanged, decision.NoticeID,
+		decision.NoticeRevisionHash, evidence, raw, decision.RawSnapshotExpiresAt, mode, productionSend)
+	if err != nil {
+		if IsUniqueViolation(err) { return true, tx.Commit(ctx) }
+		return false, err
+	}
+	return false, tx.Commit(ctx)
+}
+
+func (s *PostgresStore) GetLatestPlannedOutageDecision(ctx context.Context, ticketID string) (*PlannedOutageDecision, error) {
+	var item PlannedOutageDecision
+	err := s.pool.QueryRow(ctx, `
+		SELECT ticket_id, revision, decision_hash, recorded_at, occurred_at, session_ref_hash,
+			province, district, subdistrict, location_text, decision, source_mode,
+			source_fetched_at, source_hash, source_stale, source_changed, notice_id,
+			notice_revision_hash, evidence_json, raw_snapshot_json, raw_snapshot_expires_at,
+			mode, production_send
+		FROM planned_outage_decisions
+		WHERE ticket_id=$1
+		ORDER BY revision DESC
+		LIMIT 1
+	`, ticketID).Scan(
+		&item.TicketID, &item.Revision, &item.DecisionHash, &item.RecordedAt, &item.OccurredAt,
+		&item.SessionRefHash, &item.Province, &item.District, &item.Subdistrict, &item.LocationText,
+		&item.Decision, &item.SourceMode, &item.SourceFetchedAt, &item.SourceHash, &item.SourceStale,
+		&item.SourceChanged, &item.NoticeID, &item.NoticeRevisionHash, &item.EvidenceJSON,
+		&item.RawSnapshotJSON, &item.RawSnapshotExpiresAt, &item.Mode, &item.ProductionSend,
+	)
+	if errors.Is(err, pgx.ErrNoRows) { return nil, ErrNotFound }
+	if err != nil { return nil, err }
+	return &item, nil
+}
 func (s *PostgresStore) GetStatus(ctx context.Context, requestID string) (*RequestStatus, error) {
 	rows, err := s.queryStatuses(ctx, `WHERE r.request_id = $1`, 1, requestID)
 	if err != nil {

@@ -751,10 +751,11 @@ type fakeStore struct {
 	secondaryValidation []storage.BuengKanSecondaryValidation
 	outageResolutions   map[string]storage.BuengKanOutageResolution
 	unknownPlaces       map[string]storage.BuengKanUnknownPlaceObservation
+	plannedDecisions    map[string][]storage.PlannedOutageDecision
 }
 
 func newFakeStore() *fakeStore {
-	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}, outageResolutions: map[string]storage.BuengKanOutageResolution{}, unknownPlaces: map[string]storage.BuengKanUnknownPlaceObservation{}}
+	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}, outageResolutions: map[string]storage.BuengKanOutageResolution{}, unknownPlaces: map[string]storage.BuengKanUnknownPlaceObservation{}, plannedDecisions: map[string][]storage.PlannedOutageDecision{}}
 }
 
 func (f *fakeStore) Init(context.Context) error { return nil }
@@ -851,6 +852,32 @@ func (f *fakeStore) InsertInbound(ctx context.Context, request storage.InboundRe
 	return false, nil
 }
 
+func (f *fakeStore) InsertPlannedOutageDecision(ctx context.Context, decision storage.PlannedOutageDecision) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, rows := range f.plannedDecisions {
+		for _, existing := range rows {
+			if existing.DecisionHash == decision.DecisionHash {
+				return true, nil
+			}
+		}
+	}
+	rows := f.plannedDecisions[decision.TicketID]
+	decision.Revision = len(rows) + 1
+	f.plannedDecisions[decision.TicketID] = append(rows, decision)
+	return false, nil
+}
+
+func (f *fakeStore) GetLatestPlannedOutageDecision(ctx context.Context, ticketID string) (*storage.PlannedOutageDecision, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	rows := f.plannedDecisions[ticketID]
+	if len(rows) == 0 {
+		return nil, storage.ErrNotFound
+	}
+	item := rows[len(rows)-1]
+	return &item, nil
+}
 func (f *fakeStore) GetStatus(ctx context.Context, requestID string) (*storage.RequestStatus, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -97,6 +98,11 @@ func (s *Server) handleChatbotReport(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
 		return
 	}
+	if ok, retryAfter := s.chatbotLimiter.allow("chatbot|" + clientIP(r)); !ok {
+		w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+		writeJSON(w, http.StatusTooManyRequests, errorPayload("RATE_LIMITED", "Too many chatbot requests. Retry later.", ""))
+		return
+	}
 	if !strings.Contains(strings.ToLower(r.Header.Get("Content-Type")), "application/json") {
 		writeJSON(w, http.StatusUnsupportedMediaType, errorPayload("UNSUPPORTED_MEDIA_TYPE", "Content-Type must be application/json", ""))
 		return
@@ -112,6 +118,17 @@ func (s *Server) handleChatbotReport(w http.ResponseWriter, r *http.Request) {
 	if err := validateChatbotReportRequest(&input); err != nil {
 		writeJSON(w, http.StatusBadRequest, errorPayload("INVALID_REQUEST", err.Error(), ""))
 		return
+	}
+
+	if s.plannedOutage != nil {
+		shadow := s.plannedOutage.checkAndPersist(r.Context(), input)
+		s.cfg.Logger.Info("planned outage gate shadow decision",
+			"ticket_ref", hashReference("chatbot_ticket", input.Report.TicketID),
+			"decision", shadow.Decision,
+			"source_mode", shadow.SourceMode,
+			"source_stale", shadow.SourceStale,
+			"configured_mode", s.plannedOutage.mode,
+			"enforced", false)
 	}
 
 	requestID := outageRequestID(chatbotInternalChannel, input.Report.TicketID)
