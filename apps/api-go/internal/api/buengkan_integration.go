@@ -106,6 +106,14 @@ func (s *Server) handleBuengKanOutageResolve(w http.ResponseWriter, r *http.Requ
 		placeLocation = &buengkan.PlaceResolveLocationInput{Lat: *input.Location.Lat, Lon: *input.Location.Lon, AccuracyM: input.Location.AccuracyM, Source: strings.TrimSpace(input.Location.Source)}
 	}
 	placeResolution := buengkan.ResolvePlace(input.Message.Text, placeLocation, 10)
+	if placeResolution.MatchCount == 0 {
+		if err := s.recordUnknownPlaceObservation(r, input.Message.Text, placeLocation, input.Source.Channel, input.Source.EventID); err != nil {
+			s.cfg.Logger.Error("unknown place queue insert failed", "request_ref", hashReference("request", requestID), "error", err)
+			placeResolution.DiscoveryStatus = "QUEUE_WRITE_FAILED"
+		} else {
+			placeResolution.DiscoveryStatus = "QUEUED_HASH_ONLY"
+		}
+	}
 	payload := map[string]any{
 		"api_version":     APIVersion,
 		"schema_version":  outageResultSchema,

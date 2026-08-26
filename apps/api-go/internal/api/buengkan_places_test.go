@@ -130,3 +130,39 @@ func TestPlaceLookupAPIUsesStablePlaceID(t *testing.T) {
 		t.Fatalf("expected missing place 404, got %d", missingRes.Code)
 	}
 }
+
+func TestUnknownPlaceQueuesHashOnlyAndDiscoveryEndpointIsProtected(t *testing.T) {
+	store := newFakeStore()
+	h := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	rawQuery := "ไฟดับแถวร้านลาบยายแดง"
+	body := `{"schema_version":"place-resolve.v1","query":"` + rawQuery + `","location":{"lat":18.35512,"lon":103.65122,"accuracy_m":12,"source":"user_shared_location"}}`
+	req := httptest.NewRequest(http.MethodPost, placeResolvePath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	h.ServeHTTP(res, req)
+	if res.Code != http.StatusOK { t.Fatalf("unknown place resolve expected 200: %d %s", res.Code, res.Body.String()) }
+	payload := decodeBody(t, res)
+	resolver := payload["resolver"].(map[string]any)
+	if resolver["status"] != "NO_PLACE_MATCH" || resolver["discovery_status"] != "QUEUED_HASH_ONLY" { t.Fatalf("unexpected discovery result: %#v", resolver) }
+	if strings.Contains(res.Body.String(), rawQuery) { t.Fatalf("raw query echoed in response: %s", res.Body.String()) }
+	if len(store.unknownPlaces) != 1 { t.Fatalf("expected one hashed unknown observation, got %d", len(store.unknownPlaces)) }
+	for _, row := range store.unknownPlaces {
+		if row.QueryHash == "" || strings.Contains(row.QueryHash, "ยายแดง") { t.Fatalf("query must be hash only: %#v", row) }
+		if row.LocationCell != "18.355,103.651" { t.Fatalf("expected coarse location cell, got %q", row.LocationCell) }
+		if row.SourceChannel != "PLACE_API" { t.Fatalf("unexpected source channel: %#v", row) }
+	}
+
+	unauth := httptest.NewRecorder()
+	h.ServeHTTP(unauth, httptest.NewRequest(http.MethodGet, placeDiscoveryQueuePath, nil))
+	if unauth.Code != http.StatusUnauthorized { t.Fatalf("expected discovery queue 401, got %d", unauth.Code) }
+
+	listReq := httptest.NewRequest(http.MethodGet, placeDiscoveryQueuePath+"?limit=10", nil)
+	listReq.Header.Set("X-API-Key", "pilot-key")
+	listRes := httptest.NewRecorder()
+	h.ServeHTTP(listRes, listReq)
+	if listRes.Code != http.StatusOK { t.Fatalf("queue list expected 200: %d %s", listRes.Code, listRes.Body.String()) }
+	if strings.Contains(listRes.Body.String(), rawQuery) || strings.Contains(listRes.Body.String(), "ยายแดง") { t.Fatalf("discovery queue leaked raw query: %s", listRes.Body.String()) }
+	listed := decodeBody(t, listRes)
+	if listed["raw_query_persisted"] != false || listed["auto_add"] != false || listed["count"].(float64) != 1 { t.Fatalf("unsafe queue response: %#v", listed) }
+}

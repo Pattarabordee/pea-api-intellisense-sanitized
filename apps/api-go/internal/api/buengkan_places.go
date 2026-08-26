@@ -1,19 +1,27 @@
 ﻿package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"strconv"
 	"unicode"
 	"unicode/utf8"
+	"time"
+
+	"pea-api-intellisense/apps/api-go/internal/storage"
 
 	"pea-api-intellisense/apps/api-go/internal/buengkan"
 )
 
 const (
+	placeDiscoveryQueuePath = "/api/v1/places/discovery-queue"
 	placeResolvePath      = "/api/v1/places/resolve"
 	placePathPrefix       = "/api/v1/places/"
 	placeResolveSchema    = "place-resolve.v1"
@@ -68,6 +76,14 @@ func (s *Server) handlePlaceResolve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	result := buengkan.ResolvePlace(input.Query, location, input.Limit)
+	if result.MatchCount == 0 {
+		if err := s.recordUnknownPlaceObservation(r, input.Query, location, "PLACE_API", ""); err != nil {
+			s.cfg.Logger.Error("unknown place queue insert failed", "query_ref", hashReference("place_query", input.Query), "error", err)
+			result.DiscoveryStatus = "QUEUE_WRITE_FAILED"
+		} else {
+			result.DiscoveryStatus = "QUEUED_HASH_ONLY"
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"api_version":       APIVersion,
 		"schema_version":    placeResolutionSchema,
@@ -135,4 +151,57 @@ func validatePlaceResolveRequest(input *placeResolveRequest) error {
 		}
 	}
 	return nil
+}
+
+func (s *Server) handlePlaceDiscoveryQueue(w http.ResponseWriter, r *http.Request) {
+	if !s.authorizedOutage(r) {
+		writeJSON(w, http.StatusUnauthorized, errorPayload("UNAUTHORIZED", "X-API-Key or Authorization Bearer credential is required", ""))
+		return
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 || limit > 500 { limit = 100 }
+	items, err := s.store.ListBuengKanUnknownPlaceQueue(r.Context(), limit)
+	if err != nil {
+		s.cfg.Logger.Error("unknown place queue list failed", "error", err)
+		writeJSON(w, http.StatusInternalServerError, errorPayload("INTERNAL_ERROR", "Could not load place discovery queue", ""))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"api_version": APIVersion,
+		"schema_version": "place-discovery-queue.v1",
+		"mode": Mode,
+		"production_send": ProductionSend,
+		"raw_query_persisted": false,
+		"auto_add": false,
+		"items": items,
+		"count": len(items),
+		"generated_at": nowISO(),
+	})
+}
+
+func (s *Server) recordUnknownPlaceObservation(r *http.Request, query string, location *buengkan.PlaceResolveLocationInput, sourceChannel, eventID string) error {
+	queryHash := hashCompact("place_query", buengkan.NormalizeText(query))
+	if queryHash == "" { return nil }
+	cell := ""
+	if location != nil && location.Lat >= -90 && location.Lat <= 90 && location.Lon >= -180 && location.Lon <= 180 {
+		cell = fmt.Sprintf("%.3f,%.3f", location.Lat, location.Lon)
+	}
+	basis := strings.ToUpper(strings.TrimSpace(sourceChannel)) + "|" + queryHash + "|" + cell
+	if strings.TrimSpace(eventID) != "" {
+		basis += "|event:" + hashCompact("unknown_place_event", eventID)
+	} else {
+		basis += "|day:" + time.Now().UTC().Format("2006-01-02")
+	}
+	sum := sha256.Sum256([]byte(basis))
+	observationHash := hex.EncodeToString(sum[:])[:24]
+	_, err := s.store.RecordBuengKanUnknownPlaceObservation(r.Context(), storage.BuengKanUnknownPlaceObservation{
+		ObservationHash: observationHash,
+		QueryHash: queryHash,
+		LocationCell: cell,
+		SourceChannel: strings.ToUpper(strings.TrimSpace(sourceChannel)),
+		SeenAt: time.Now().UTC(),
+		Mode: Mode,
+		ProductionSend: ProductionSend,
+	})
+	return err
 }

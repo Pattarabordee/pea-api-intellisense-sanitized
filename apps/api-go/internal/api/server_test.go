@@ -749,10 +749,11 @@ type fakeStore struct {
 	feedback            []storage.BuengKanTesterFeedback
 	secondaryValidation []storage.BuengKanSecondaryValidation
 	outageResolutions   map[string]storage.BuengKanOutageResolution
+	unknownPlaces       map[string]storage.BuengKanUnknownPlaceObservation
 }
 
 func newFakeStore() *fakeStore {
-	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}, outageResolutions: map[string]storage.BuengKanOutageResolution{}}
+	return &fakeStore{rows: map[string]storage.RequestStatus{}, callbackStatusCount: map[string]int64{}, outageResolutions: map[string]storage.BuengKanOutageResolution{}, unknownPlaces: map[string]storage.BuengKanUnknownPlaceObservation{}}
 }
 
 func (f *fakeStore) Init(context.Context) error { return nil }
@@ -877,6 +878,37 @@ func (f *fakeStore) GetBuengKanOutageResolution(ctx context.Context, requestID s
 		return nil, storage.ErrNotFound
 	}
 	return &row, nil
+}
+
+func (f *fakeStore) RecordBuengKanUnknownPlaceObservation(ctx context.Context, observation storage.BuengKanUnknownPlaceObservation) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if existing, ok := f.unknownPlaces[observation.ObservationHash]; ok {
+		if observation.SeenAt.After(existing.SeenAt) { existing.SeenAt = observation.SeenAt; f.unknownPlaces[observation.ObservationHash] = existing }
+		return true, nil
+	}
+	f.unknownPlaces[observation.ObservationHash] = observation
+	return false, nil
+}
+
+func (f *fakeStore) ListBuengKanUnknownPlaceQueue(ctx context.Context, limit int) ([]storage.BuengKanUnknownPlaceQueueItem, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	type agg struct { item storage.BuengKanUnknownPlaceQueueItem }
+	groups := map[string]*agg{}
+	for _, row := range f.unknownPlaces {
+		key := row.QueryHash + "|" + row.LocationCell
+		g := groups[key]
+		if g == nil { g = &agg{item: storage.BuengKanUnknownPlaceQueueItem{QueryHash: row.QueryHash, LocationCell: row.LocationCell, FirstSeenAt: row.SeenAt, LastSeenAt: row.SeenAt}}; groups[key] = g }
+		g.item.ObservationCount++
+		if row.SeenAt.Before(g.item.FirstSeenAt) { g.item.FirstSeenAt = row.SeenAt }
+		if row.SeenAt.After(g.item.LastSeenAt) { g.item.LastSeenAt = row.SeenAt }
+	}
+	result := []storage.BuengKanUnknownPlaceQueueItem{}
+	for _, g := range groups { result = append(result, g.item) }
+	sort.Slice(result, func(i,j int) bool { if result[i].ObservationCount != result[j].ObservationCount { return result[i].ObservationCount > result[j].ObservationCount }; return result[i].LastSeenAt.After(result[j].LastSeenAt) })
+	if limit <= 0 || limit > 500 { limit = 100 }; if len(result) > limit { result = result[:limit] }
+	return result, nil
 }
 
 func (f *fakeStore) InsertBuengKanTesterFeedback(ctx context.Context, feedback storage.BuengKanTesterFeedback) (bool, error) {

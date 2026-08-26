@@ -28,9 +28,29 @@ type Store interface {
 	BuengKanSecondaryValidationCounts(ctx context.Context) (*BuengKanSecondaryValidationCounts, error)
 	InsertBuengKanOutageResolution(ctx context.Context, resolution BuengKanOutageResolution) (duplicate bool, err error)
 	GetBuengKanOutageResolution(ctx context.Context, requestID string) (*BuengKanOutageResolution, error)
+	RecordBuengKanUnknownPlaceObservation(ctx context.Context, observation BuengKanUnknownPlaceObservation) (duplicate bool, err error)
+	ListBuengKanUnknownPlaceQueue(ctx context.Context, limit int) ([]BuengKanUnknownPlaceQueueItem, error)
 }
 
 
+
+type BuengKanUnknownPlaceObservation struct {
+	ObservationHash string
+	QueryHash string
+	LocationCell string
+	SourceChannel string
+	SeenAt time.Time
+	Mode string
+	ProductionSend string
+}
+
+type BuengKanUnknownPlaceQueueItem struct {
+	QueryHash string
+	LocationCell string
+	ObservationCount int64
+	FirstSeenAt time.Time
+	LastSeenAt time.Time
+}
 
 type BuengKanOutageResolution struct {
 	RequestID            string

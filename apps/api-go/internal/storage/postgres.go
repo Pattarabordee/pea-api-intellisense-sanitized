@@ -357,6 +357,37 @@ func (s *PostgresStore) GetBuengKanOutageResolution(ctx context.Context, request
 	return &item, nil
 }
 
+func (s *PostgresStore) RecordBuengKanUnknownPlaceObservation(ctx context.Context, observation BuengKanUnknownPlaceObservation) (bool, error) {
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO buengkan_unknown_place_observations (
+			observation_hash, query_hash, location_cell, source_channel, first_seen_at, last_seen_at, mode, production_send
+		) VALUES ($1,$2,$3,$4,$5,$5,'shadow','blocked')
+		ON CONFLICT (observation_hash) DO UPDATE SET last_seen_at = GREATEST(buengkan_unknown_place_observations.last_seen_at, EXCLUDED.last_seen_at)
+	`, observation.ObservationHash, observation.QueryHash, observation.LocationCell, observation.SourceChannel, observation.SeenAt)
+	if err != nil { return false, err }
+	return tag.RowsAffected() == 0, nil
+}
+
+func (s *PostgresStore) ListBuengKanUnknownPlaceQueue(ctx context.Context, limit int) ([]BuengKanUnknownPlaceQueueItem, error) {
+	if limit <= 0 || limit > 500 { limit = 100 }
+	rows, err := s.pool.Query(ctx, `
+		SELECT query_hash, location_cell, count(*)::bigint, min(first_seen_at), max(last_seen_at)
+		FROM buengkan_unknown_place_observations
+		GROUP BY query_hash, location_cell
+		ORDER BY count(*) DESC, max(last_seen_at) DESC, query_hash
+		LIMIT $1
+	`, limit)
+	if err != nil { return nil, err }
+	defer rows.Close()
+	result := []BuengKanUnknownPlaceQueueItem{}
+	for rows.Next() {
+		var item BuengKanUnknownPlaceQueueItem
+		if err := rows.Scan(&item.QueryHash, &item.LocationCell, &item.ObservationCount, &item.FirstSeenAt, &item.LastSeenAt); err != nil { return nil, err }
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
 func (s *PostgresStore) GetStatus(ctx context.Context, requestID string) (*RequestStatus, error) {
 	rows, err := s.queryStatuses(ctx, `WHERE r.request_id = $1`, 1, requestID)
 	if err != nil {

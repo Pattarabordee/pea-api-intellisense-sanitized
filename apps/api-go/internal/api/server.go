@@ -104,6 +104,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleBuengKanSecondaryValidationPost(w, r)
 	case r.URL.Path == placeResolvePath && r.Method == http.MethodPost:
 		s.handlePlaceResolve(w, r)
+	case r.URL.Path == placeDiscoveryQueuePath && r.Method == http.MethodGet:
+		s.handlePlaceDiscoveryQueue(w, r)
 	case strings.HasPrefix(r.URL.Path, placePathPrefix) && r.Method == http.MethodGet:
 		s.handlePlaceLookup(w, r)
 	case r.URL.Path == outageResolvePath && r.Method == http.MethodPost:

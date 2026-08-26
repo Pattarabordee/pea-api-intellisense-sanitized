@@ -238,3 +238,22 @@ func TestOutageResolveIncludesAmbiguousBrandPlaceEvidenceFailClosed(t *testing.T
 		t.Fatalf("brand ambiguity must not select outage TX: %#v", resolution)
 	}
 }
+
+func TestOutageUnknownPlaceObservationIsIdempotentAndHashOnly(t *testing.T) {
+	store := newFakeStore()
+	h := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	raw := "ไฟดับแถวร้านลาบยายแดง"
+	body := `{"schema_version":"outage-report.v1","source":{"channel":"LINE","event_id":"line-unknown-001","occurred_at":"2026-08-26T09:00:00+07:00","reporter_ref":"usr_hash","conversation_ref":"conv_hash"},"message":{"text":"` + raw + `"},"location":{"lat":18.35512,"lon":103.65122,"accuracy_m":12,"source":"user_shared_location"}}`
+	call := func() *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, outageResolvePath, bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-API-Key", "pilot-key")
+		res := httptest.NewRecorder(); h.ServeHTTP(res, req); return res
+	}
+	first := call(); if first.Code != http.StatusCreated { t.Fatalf("first expected 201: %d %s", first.Code, first.Body.String()) }
+	second := call(); if second.Code != http.StatusOK { t.Fatalf("retry expected 200: %d %s", second.Code, second.Body.String()) }
+	if len(store.unknownPlaces) != 1 { t.Fatalf("retry must not duplicate unknown-place observation: %d", len(store.unknownPlaces)) }
+	if strings.Contains(first.Body.String(), raw) || strings.Contains(first.Body.String(), "ยายแดง") { t.Fatalf("raw unknown text leaked in result: %s", first.Body.String()) }
+	place := decodeBody(t, first)["place_resolution"].(map[string]any)
+	if place["discovery_status"] != "QUEUED_HASH_ONLY" { t.Fatalf("expected queued discovery status: %#v", place) }
+}
