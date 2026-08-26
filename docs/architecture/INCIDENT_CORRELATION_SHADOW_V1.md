@@ -177,3 +177,28 @@ Job lifecycle is durable: `PENDING -> PROCESSING -> RETRYING -> SUCCEEDED/FAILED
 Concurrency uses an ordered set of scoped PostgreSQL advisory locks derived from feeder, upstream protection, transformer and the administrative fallback scope. Related jobs therefore share at least one deterministic lock even when evidence completeness differs, without taking a whole-system lock. Candidate retrieval is topology-first; known unrelated electrical scopes do not re-enter through administrative similarity. Common upstream protection can keep cross-feeder reports in the same candidate scope. Cluster revisions additionally use optimistic `expected_revision`; stale writers return a revision conflict and are retried from current state. No whole-system correlation lock is used.
 
 Phase 2 persists pairwise relationship revisions, suspected-cluster revisions, versioned report membership and merge/split lineage. It remains Shadow-only: no Operational Incident, Work Order, root-cause confirmation, n8n correlation action, or customer-facing message is created by this worker.
+
+
+## Phase 5 slice status — n8n authoritative read interface
+
+Implementation branch: `feat/incident-correlation-n8n-read-v1-20260826` (child of Phase-2 branch).
+
+This slice adds a read-only safe correlation endpoint:
+
+`GET /api/v1/chatbot-reports/{ticket_id}/correlation`
+
+Key constraints:
+- legacy chatbot ACK/status semantics remain unchanged;
+- endpoint uses the existing dedicated outage-integration authentication boundary;
+- n8n receives backend-decided safe state/confidence level only, not numeric score or topology scoring details;
+- raw internal cluster ID is replaced by a one-way safe `cluster_ref`;
+- `bot_action=NO_CUSTOMER_ACTION`, `customer_truth_changed=false`, `mode=shadow`, and `production_send=blocked` remain enforced;
+- async worker `PENDING/PROCESSING/RETRYING` maps to safe `PENDING`;
+- completed singleton maps to `NO_CLUSTER`;
+- active cluster maps to `SUSPECTED_RELATED` (or future backend-owned `MULTIPLE_CLUSTER_CANDIDATES`);
+- permanent processing failure/capability gap maps to `UNAVAILABLE` and never rewrites the accepted outage receipt;
+- planned-outage authoritative match remains a separate lane and may surface as `PLANNED_OUTAGE_LINKED`.
+
+Detailed n8n contract: `docs/integrations/INCIDENT_CORRELATION_N8N_READ_V1.md`.
+
+This is the GET/recovery slice of Phase 5 only. Transactional outbox/webhook/DLQ push remains a later slice.

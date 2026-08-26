@@ -351,6 +351,53 @@ func (s *PostgresStore) GetLatestCorrelationClusterRevision(ctx context.Context,
 	return &item, nil
 }
 
+func (s *PostgresStore) GetLatestCorrelationMembership(ctx context.Context, reportID string) (*CorrelationMembershipRevision, error) {
+	var item CorrelationMembershipRevision
+	err := s.pool.QueryRow(ctx, `
+		SELECT report_id,cluster_id,membership_revision,membership_state,assignment_reason,
+			confidence_score,confidence_level,engine_version,decision_hash,created_at
+		FROM correlation_cluster_membership_revisions
+		WHERE report_id=$1
+		ORDER BY membership_revision DESC
+		LIMIT 1
+	`, reportID).Scan(
+		&item.ReportID, &item.ClusterID, &item.MembershipRevision,
+		&item.MembershipState, &item.AssignmentReason, &item.ConfidenceScore,
+		&item.ConfidenceLevel, &item.EngineVersion, &item.DecisionHash, &item.CreatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (s *PostgresStore) GetLatestCorrelationJobForReport(ctx context.Context, reportID string) (*CorrelationJob, error) {
+	var job CorrelationJob
+	err := s.pool.QueryRow(ctx, `
+		SELECT job_id,report_id,job_type,trigger_key,trigger_evidence_revision,
+			state,attempt_count,max_attempts,available_at,lease_until,claimed_by,
+			last_error_class,created_at,updated_at,completed_at
+		FROM correlation_jobs
+		WHERE report_id=$1
+		ORDER BY trigger_evidence_revision DESC, created_at DESC, job_id DESC
+		LIMIT 1
+	`, reportID).Scan(
+		&job.JobID, &job.ReportID, &job.JobType, &job.TriggerKey, &job.TriggerEvidenceRevision,
+		&job.State, &job.AttemptCount, &job.MaxAttempts, &job.AvailableAt, &job.LeaseUntil,
+		&job.ClaimedBy, &job.LastErrorClass, &job.CreatedAt, &job.UpdatedAt, &job.CompletedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
+}
+
 func (s *PostgresStore) CorrelationJobCounts(ctx context.Context) (map[string]int64, error) {
 	rows, err := s.pool.Query(ctx, `SELECT state,count(*)::bigint FROM correlation_jobs GROUP BY state`)
 	if err != nil {
