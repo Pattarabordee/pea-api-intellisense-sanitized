@@ -108,6 +108,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handlePlaceDiscoveryQueue(w, r)
 	case strings.HasPrefix(r.URL.Path, placePathPrefix) && r.Method == http.MethodGet:
 		s.handlePlaceLookup(w, r)
+	case r.URL.Path == chatbotReportsPath && r.Method == http.MethodPost:
+		s.handleChatbotReport(w, r)
+	case strings.HasPrefix(r.URL.Path, chatbotReportsPath+"/") && strings.HasSuffix(r.URL.Path, "/status") && r.Method == http.MethodGet:
+		s.handleChatbotReportStatus(w, r)
 	case r.URL.Path == outageResolvePath && r.Method == http.MethodPost:
 		s.handleBuengKanOutageResolve(w, r)
 	case strings.HasPrefix(r.URL.Path, outageResultPathPrefix) && r.Method == http.MethodGet:
