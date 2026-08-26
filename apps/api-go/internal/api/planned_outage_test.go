@@ -44,12 +44,12 @@ func plannedSnapshot(records ...plannedOutageSourceRecord) plannedOutageSnapshot
 func TestPlannedOutageDeterministicActiveMatch(t *testing.T) {
 	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
 	record := plannedSourceRecord(
-		"notice-1", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่ายและเปลี่ยนอุปกรณ์",
+		"notice-1", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่ายและเปลี่ยนอุปกรณ์",
 		occurred.Add(-time.Hour), occurred.Add(2*time.Hour),
 	)
 	result := evaluatePlannedOutageSnapshot(
 		plannedSnapshot(record),
-		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"},
+		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Subdistrict: "บึงกาฬ", District: "เมืองบึงกาฬ", Province: "บึงกาฬ"},
 		occurred,
 		false,
 	)
@@ -71,12 +71,12 @@ func TestPlannedOutageDeterministicActiveMatch(t *testing.T) {
 func TestPlannedOutagePartialAreaIsAmbiguous(t *testing.T) {
 	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
 	record := plannedSourceRecord(
-		"notice-partial", "บึงกาฬ", "บ้านดงหมากยางบางส่วน ตั้งแต่หน้าโรงเรียนถึงวัด", "ตัดต้นไม้ใกล้แนวสายไฟ",
+		"notice-partial", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยางบางส่วน ตั้งแต่หน้าโรงเรียนถึงวัด", "ตัดต้นไม้ใกล้แนวสายไฟ",
 		occurred.Add(-time.Hour), occurred.Add(time.Hour),
 	)
 	result := evaluatePlannedOutageSnapshot(
 		plannedSnapshot(record),
-		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"},
+		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Subdistrict: "บึงกาฬ", District: "เมืองบึงกาฬ", Province: "บึงกาฬ"},
 		occurred,
 		false,
 	)
@@ -91,12 +91,12 @@ func TestPlannedOutagePartialAreaIsAmbiguous(t *testing.T) {
 func TestPlannedOutageUpcomingNoticeDoesNotExplainCurrentOutage(t *testing.T) {
 	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
 	record := plannedSourceRecord(
-		"notice-future", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
+		"notice-future", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
 		occurred.Add(30*time.Minute), occurred.Add(3*time.Hour),
 	)
 	result := evaluatePlannedOutageSnapshot(
 		plannedSnapshot(record),
-		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"},
+		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Subdistrict: "บึงกาฬ", District: "เมืองบึงกาฬ", Province: "บึงกาฬ"},
 		occurred,
 		false,
 	)
@@ -116,7 +116,7 @@ func TestPlannedOutageUnavailableDoesNotUseStaleCacheAsNoMatch(t *testing.T) {
 	defer server.Close()
 
 	stale := plannedSnapshot(plannedSourceRecord(
-		"stale-notice", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
+		"stale-notice", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
 		time.Now().Add(-time.Hour), time.Now().Add(time.Hour),
 	))
 	stale.FetchedAt = time.Now().Add(-time.Hour)
@@ -128,7 +128,7 @@ func TestPlannedOutageUnavailableDoesNotUseStaleCacheAsNoMatch(t *testing.T) {
 		httpClient: &http.Client{Timeout: 500 * time.Millisecond},
 		cache:      plannedOutageCache{snapshot: stale},
 	}
-	result := gate.check(context.Background(), chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Province: "บึงกาฬ"}, time.Now())
+	result := gate.check(context.Background(), chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Subdistrict: "บึงกาฬ", District: "เมืองบึงกาฬ", Province: "บึงกาฬ"}, time.Now())
 	if result.Decision != "UNAVAILABLE" || !result.SourceStale {
 		t.Fatalf("stale source after refresh failure must be UNAVAILABLE, got %#v", result)
 	}
@@ -140,7 +140,7 @@ func TestPlannedOutageUnavailableDoesNotUseStaleCacheAsNoMatch(t *testing.T) {
 func TestPlannedOutageShadowPersistsDecisionWithoutChangingChatbotAckOrPII(t *testing.T) {
 	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
 	record := plannedSourceRecord(
-		"notice-shadow", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
+		"notice-shadow", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
 		occurred.Add(-time.Hour), occurred.Add(2*time.Hour),
 	)
 	server := plannedOutageTestServer(t, []plannedOutageSourceRecord{record})
@@ -182,7 +182,7 @@ func TestPlannedOutageSourceChangeCreatesRevision(t *testing.T) {
 	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
 	var mu sync.Mutex
 	records := []plannedOutageSourceRecord{plannedSourceRecord(
-		"notice-revision", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
+		"notice-revision", "บึงกาฬ", "ต.บึงกาฬ อ.เมืองบึงกาฬ บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
 		occurred.Add(-time.Hour), occurred.Add(2*time.Hour),
 	)}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -261,4 +261,24 @@ func plannedOutageTestServer(t *testing.T, records []plannedOutageSourceRecord) 
 			Data:            records,
 		})
 	}))
+}
+
+func TestPlannedOutageVillageOnlyCannotBePromotedToMatched(t *testing.T) {
+	occurred := time.Date(2026, 8, 26, 6, 32, 2, 0, time.UTC)
+	record := plannedSourceRecord(
+		"notice-village-only", "บึงกาฬ", "บ้านดงหมากยาง หมู่ 7", "ปรับปรุงระบบจำหน่าย",
+		occurred.Add(-time.Hour), occurred.Add(time.Hour),
+	)
+	result := evaluatePlannedOutageSnapshot(
+		plannedSnapshot(record),
+		chatbotLocationInput{HouseOrVillage: "บ้านดงหมากยาง หมู่ 7", Subdistrict: "บึงกาฬ", District: "เมืองบึงกาฬ", Province: "บึงกาฬ"},
+		occurred,
+		false,
+	)
+	if result.Decision != "AMBIGUOUS" {
+		t.Fatalf("province plus village alone is insufficient deterministic admin evidence: %#v", result)
+	}
+	if len(result.RawSnapshot) == 0 || strings.Contains(string(result.RawSnapshot), `"admin_match":true`) {
+		t.Fatalf("candidate must preserve missing-admin evidence without promoting to MATCHED: %s", result.RawSnapshot)
+	}
 }

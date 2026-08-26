@@ -58,26 +58,27 @@ type plannedOutageListResponse struct {
 }
 
 type plannedOutageNotice struct {
-	ID             string    `json:"notice_id"`
-	Province       string    `json:"province"`
-	Area           string    `json:"area_text"`
-	Detail         string    `json:"reason_text_original"`
-	ReasonCode     string    `json:"reason_code"`
-	Start          time.Time `json:"planned_start"`
-	End            time.Time `json:"planned_end"`
-	OfficeID       string    `json:"office_id,omitempty"`
-	PEAOffice      string    `json:"pea_office,omitempty"`
-	RevisionHash   string    `json:"notice_revision_hash"`
-	SourceRef      string    `json:"source_reference"`
-	PartialArea    bool      `json:"partial_area"`
-	LocationMatch  bool      `json:"location_match"`
-	TimeRelation   string    `json:"time_relation"`
-	EvidenceLevel  string    `json:"evidence_level"`
+	ID            string    `json:"notice_id"`
+	Province      string    `json:"province"`
+	Area          string    `json:"area_text"`
+	Detail        string    `json:"reason_text_original"`
+	ReasonCode    string    `json:"reason_code"`
+	Start         time.Time `json:"planned_start"`
+	End           time.Time `json:"planned_end"`
+	OfficeID      string    `json:"office_id,omitempty"`
+	PEAOffice     string    `json:"pea_office,omitempty"`
+	RevisionHash  string    `json:"notice_revision_hash"`
+	SourceRef     string    `json:"source_reference"`
+	PartialArea   bool      `json:"partial_area"`
+	LocationMatch bool      `json:"location_match"`
+	AdminMatch    bool      `json:"admin_match"`
+	TimeRelation  string    `json:"time_relation"`
+	EvidenceLevel string    `json:"evidence_level"`
 }
 
 type plannedOutageSnapshot struct {
-	Records   []plannedOutageSourceRecord
-	FetchedAt time.Time
+	Records    []plannedOutageSourceRecord
+	FetchedAt  time.Time
 	SourceHash string
 	SourceMode string
 }
@@ -87,16 +88,17 @@ type plannedOutageCache struct {
 }
 
 type plannedOutageCheck struct {
-	Decision       string
-	SourceMode     string
-	SourceFetchedAt *time.Time
-	SourceHash     string
-	SourceStale    bool
-	NoticeID       string
+	Decision           string
+	SourceMode         string
+	SourceFetchedAt    *time.Time
+	SourceHash         string
+	SourceStale        bool
+	NoticeID           string
 	NoticeRevisionHash string
-	Evidence       map[string]any
-	RawSnapshot    json.RawMessage
-	RawExpiresAt   *time.Time
+	Evidence           map[string]any
+	RawSnapshot        json.RawMessage
+	RawExpiresAt       *time.Time
+	RelevantHash       string
 }
 
 type plannedOutageGate struct {
@@ -145,12 +147,12 @@ func newPlannedOutageGate(cfg ServerConfig, store storage.Store) *plannedOutageG
 		timeout = 1200 * time.Millisecond
 	}
 	return &plannedOutageGate{
-		mode: mode,
-		baseURL: baseURL,
-		normalTTL: normalTTL,
-		hotTTL: hotTTL,
+		mode:       mode,
+		baseURL:    baseURL,
+		normalTTL:  normalTTL,
+		hotTTL:     hotTTL,
 		httpClient: &http.Client{Timeout: timeout},
-		store: store,
+		store:      store,
 	}
 }
 
@@ -160,52 +162,51 @@ func (g *plannedOutageGate) checkAndPersist(ctx context.Context, input chatbotRe
 		return plannedOutageCheck{Decision: "UNAVAILABLE", Evidence: map[string]any{"reason": "invalid_occurred_at_after_contract_validation"}}
 	}
 	result := g.check(ctx, input.Report.Location, occurredAt)
+	decisionHash := plannedOutageDecisionHash(input.Report.TicketID, result)
 	latest, latestErr := g.store.GetLatestPlannedOutageDecision(ctx, input.Report.TicketID)
-	sourceChanged := latestErr == nil && latest.SourceHash != "" && result.SourceHash != "" && latest.SourceHash != result.SourceHash
+	sourceChanged := latestErr == nil && latest.DecisionHash != "" && latest.DecisionHash != decisionHash
 	if sourceChanged {
 		result.Evidence["source_changed"] = true
-		result.Evidence["previous_source_hash"] = latest.SourceHash
+		result.Evidence["previous_notice_revision_hash"] = latest.NoticeRevisionHash
 	}
-	decisionHash := plannedOutageDecisionHash(input.Report.TicketID, result)
 	record := storage.PlannedOutageDecision{
-		TicketID: input.Report.TicketID,
-		DecisionHash: decisionHash,
-		RecordedAt: time.Now().UTC(),
-		OccurredAt: occurredAt.UTC(),
-		SessionRefHash: hashReference("chatbot_session", input.Source.SessionRef),
-		Province: strings.TrimSpace(input.Report.Location.Province),
-		District: strings.TrimSpace(input.Report.Location.District),
-		Subdistrict: strings.TrimSpace(input.Report.Location.Subdistrict),
-		LocationText: strings.TrimSpace(input.Report.Location.HouseOrVillage),
-		Decision: result.Decision,
-		SourceMode: result.SourceMode,
-		SourceFetchedAt: result.SourceFetchedAt,
-		SourceHash: result.SourceHash,
-		SourceStale: result.SourceStale,
-		SourceChanged: sourceChanged,
-		NoticeID: result.NoticeID,
-		NoticeRevisionHash: result.NoticeRevisionHash,
-		EvidenceJSON: mustJSON(result.Evidence),
-		RawSnapshotJSON: result.RawSnapshot,
+		TicketID:             input.Report.TicketID,
+		DecisionHash:         decisionHash,
+		RecordedAt:           time.Now().UTC(),
+		OccurredAt:           occurredAt.UTC(),
+		SessionRefHash:       hashReference("chatbot_session", input.Source.SessionRef),
+		Province:             strings.TrimSpace(input.Report.Location.Province),
+		District:             strings.TrimSpace(input.Report.Location.District),
+		Subdistrict:          strings.TrimSpace(input.Report.Location.Subdistrict),
+		LocationText:         strings.TrimSpace(input.Report.Location.HouseOrVillage),
+		Decision:             result.Decision,
+		SourceMode:           result.SourceMode,
+		SourceFetchedAt:      result.SourceFetchedAt,
+		SourceHash:           result.SourceHash,
+		SourceStale:          result.SourceStale,
+		SourceChanged:        sourceChanged,
+		NoticeID:             result.NoticeID,
+		NoticeRevisionHash:   result.NoticeRevisionHash,
+		EvidenceJSON:         mustJSON(result.Evidence),
+		RawSnapshotJSON:      result.RawSnapshot,
 		RawSnapshotExpiresAt: result.RawExpiresAt,
-		Mode: g.mode,
-		ProductionSend: ProductionSend,
+		Mode:                 g.mode,
+		ProductionSend:       ProductionSend,
 	}
 	if _, err := g.store.InsertPlannedOutageDecision(ctx, record); err != nil {
 		result.Evidence["audit_persist_error"] = true
 	}
 	return result
 }
-
 func (g *plannedOutageGate) check(ctx context.Context, location chatbotLocationInput, occurredAt time.Time) plannedOutageCheck {
 	snapshot, fromCache, staleSnapshot, err := g.snapshot(ctx, location, occurredAt, false)
 	if err != nil {
 		evidence := map[string]any{
-			"source": "pea_eservice_power_outage",
-			"source_mode": plannedOutageSourcePrimary,
-			"reason": "source_unavailable_after_retry_and_public_page_fallback",
-			"source_error_class": plannedOutageErrorClass(err),
-			"deterministic_only": true,
+			"source":              "pea_eservice_power_outage",
+			"source_mode":         plannedOutageSourcePrimary,
+			"reason":              "source_unavailable_after_retry_and_public_page_fallback",
+			"source_error_class":  plannedOutageErrorClass(err),
+			"deterministic_only":  true,
 			"ai_decision_allowed": false,
 		}
 		result := plannedOutageCheck{Decision: "UNAVAILABLE", SourceMode: plannedOutageSourcePrimary, SourceStale: staleSnapshot.SourceHash != "", Evidence: evidence}
@@ -316,14 +317,20 @@ func (g *plannedOutageGate) fetchAllOutages(ctx context.Context) (plannedOutageS
 		form.Set("date", "")
 		form.Set("detail", "")
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, g.baseURL+"/Home/GetOutages", strings.NewReader(form.Encode()))
-		if err != nil { return plannedOutageSnapshot{}, err }
+		if err != nil {
+			return plannedOutageSnapshot{}, err
+		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 		req.Header.Set("Accept", "application/json")
 		resp, err := g.httpClient.Do(req)
-		if err != nil { return plannedOutageSnapshot{}, err }
+		if err != nil {
+			return plannedOutageSnapshot{}, err
+		}
 		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 5_000_000))
 		_ = resp.Body.Close()
-		if readErr != nil { return plannedOutageSnapshot{}, readErr }
+		if readErr != nil {
+			return plannedOutageSnapshot{}, readErr
+		}
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return plannedOutageSnapshot{}, fmt.Errorf("eservice list status %d", resp.StatusCode)
 		}
@@ -342,11 +349,13 @@ func (g *plannedOutageGate) fetchAllOutages(ctx context.Context) (plannedOutageS
 	}
 	sort.Slice(all, func(i, j int) bool { return all[i].OutageID < all[j].OutageID })
 	canonical, err := json.Marshal(all)
-	if err != nil { return plannedOutageSnapshot{}, err }
+	if err != nil {
+		return plannedOutageSnapshot{}, err
+	}
 	sum := sha256.Sum256(canonical)
 	return plannedOutageSnapshot{
-		Records: all,
-		FetchedAt: time.Now().UTC(),
+		Records:    all,
+		FetchedAt:  time.Now().UTC(),
 		SourceHash: hex.EncodeToString(sum[:]),
 		SourceMode: plannedOutageSourcePrimary,
 	}, nil
@@ -354,12 +363,18 @@ func (g *plannedOutageGate) fetchAllOutages(ctx context.Context) (plannedOutageS
 
 func (g *plannedOutageGate) tryPublicPageFallback(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, g.baseURL+"/", nil)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	resp, err := g.httpClient.Do(req)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 256_000))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("public page fallback status %d", resp.StatusCode)
 	}
@@ -389,12 +404,18 @@ func evaluatePlannedOutageSnapshot(snapshot plannedOutageSnapshot, location chat
 			continue
 		}
 		notice := plannedNotice(record, start, end, occurredAt)
+		notice.AdminMatch = plannedAdminScopeMatches(record.Area, location)
+		if notice.AdminMatch {
+			notice.EvidenceLevel = "ADMIN_LOCATION_DETERMINISTIC"
+		} else {
+			notice.EvidenceLevel = "TEXT_LOCATION_CANDIDATE_NEEDS_ADMIN"
+		}
 		switch {
 		case occurredAt.Before(start):
 			upcoming = append(upcoming, notice)
 		case occurredAt.After(end):
 			ended = append(ended, notice)
-		case notice.PartialArea:
+		case notice.PartialArea || !notice.AdminMatch:
 			ambiguous = append(ambiguous, notice)
 		default:
 			active = append(active, notice)
@@ -405,35 +426,43 @@ func evaluatePlannedOutageSnapshot(snapshot plannedOutageSnapshot, location chat
 	candidates := []plannedOutageNotice{}
 	if len(active) == 1 && len(ambiguous) == 0 {
 		decision = "MATCHED"
-		basis = "single_active_deterministic_location_and_time_match"
+		basis = "single_active_deterministic_admin_location_and_time_match"
 		candidates = active
 	} else if len(active)+len(ambiguous) > 1 || len(ambiguous) > 0 {
 		decision = "AMBIGUOUS"
-		basis = "partial_or_multiple_active_notice_candidates"
+		basis = "missing_admin_scope_partial_area_or_multiple_active_candidates"
 		candidates = append(candidates, active...)
 		candidates = append(candidates, ambiguous...)
 	}
+	relevant := make([]plannedOutageNotice, 0, len(active)+len(ambiguous)+len(upcoming)+len(ended))
+	relevant = append(relevant, active...)
+	relevant = append(relevant, ambiguous...)
+	relevant = append(relevant, upcoming...)
+	relevant = append(relevant, ended...)
+	relevantHash := plannedNoticeSetHash(relevant)
 	evidence := map[string]any{
-		"source": "pea_eservice_power_outage",
-		"source_mode": snapshot.SourceMode,
-		"source_hash": snapshot.SourceHash,
-		"source_fetched_at": snapshot.FetchedAt.Format(time.RFC3339),
-		"cache_used": fromCache,
-		"decision_basis": basis,
-		"deterministic_only": true,
-		"ai_parser_used": false,
-		"ai_decision_allowed": false,
+		"source":                         "pea_eservice_power_outage",
+		"source_mode":                    snapshot.SourceMode,
+		"source_hash":                    snapshot.SourceHash,
+		"source_fetched_at":              snapshot.FetchedAt.Format(time.RFC3339),
+		"relevant_evidence_hash":         relevantHash,
+		"cache_used":                     fromCache,
+		"decision_basis":                 basis,
+		"deterministic_only":             true,
+		"ai_parser_used":                 false,
+		"ai_decision_allowed":            false,
 		"planned_end_is_restoration_eta": false,
-		"active_candidate_ids": noticeIDs(active),
-		"ambiguous_candidate_ids": noticeIDs(ambiguous),
-		"upcoming_candidate_ids": noticeIDs(upcoming),
-		"ended_candidate_ids": noticeIDs(ended),
+		"active_candidate_ids":           noticeIDs(active),
+		"ambiguous_candidate_ids":        noticeIDs(ambiguous),
+		"upcoming_candidate_ids":         noticeIDs(upcoming),
+		"ended_candidate_ids":            noticeIDs(ended),
 	}
 	result := plannedOutageCheck{
-		Decision: decision,
-		SourceMode: snapshot.SourceMode,
-		SourceHash: snapshot.SourceHash,
-		Evidence: evidence,
+		Decision:     decision,
+		SourceMode:   snapshot.SourceMode,
+		SourceHash:   snapshot.SourceHash,
+		Evidence:     evidence,
+		RelevantHash: relevantHash,
 	}
 	fetched := snapshot.FetchedAt
 	result.SourceFetchedAt = &fetched
@@ -453,33 +482,36 @@ func evaluatePlannedOutageSnapshot(snapshot plannedOutageSnapshot, location chat
 
 func plannedNotice(record plannedOutageSourceRecord, start, end, occurredAt time.Time) plannedOutageNotice {
 	revisionBasis, _ := json.Marshal(map[string]any{
-		"id": record.OutageID,
+		"id":       record.OutageID,
 		"province": record.Province,
-		"area": strings.TrimSpace(record.Area),
-		"detail": strings.TrimSpace(record.Detail),
-		"start": start.UTC().Format(time.RFC3339),
-		"end": end.UTC().Format(time.RFC3339),
+		"area":     strings.TrimSpace(record.Area),
+		"detail":   strings.TrimSpace(record.Detail),
+		"start":    start.UTC().Format(time.RFC3339),
+		"end":      end.UTC().Format(time.RFC3339),
 	})
 	sum := sha256.Sum256(revisionBasis)
 	relation := "ACTIVE"
-	if occurredAt.Before(start) { relation = "UPCOMING" }
-	if occurredAt.After(end) { relation = "ENDED" }
+	if occurredAt.Before(start) {
+		relation = "UPCOMING"
+	}
+	if occurredAt.After(end) {
+		relation = "ENDED"
+	}
 	return plannedOutageNotice{
-		ID: record.OutageID,
-		Province: strings.TrimSpace(record.Province),
-		Area: strings.TrimSpace(record.Area),
-		Detail: strings.TrimSpace(record.Detail),
-		ReasonCode: plannedReasonCode(record.Detail),
-		Start: start.UTC(),
-		End: end.UTC(),
-		OfficeID: strings.TrimSpace(record.OfficeID),
-		PEAOffice: strings.TrimSpace(record.PEAOffice),
-		RevisionHash: hex.EncodeToString(sum[:]),
-		SourceRef: "/PowerOutage/Home/Detail/" + record.OutageID,
-		PartialArea: plannedAreaLooksPartial(record.Area),
+		ID:            record.OutageID,
+		Province:      strings.TrimSpace(record.Province),
+		Area:          strings.TrimSpace(record.Area),
+		Detail:        strings.TrimSpace(record.Detail),
+		ReasonCode:    plannedReasonCode(record.Detail),
+		Start:         start.UTC(),
+		End:           end.UTC(),
+		OfficeID:      strings.TrimSpace(record.OfficeID),
+		PEAOffice:     strings.TrimSpace(record.PEAOffice),
+		RevisionHash:  hex.EncodeToString(sum[:]),
+		SourceRef:     "/PowerOutage/Home/Detail/" + record.OutageID,
+		PartialArea:   plannedAreaLooksPartial(record.Area),
 		LocationMatch: true,
-		TimeRelation: relation,
-		EvidenceLevel: "ADMIN_LOCATION_DETERMINISTIC",
+		TimeRelation:  relation,
 	}
 }
 
@@ -500,6 +532,44 @@ func plannedAreaContainsLocation(area, locationKey string) bool {
 	}
 	withoutBan := strings.TrimPrefix(locationKey, "บ้าน")
 	return len([]rune(withoutBan)) >= 4 && strings.Contains(areaKey, withoutBan)
+}
+
+func plannedAdminScopeMatches(area string, location chatbotLocationInput) bool {
+	district := normalizeChatbotAdmin(location.District, "อำเภอ", "อ.")
+	subdistrict := normalizeChatbotAdmin(location.Subdistrict, "ตำบล", "ต.")
+	if district == "" || subdistrict == "" {
+		return false
+	}
+	if !plannedAreaHasLabeledAdmin(area, []string{subdistrict}, []string{"ตำบล", "ต."}) {
+		return false
+	}
+	districtAliases := []string{district}
+	if strings.HasPrefix(district, "เมือง") {
+		trimmed := strings.TrimPrefix(district, "เมือง")
+		if trimmed != "" {
+			districtAliases = append(districtAliases, trimmed)
+		}
+	} else {
+		districtAliases = append(districtAliases, "เมือง"+district)
+	}
+	return plannedAreaHasLabeledAdmin(area, districtAliases, []string{"อำเภอ", "อ."})
+}
+
+func plannedAreaHasLabeledAdmin(area string, values, labels []string) bool {
+	areaKey := normalizePlannedText(area)
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		for _, label := range labels {
+			needle := normalizePlannedText(label + value)
+			if needle != "" && strings.Contains(areaKey, needle) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func plannedAreaLooksPartial(area string) bool {
@@ -524,6 +594,23 @@ func normalizePlannedText(value string) string {
 	return b.String()
 }
 
+func plannedNoticeSetHash(values []plannedOutageNotice) string {
+	parts := make([]string, 0, len(values))
+	for _, value := range values {
+		parts = append(parts, strings.Join([]string{
+			value.ID,
+			value.RevisionHash,
+			value.TimeRelation,
+			value.EvidenceLevel,
+			strconv.FormatBool(value.PartialArea),
+			strconv.FormatBool(value.AdminMatch),
+		}, "|"))
+	}
+	sort.Strings(parts)
+	raw, _ := json.Marshal(parts)
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:])
+}
 func parsePlannedOutageTime(value string) (time.Time, bool) {
 	match := plannedOutageDatePattern.FindStringSubmatch(strings.TrimSpace(value))
 	if len(match) != 2 {
@@ -552,27 +639,30 @@ func plannedReasonCode(detail string) string {
 
 func noticeIDs(values []plannedOutageNotice) []string {
 	ids := make([]string, 0, len(values))
-	for _, value := range values { ids = append(ids, value.ID) }
+	for _, value := range values {
+		ids = append(ids, value.ID)
+	}
 	sort.Strings(ids)
 	return ids
 }
 
 func plannedOutageDecisionHash(ticketID string, result plannedOutageCheck) string {
 	basis, _ := json.Marshal(map[string]any{
-		"ticket_id": ticketID,
-		"decision": result.Decision,
-		"source_hash": result.SourceHash,
-		"source_mode": result.SourceMode,
-		"notice_id": result.NoticeID,
-		"notice_revision_hash": result.NoticeRevisionHash,
-		"source_stale": result.SourceStale,
+		"ticket_id":              ticketID,
+		"decision":               result.Decision,
+		"relevant_evidence_hash": result.RelevantHash,
+		"source_mode":            result.SourceMode,
+		"notice_id":              result.NoticeID,
+		"notice_revision_hash":   result.NoticeRevisionHash,
+		"source_stale":           result.SourceStale,
 	})
 	sum := sha256.Sum256(basis)
 	return hex.EncodeToString(sum[:])
 }
-
 func plannedOutageErrorClass(err error) string {
-	if err == nil { return "" }
+	if err == nil {
+		return ""
+	}
 	text := strings.ToLower(err.Error())
 	switch {
 	case errors.Is(err, context.DeadlineExceeded) || strings.Contains(text, "timeout"):
@@ -587,6 +677,8 @@ func plannedOutageErrorClass(err error) string {
 }
 
 func absDuration(value time.Duration) time.Duration {
-	if value < 0 { return -value }
+	if value < 0 {
+		return -value
+	}
 	return value
 }
