@@ -181,3 +181,60 @@ func TestOutageResolveAcceptsExtendedSecondaryHintsWithoutUsingThem(t *testing.T
 		}
 	}
 }
+
+func TestOutageResolveIncludesUniversalPlaceEvidenceButDoesNotUseItForTopology(t *testing.T) {
+	store := newFakeStore()
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, store)
+	body := `{"schema_version":"outage-report.v1","source":{"channel":"N8N","event_id":"place-shadow-1","occurred_at":"2026-08-26T02:30:00+07:00"},"message":{"text":"ไฟดับหน้าโรงพยาบาลบึงกาฬ"}}`
+	req := httptest.NewRequest(http.MethodPost, outageResolvePath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String())
+	}
+	payload := decodeBody(t, res)
+	evidence := payload["input_evidence"].(map[string]any)
+	if evidence["place_evidence_matched"] != true || evidence["place_evidence_used_for_topology"] != false {
+		t.Fatalf("place evidence must be visible but shadow-only: %#v", evidence)
+	}
+	place := payload["place_resolution"].(map[string]any)
+	if place["status"] != "MATCHED_SINGLE_PLACE" || place["outage_state"] != "UNDETERMINED" {
+		t.Fatalf("unexpected place resolution: %#v", place)
+	}
+	selectedPlace := place["selected_place"].(map[string]any)
+	if selectedPlace["canonical_name"] != "โรงพยาบาลบึงกาฬ" {
+		t.Fatalf("unexpected place: %#v", selectedPlace)
+	}
+	resolution := payload["resolution"].(map[string]any)
+	if resolution["status"] != "OUTSIDE_PILOT_SCOPE" {
+		t.Fatalf("place evidence must not alter outage resolver yet: %#v", resolution)
+	}
+	stored := string(store.outageResolutions[payload["request_id"].(string)].ResultJSON)
+	if strings.Contains(stored, "ไฟดับหน้าโรงพยาบาลบึงกาฬ") {
+		t.Fatalf("durable result must not persist raw message: %s", stored)
+	}
+}
+
+func TestOutageResolveIncludesAmbiguousBrandPlaceEvidenceFailClosed(t *testing.T) {
+	handler := NewServer(ServerConfig{APIKey: "pilot-key"}, newFakeStore())
+	body := `{"schema_version":"outage-report.v1","source":{"channel":"LINE","event_id":"place-shadow-2","occurred_at":"2026-08-26T02:31:00+07:00"},"message":{"text":"ไฟดับแถว 7-11"}}`
+	req := httptest.NewRequest(http.MethodPost, outageResolvePath, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", "pilot-key")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", res.Code, res.Body.String())
+	}
+	payload := decodeBody(t, res)
+	place := payload["place_resolution"].(map[string]any)
+	if place["status"] != "AMBIGUOUS_PLACE" || place["match_count"].(float64) != 2 || place["location_used"] != false {
+		t.Fatalf("brand evidence must remain ambiguous: %#v", place)
+	}
+	resolution := payload["resolution"].(map[string]any)
+	if resolution["outage_state"] != "UNDETERMINED" || len(resolution["selected_transformers"].([]any)) != 0 {
+		t.Fatalf("brand ambiguity must not select outage TX: %#v", resolution)
+	}
+}

@@ -101,6 +101,11 @@ func (s *Server) handleBuengKanOutageResolve(w http.ResponseWriter, r *http.Requ
 	}
 	result := buengkan.ResolveWithLocation(input.Message.Text, location)
 	locationUsed := result.LocationEvidence != nil && result.LocationEvidence.UsedForTopology
+	var placeLocation *buengkan.PlaceResolveLocationInput
+	if input.Location != nil && input.Location.Lat != nil && input.Location.Lon != nil {
+		placeLocation = &buengkan.PlaceResolveLocationInput{Lat: *input.Location.Lat, Lon: *input.Location.Lon, AccuracyM: input.Location.AccuracyM, Source: strings.TrimSpace(input.Location.Source)}
+	}
+	placeResolution := buengkan.ResolvePlace(input.Message.Text, placeLocation, 10)
 	payload := map[string]any{
 		"api_version":     APIVersion,
 		"schema_version":  outageResultSchema,
@@ -121,7 +126,10 @@ func (s *Server) handleBuengKanOutageResolve(w http.ResponseWriter, r *http.Requ
 			"location_used_for_topology": locationUsed,
 			"hints_received":         input.Hints != nil,
 			"hints_used_for_topology": false,
+			"place_evidence_matched":  placeResolution.MatchCount > 0,
+			"place_evidence_used_for_topology": false,
 		},
+		"place_resolution": placeResolution,
 		"resolution":   result,
 		"generated_at": nowISO(),
 	}
