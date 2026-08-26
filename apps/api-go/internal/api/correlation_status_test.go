@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"pea-api-intellisense/apps/api-go/internal/correlation"
 	"pea-api-intellisense/apps/api-go/internal/storage"
 )
 
@@ -150,7 +151,7 @@ func TestChatbotCorrelationStatusPlannedOutageUsesSeparateSafeLane(t *testing.T)
 	job.State = "SUCCEEDED"
 	store.jobs[reportID] = job
 	snapshot := store.snapshots[reportID]
-	snapshot.Evidence.PlannedOutageState = "PLANNED_OUTAGE_MATCHED"
+	snapshot.Evidence.PlannedOutageState = correlation.PlannedMatched
 	store.snapshots[reportID] = snapshot
 
 	res := callChatbotCorrelation(t, h, "PEA-20260826-C0B106", "n8n-key")
