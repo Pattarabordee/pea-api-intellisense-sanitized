@@ -125,7 +125,7 @@ This query intentionally omits report IDs, ticket IDs, channel/session identifie
 ## Running the harness
 
 ```text
-python -m ais_etr.incident_correlation_calibration ^
+python -m shared_core.incident_correlation.calibration ^
   --scores path\to\runtime_scores.jsonl ^
   --labels path\to\review_labels.jsonl ^
   --output-dir runtime\incident-correlation-calibration\run_xxx ^

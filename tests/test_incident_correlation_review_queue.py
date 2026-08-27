@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from ais_etr.incident_correlation_review_queue import (
+from shared_core.incident_correlation.review_queue import (
     CANDIDATE_SCHEMA,
     LABEL_SCHEMA,
     ReviewQueueError,

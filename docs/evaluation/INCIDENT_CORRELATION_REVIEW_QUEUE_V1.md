@@ -214,7 +214,7 @@ The query uses raw identifiers only inside PostgreSQL to construct opaque refere
 ## Build the static queue
 
 ```text
-python -m ais_etr.incident_correlation_review_queue build ^
+python -m shared_core.incident_correlation.review_queue build ^
   --candidates runtime\review\candidates.jsonl ^
   --output-dir runtime\review\queue_v1 ^
   --split-seed incident-correlation-review-v1 ^
@@ -232,7 +232,7 @@ The HTML stores review choices only in browser `localStorage` until the reviewer
 ## Validate exported labels
 
 ```text
-python -m ais_etr.incident_correlation_review_queue validate-labels ^
+python -m shared_core.incident_correlation.review_queue validate-labels ^
   --labels runtime\review\incident_correlation_review_labels.jsonl ^
   --manifest runtime\review\queue_v1\incident_correlation_review_queue_manifest.json
 ```

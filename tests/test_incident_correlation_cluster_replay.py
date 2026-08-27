@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ais_etr.incident_correlation_cluster_replay import (
+from shared_core.incident_correlation.cluster_replay import (
     OBS_SCHEMA_VERSION,
     TRUTH_SCHEMA_VERSION,
     ClusterObservation,
