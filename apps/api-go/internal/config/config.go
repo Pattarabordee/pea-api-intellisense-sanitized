@@ -37,9 +37,9 @@ func Load() Config {
 		RuntimeProfile:                   envString("RUNTIME_PROFILE", "legacy-full"),
 		ListenAddress:                    os.Getenv("LISTEN_ADDRESS"),
 		Port:                             envInt("PORT", 8090),
-		APIKey:                           os.Getenv("AIS_INBOUND_API_KEY"),
-		OutageIntegrationAPIKey:          os.Getenv("OUTAGE_INTEGRATION_API_KEY"),
-		DatabaseURL:                      os.Getenv("DATABASE_URL"),
+		APIKey:                           envOrFile("AIS_INBOUND_API_KEY", "AIS_INBOUND_API_KEY_FILE"),
+		OutageIntegrationAPIKey:          envOrFile("OUTAGE_INTEGRATION_API_KEY", "OUTAGE_INTEGRATION_API_KEY_FILE"),
+		DatabaseURL:                      envOrFile("DATABASE_URL", "DATABASE_URL_FILE"),
 		RunDBMigrations:                  envBool("RUN_DB_MIGRATIONS", true),
 		RateLimitPerMinute:               envInt("RATE_LIMIT_PER_MINUTE", 120),
 		AllowedOrigin:                    os.Getenv("ALLOWED_ORIGIN"),
@@ -94,6 +94,21 @@ func (c Config) ListenHost() string {
 		return "127.0.0.1"
 	}
 	return ""
+}
+
+func envOrFile(name, fileName string) string {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
+		return value
+	}
+	path := strings.TrimSpace(os.Getenv(fileName))
+	if path == "" {
+		return ""
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func envString(name, fallback string) string {
