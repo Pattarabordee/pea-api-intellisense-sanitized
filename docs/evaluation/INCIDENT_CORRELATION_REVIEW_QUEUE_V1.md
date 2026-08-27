@@ -65,9 +65,19 @@ No extra candidate fields are accepted. This intentionally makes it difficult to
 
 ## Case grouping and split leakage guard
 
-The builder computes connected components over opaque `report_ref_a` / `report_ref_b`. All pair relationships connected through a shared report receive the same `review_case_ref`.
+Two explicit split strategies are supported. The default remains `connected-component-v1` for backward compatibility.
 
-A deterministic SHA-256 split assignment then places each entire case into either `CALIBRATION` or `EVALUATION`. The browser reviewer cannot edit the split. This prevents the same connected review case from being moved across calibration/evaluation after model results are seen.
+### `connected-component-v1`
+
+The builder computes connected components over opaque `report_ref_a` / `report_ref_b`. All pair relationships connected through a shared report receive the same `review_case_ref`. A deterministic SHA-256 split assignment then places each entire case into either `CALIBRATION` or `EVALUATION`. This is conservative, but a dense relationship graph can collapse a whole cohort into one case and leave no held-out split.
+
+### `report-disjoint-v1`
+
+For dense runtime relationship exports, prefer `report-disjoint-v1`. Each opaque report ref is assigned deterministically to `CALIBRATION` or `EVALUATION` before pair review. A pair is retained only when both endpoint reports are assigned to the same split. Cross-split pairs are dropped and counted in the manifest. Connected components are then computed only inside the retained split-local graph.
+
+This guarantees that the same report cannot appear in both calibration and evaluation while avoiding the all-or-nothing behavior of a single dense connected component. The dropped-pair rule depends only on opaque report refs, the fixed split seed and calibration fraction; it does not inspect model score, confidence, relationship decision or reviewer label.
+
+The manifest records `split_strategy`, `candidate_input_count`, `candidate_count`, `dropped_cross_split_pair_count`, `report_count`, `review_report_count`, `report_split_counts` and `report_leakage_guard`. The browser reviewer cannot edit the split.
 
 Default calibration fraction is 0.70. The split seed and fraction are recorded in the manifest.
 
@@ -208,7 +218,8 @@ python -m ais_etr.incident_correlation_review_queue build ^
   --candidates runtime\review\candidates.jsonl ^
   --output-dir runtime\review\queue_v1 ^
   --split-seed incident-correlation-review-v1 ^
-  --calibration-fraction 0.70
+  --calibration-fraction 0.70 ^
+  --split-strategy report-disjoint-v1
 ```
 
 Outputs:
