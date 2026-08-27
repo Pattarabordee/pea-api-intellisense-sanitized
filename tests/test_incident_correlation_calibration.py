@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from ais_etr.incident_correlation_calibration import (
+from shared_core.incident_correlation.calibration import (
     LABEL_SCHEMA_VERSION,
     SCORE_SCHEMA_VERSION,
     ReviewLabel,

@@ -1,36 +1,33 @@
-# PEA API Intellisense / AIS ETR
+# PEA Intellisense
 
-This repository is the sanitized source-of-truth export for the PEA API Intellisense / AIS ETR project.
+This repository contains the sanitized application and evaluation code used by the current PEA Intellisense project.
 
-## Current Truth
+## Current project boundary
 
-- Current mode: `shadow`
-- Production send: `blocked`
-- Controlled AIS API pilot: ready for shadow testing
-- Production infrastructure: not yet approved
-- Customer-facing Auto ETR: not yet approved
+PEA Intellisense is not the AIS/ETR project. AIS/ETR code remains in this repository only as a clearly isolated legacy/reference lane until its dependency removal is completed.
 
-## Start Here
+Current PEA Intellisense scope includes:
+- customer-service chatbot report intake and safe status readback;
+- Bueng Kan place/GIS resolution and electrical topology evidence;
+- Incident Correlation shadow runtime and its n8n read contract;
+- blind human review, calibration and cluster-replay tooling;
+- shadow-mode safety controls and deployment/integration tests.
 
-1. `AI_REVIEW_START_HERE.md`
-2. `README_AIS_ETR_MVP.md`
-3. `pea_pitching_executive_summary.md`
-4. `runtime/PILOT_COMPLETE_README.md`
-5. `runtime/go_no_go_summary.md`
-6. `runtime/production_readiness_gate.md`
+## Source lanes
 
-## What This Project Does
+- `apps/` — current PEA Intellisense application/runtime code.
+- `shared_core/` — reusable code that has no AIS/ETR business semantics.
+- `docs/architecture`, `docs/evaluation`, `docs/integrations` — current design and validation contracts.
+- `ais_etr/` — AIS/ETR-specific legacy/reference lane. Do not treat it as a current PEA Intellisense requirement.
+- `docs/legacy/ais-etr/` — AIS/ETR historical documentation.
 
-The Render cloud service is a secure AIS receiver and meter-state truth ledger. It does not run the PEA evidence or ETR model worker.
+## Safety state
 
-PEA evidence checks run as private, one-shot local reports. Customer-facing ETR remains shadow research and uses only clean AIS remaining-restoration truth.
+- Incident Correlation remains shadow-only unless explicitly promoted through approved gates.
+- Production send remains blocked unless separately authorized.
+- GIS/topology is evidence/context, not customer-facing outage truth.
+- AIS/ETR requirements must not be inherited into PEA Intellisense unless explicitly adopted as a shared capability.
 
-The pilot proves the API, evidence store, audit trail, and operator handoff. It does not enable production Auto ETR.
+## Development authority
 
-## Key Guardrails
-
-- Do not expose API keys, tokens, room ids, verbatim WebEx text, full meter/PEANO lists, or customer identity.
-- Do not enable customer-facing Auto ETR until green-lane evidence, model thresholds, production infrastructure, and owner approval pass.
-- AIS outage/restore remains the customer-facing truth source.
-- The public web console uses synthetic demo data only. Live operator data requires the authenticated API or private reports.
-
+The organization Server is the current Development / Integration Authority. Runtime Authority cutover is a separate migration gate.

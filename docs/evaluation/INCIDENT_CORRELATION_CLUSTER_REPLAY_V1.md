@@ -138,7 +138,7 @@ Synthetic scenarios are suitable for software correctness tests only. They are n
 ## Running
 
 ```text
-python -m ais_etr.incident_correlation_cluster_replay \
+python -m shared_core.incident_correlation.cluster_replay \
   --observations runtime/.../observations.jsonl \
   --truth runtime/.../reviewed_truth.jsonl \
   --output-dir runtime/.../cluster-replay-out
