@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -120,6 +121,46 @@ func TestCorrelationShadowQueuesOnlyAfterAcceptedReport(t *testing.T) {
 	}
 	if !strings.Contains(string(captured.evidence.TopologyJSON), "BUA03") {
 		t.Fatalf("expected core topology context in evidence: %s", captured.evidence.TopologyJSON)
+	}
+}
+
+func TestCorrelationShadowCanonicalizesSupportedVillageAliases(t *testing.T) {
+	cases := []struct {
+		name    string
+		ticket  string
+		village string
+	}{
+		{name: "full", ticket: "PEA-20260827-A11001", village: "บ้านดงหมากยาง หมู่ 7"},
+		{name: "house", ticket: "PEA-20260827-A11002", village: "บ้านดงหมากยาง"},
+		{name: "canonical", ticket: "PEA-20260827-A11003", village: "ดงหมากยาง"},
+		{name: "moo_alias", ticket: "PEA-20260827-A11004", village: "ม.7 ดงหมากยาง"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newCorrelationCaptureStore()
+			h := NewServer(ServerConfig{
+				OutageIntegrationAPIKey: "n8n-key",
+				IncidentCorrelationMode: "shadow",
+			}, store)
+			body := chatbotTestBody(tc.ticket, tc.village, "บึงกาฬ", "บึงกาฬ", "บึงกาฬ", "power_outage")
+			res := callChatbotReport(t, h, body, "n8n-key")
+			if res.Code != http.StatusCreated {
+				t.Fatalf("expected accepted alias report, got %d: %s", res.Code, res.Body.String())
+			}
+			if len(store.accepted) != 1 {
+				t.Fatalf("expected one correlation capture, got %d", len(store.accepted))
+			}
+			var location map[string]any
+			if err := json.Unmarshal(store.accepted[0].evidence.LocationJSON, &location); err != nil {
+				t.Fatalf("decode location evidence: %v", err)
+			}
+			if got := location["village"]; got != "ดงหมากยาง" {
+				t.Fatalf("expected canonical village evidence, got %#v for alias %q", got, tc.village)
+			}
+			if !strings.Contains(string(store.accepted[0].evidence.TopologyJSON), "BUA03") {
+				t.Fatalf("expected BUA03 topology evidence for alias %q: %s", tc.village, store.accepted[0].evidence.TopologyJSON)
+			}
+		})
 	}
 }
 

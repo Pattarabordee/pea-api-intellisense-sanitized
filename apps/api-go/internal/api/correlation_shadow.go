@@ -44,7 +44,7 @@ func (s *Server) captureCorrelationShadow(ctx context.Context, input chatbotRepo
 		"province":    strings.TrimSpace(input.Report.Location.Province),
 		"district":    strings.TrimSpace(input.Report.Location.District),
 		"subdistrict": strings.TrimSpace(input.Report.Location.Subdistrict),
-		"village":     strings.TrimSpace(input.Report.Location.HouseOrVillage),
+		"village":     correlationCanonicalVillage(resolved, input.Report.Location.HouseOrVillage),
 	}
 	topology := correlationTopologyFromResolved(resolved)
 	freshness := map[string]any{
@@ -110,6 +110,20 @@ func (s *Server) captureCorrelationShadow(ctx context.Context, input chatbotRepo
 		"report_ref", hashReference("correlation_report_ref", storedID),
 		"evidence_revision", revision, "job_duplicate", duplicate,
 		"planned_outage_state", plannedState, "engine_version", correlation.EngineVersion)
+}
+
+func correlationCanonicalVillage(resolved map[string]any, fallback string) string {
+	fallback = strings.TrimSpace(fallback)
+	resolution, ok := resolved["resolution"].(map[string]any)
+	if !ok {
+		return fallback
+	}
+	village, _ := resolution["village_name"].(string)
+	village = strings.TrimSpace(village)
+	if village == "" {
+		return fallback
+	}
+	return village
 }
 
 func correlationTopologyFromResolved(resolved map[string]any) map[string]any {
