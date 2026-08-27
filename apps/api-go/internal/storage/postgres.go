@@ -46,7 +46,33 @@ func (s *PostgresStore) Close() {
 	s.pool.Close()
 }
 
+var peaCurrentMigrations = map[string]struct{}{
+	"006_buengkan_tester_feedback.sql": {},
+	"008_buengkan_outage_resolution.sql": {},
+	"009_buengkan_secondary_validation.sql": {},
+	"010_buengkan_unknown_place_queue.sql": {},
+	"011_planned_outage_shadow.sql": {},
+	"012_incident_correlation_shadow.sql": {},
+	"013_incident_correlation_jobs.sql": {},
+}
+
+func migrationAllowed(profile, name string) (bool, error) {
+	profile = strings.ToLower(strings.TrimSpace(profile))
+	if profile == "" || profile == "legacy-full" {
+		return true, nil
+	}
+	if profile == "pea-current" {
+		_, ok := peaCurrentMigrations[name]
+		return ok, nil
+	}
+	return false, fmt.Errorf("unknown migration profile %q", profile)
+}
+
 func (s *PostgresStore) Init(ctx context.Context) error {
+	return s.InitProfile(ctx, "legacy-full")
+}
+
+func (s *PostgresStore) InitProfile(ctx context.Context, profile string) error {
 	if _, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`); err != nil {
 		return err
 	}
@@ -56,7 +82,14 @@ func (s *PostgresStore) Init(ctx context.Context) error {
 	}
 	names := make([]string, 0, len(entries))
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		if entry.IsDir() {
+			continue
+		}
+		allowed, err := migrationAllowed(profile, entry.Name())
+		if err != nil {
+			return err
+		}
+		if allowed {
 			names = append(names, entry.Name())
 		}
 	}

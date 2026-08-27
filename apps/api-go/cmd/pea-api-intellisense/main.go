@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,12 +37,17 @@ func main() {
 	}
 	defer store.Close()
 
-	if err := store.Init(ctx); err != nil {
-		logger.Error("postgres migration failed", "error", err)
-		os.Exit(1)
+	if cfg.RunDBMigrations {
+		if err := store.InitProfile(ctx, cfg.RuntimeProfile); err != nil {
+			logger.Error("postgres migration failed", "error", err)
+			os.Exit(1)
+		}
+	} else {
+		logger.Info("postgres migrations disabled for runtime process", "runtime_profile", cfg.RuntimeProfile)
 	}
 
 	handler := api.NewServer(api.ServerConfig{
+		RuntimeProfile:                 cfg.RuntimeProfile,
 		APIKey:                         cfg.APIKey,
 		OutageIntegrationAPIKey:        cfg.OutageIntegrationAPIKey,
 		RateLimitPerMinute:             cfg.RateLimitPerMinute,
@@ -77,8 +83,9 @@ func main() {
 			"snapshot_limit", cfg.IncidentCorrelationSnapshotLimit)
 	}
 
+	listenAddr := net.JoinHostPort(cfg.ListenHost(), strconv.Itoa(cfg.Port))
 	server := &http.Server{
-		Addr:              ":" + strconv.Itoa(cfg.Port),
+		Addr:              listenAddr,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
@@ -87,7 +94,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("pea api intellisense cloud shadow api starting", "port", cfg.Port)
+		logger.Info("pea api intellisense shadow api starting", "listen_address", listenAddr, "runtime_profile", cfg.RuntimeProfile)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("server failed", "error", err)
 			os.Exit(1)
