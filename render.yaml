@@ -1,36 +1,24 @@
+# VALIDATION CANDIDATE — ZERO-COST-FIRST STAGING ONLY.
+# Do not use this file to modify existing production services/databases.
+# Canonical Phase-2 branch at preparation time:
+#   feat/incident-correlation-shadow-v1-20260826 @ a14cdebe79a14b98330d9ea19008a3608a91e60b
+
 services:
   - type: web
-    name: pea-line-webhook
-    runtime: python
-    plan: starter
-    buildCommand: python -m py_compile apps/line-webhook/server.py
-    startCommand: python apps/line-webhook/server.py
-    healthCheckPath: /health
-    envVars:
-      - key: AIS_NOTIFICATION_MODE
-        value: shadow
-      - key: PRODUCTION_SEND_MODE
-        value: blocked
-      - key: LINE_CHANNEL_SECRET
-        sync: false
-      - key: LINE_ALLOWED_GROUP_IDS
-        sync: false
-      - key: LINE_ALLOWED_CHAT_HASHES
-        sync: false
-      - key: LINE_CAPTURE_MODE
-        value: shadow
-
-  - type: web
-    name: pea-api-intellisense-api
+    name: pea-api-intellisense-phase2-shadow-staging
     runtime: docker
-    plan: starter
+    repo: https://github.com/Pattarabordee/pea-api-intellisense-sanitized
+    branch: feat/incident-correlation-shadow-v1-20260826
+    autoDeploy: false
+    plan: free
+    region: oregon
     dockerfilePath: ./apps/api-go/Dockerfile
     dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: pea-api-intellisense-postgres
+          name: pea-api-intellisense-phase2-shadow-staging-postgres
           property: connectionString
       - key: AIS_INBOUND_API_KEY
         sync: false
@@ -44,26 +32,25 @@ services:
         value: dry_run
       - key: EMERGENCY_OFF
         value: "false"
+      - key: INCIDENT_CORRELATION_MODE
+        value: shadow
+      - key: INCIDENT_CORRELATION_MAX_ATTEMPTS
+        value: "5"
+      - key: INCIDENT_CORRELATION_POLL_MS
+        value: "1000"
+      - key: INCIDENT_CORRELATION_LEASE_SECONDS
+        value: "30"
+      - key: INCIDENT_CORRELATION_SNAPSHOT_LIMIT
+        value: "1000"
+      - key: PLANNED_OUTAGE_MODE
+        value: off
       - key: RATE_LIMIT_PER_MINUTE
-        value: "120"
+        value: "240"
       - key: ALLOWED_ORIGIN
-        value: https://pea-api-intellisense-web.onrender.com
-
-  - type: web
-    name: pea-api-intellisense-web
-    runtime: node
-    plan: starter
-    rootDir: apps/web-next
-    buildCommand: npm ci && npm run build
-    startCommand: npm run start
-    envVars:
-      - key: API_BASE_URL
-        value: https://pea-api-intellisense-api.onrender.com
-      - key: AIS_INBOUND_API_KEY
-        sync: false
-      - key: OUTAGE_INTEGRATION_API_KEY
-        sync: false
+        value: ""
 
 databases:
-  - name: pea-api-intellisense-postgres
-    plan: basic-256mb
+  - name: pea-api-intellisense-phase2-shadow-staging-postgres
+    plan: free
+    region: oregon
+    postgresMajorVersion: "16"
