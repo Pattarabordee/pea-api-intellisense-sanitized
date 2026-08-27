@@ -69,6 +69,51 @@ class IncidentCorrelationReviewQueueTests(unittest.TestCase):
         by_pair = {row["pair_ref"]: row for row in review_rows}
         self.assertEqual(by_pair["pair_aaaaaaaa"]["split"], by_pair["pair_bbbbbbbb"]["split"])
 
+
+    def test_report_disjoint_split_drops_cross_split_pairs_and_prevents_report_leakage(self) -> None:
+        reports = [f"report_{i:08x}" for i in range(12)]
+        rows = []
+        pair_reports = {}
+        pair_index = 0
+        for i, left in enumerate(reports):
+            for right in reports[i + 1 :]:
+                pair_ref = f"pair_{pair_index:08x}"
+                pair_index += 1
+                rows.append(candidate(pair_ref, left, right))
+                pair_reports[pair_ref] = (left, right)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            candidates = root / "candidates.jsonl"
+            output = root / "queue"
+            write_jsonl(candidates, rows)
+            manifest = build_queue(
+                candidates,
+                output,
+                split_seed="report-disjoint-test",
+                calibration_fraction=0.5,
+                split_strategy="report-disjoint-v1",
+            )
+
+            self.assertEqual(manifest["candidate_input_count"], len(rows))
+            self.assertEqual(
+                manifest["candidate_count"] + manifest["dropped_cross_split_pair_count"],
+                len(rows),
+            )
+            self.assertGreater(manifest["dropped_cross_split_pair_count"], 0)
+            self.assertTrue(manifest["report_leakage_guard"])
+            self.assertEqual(manifest["split_strategy"], "report-disjoint-v1")
+            self.assertGreater(manifest["report_split_counts"]["CALIBRATION"], 0)
+            self.assertGreater(manifest["report_split_counts"]["EVALUATION"], 0)
+            self.assertGreater(manifest["pair_split_counts"]["CALIBRATION"], 0)
+            self.assertGreater(manifest["pair_split_counts"]["EVALUATION"], 0)
+
+            seen_report_split = {}
+            for item in manifest["pair_assignments"]:
+                for report_ref in pair_reports[item["pair_ref"]]:
+                    previous = seen_report_split.setdefault(report_ref, item["split"])
+                    self.assertEqual(previous, item["split"]);
+
     def test_build_queue_is_blind_and_records_manifest(self) -> None:
         rows = [
             candidate("pair_aaaaaaaa", "report_aaaaaaaa", "report_bbbbbbbb", transformer="SAME_TRANSFORMER"),

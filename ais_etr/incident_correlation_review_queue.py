@@ -73,6 +73,7 @@ ENUMS = {
 LABELS = {"SAME_INCIDENT", "DIFFERENT_INCIDENT", "INSUFFICIENT_EVIDENCE"}
 RISK_TIERS = {"NORMAL", "HIGH", "CRITICAL"}
 SPLITS = {"CALIBRATION", "EVALUATION", "UNSPECIFIED"}
+SPLIT_STRATEGIES = {"connected-component-v1", "report-disjoint-v1"}
 
 
 class ReviewQueueError(ValueError):
@@ -206,20 +207,65 @@ def split_for_case(case_ref: str, seed: str, calibration_fraction: float) -> str
     return "CALIBRATION" if bucket < calibration_fraction else "EVALUATION"
 
 
-def build_review_rows(
-    rows: list[dict[str, Any]], *, split_seed: str, calibration_fraction: float
-) -> list[dict[str, Any]]:
+def split_for_report(report_ref: str, seed: str, calibration_fraction: float) -> str:
+    digest = hashlib.sha256(f"{seed}|report|{report_ref}".encode("utf-8")).digest()
+    bucket = int.from_bytes(digest[:8], "big") / float(1 << 64)
+    return "CALIBRATION" if bucket < calibration_fraction else "EVALUATION"
+
+
+def _prepare_review_rows(
+    rows: list[dict[str, Any]],
+    *,
+    split_seed: str,
+    calibration_fraction: float,
+    split_strategy: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     if not (0 < calibration_fraction < 1):
         raise ReviewQueueError("calibration_fraction must be between 0 and 1")
     if not split_seed or len(split_seed) > 120:
         raise ReviewQueueError("split_seed must be non-empty and <= 120 characters")
-    pair_cases = assign_cases(rows)
-    case_splits = {
-        case_ref: split_for_case(case_ref, split_seed, calibration_fraction)
-        for case_ref in sorted(set(pair_cases.values()))
-    }
+    if split_strategy not in SPLIT_STRATEGIES:
+        raise ReviewQueueError(f"invalid split_strategy: {split_strategy}")
+
+    all_report_refs = sorted({row[key] for row in rows for key in ("report_ref_a", "report_ref_b")})
+    dropped_cross_split_pair_count = 0
+
+    if split_strategy == "connected-component-v1":
+        selected_rows = list(rows)
+        pair_cases = assign_cases(selected_rows)
+        case_splits = {
+            case_ref: split_for_case(case_ref, split_seed, calibration_fraction)
+            for case_ref in sorted(set(pair_cases.values()))
+        }
+        report_splits: dict[str, str] = {}
+        for row in selected_rows:
+            split = case_splits[pair_cases[row["pair_ref"]]]
+            report_splits[row["report_ref_a"]] = split
+            report_splits[row["report_ref_b"]] = split
+    else:
+        report_splits = {
+            report_ref: split_for_report(report_ref, split_seed, calibration_fraction)
+            for report_ref in all_report_refs
+        }
+        selected_rows = []
+        for row in rows:
+            left_split = report_splits[row["report_ref_a"]]
+            right_split = report_splits[row["report_ref_b"]]
+            if left_split != right_split:
+                dropped_cross_split_pair_count += 1
+                continue
+            selected_rows.append(row)
+        if not selected_rows:
+            raise ReviewQueueError("report-disjoint split removed every candidate pair")
+        pair_cases = assign_cases(selected_rows)
+        case_splits = {
+            case_ref: report_splits[row["report_ref_a"]]
+            for row in selected_rows
+            for case_ref in (pair_cases[row["pair_ref"]],)
+        }
+
     output = []
-    for row in sorted(rows, key=lambda item: item["pair_ref"]):
+    for row in sorted(selected_rows, key=lambda item: item["pair_ref"]):
         case_ref = pair_cases[row["pair_ref"]]
         output.append(
             {
@@ -230,6 +276,37 @@ def build_review_rows(
                 "evidence": row["evidence"],
             }
         )
+
+    review_report_refs = {row[key] for row in selected_rows for key in ("report_ref_a", "report_ref_b")}
+    metadata = {
+        "split_strategy": split_strategy,
+        "candidate_input_count": len(rows),
+        "review_candidate_count": len(selected_rows),
+        "dropped_cross_split_pair_count": dropped_cross_split_pair_count,
+        "report_count": len(all_report_refs),
+        "review_report_count": len(review_report_refs),
+        "report_split_counts": {
+            name: sum(split == name for split in report_splits.values())
+            for name in ("CALIBRATION", "EVALUATION")
+        },
+        "report_leakage_guard": True,
+    }
+    return output, metadata
+
+
+def build_review_rows(
+    rows: list[dict[str, Any]],
+    *,
+    split_seed: str,
+    calibration_fraction: float,
+    split_strategy: str = "connected-component-v1",
+) -> list[dict[str, Any]]:
+    output, _ = _prepare_review_rows(
+        rows,
+        split_seed=split_seed,
+        calibration_fraction=calibration_fraction,
+        split_strategy=split_strategy,
+    )
     return output
 
 
@@ -306,16 +383,21 @@ def build_queue(
     *,
     split_seed: str = "incident-correlation-review-v1",
     calibration_fraction: float = 0.70,
+    split_strategy: str = "connected-component-v1",
 ) -> dict[str, Any]:
     candidates = load_candidates(candidate_path)
-    rows = build_review_rows(
-        candidates, split_seed=split_seed, calibration_fraction=calibration_fraction
+    rows, split_metadata = _prepare_review_rows(
+        candidates,
+        split_seed=split_seed,
+        calibration_fraction=calibration_fraction,
+        split_strategy=split_strategy,
     )
     canonical = _json_dumps(
         {
             "rows": rows,
             "split_seed": split_seed,
             "calibration_fraction": calibration_fraction,
+            "split_strategy": split_strategy,
         }
     ).encode("utf-8")
     queue_ref = "queue_" + _sha256_bytes(canonical)[:24]
@@ -332,9 +414,16 @@ def build_queue(
         "engine_version": candidates[0]["engine_version"],
         "candidate_input_sha256": _sha256_bytes(input_bytes),
         "candidate_count": len(rows),
+        "candidate_input_count": split_metadata["candidate_input_count"],
+        "dropped_cross_split_pair_count": split_metadata["dropped_cross_split_pair_count"],
+        "report_count": split_metadata["report_count"],
+        "review_report_count": split_metadata["review_report_count"],
+        "report_split_counts": split_metadata["report_split_counts"],
+        "report_leakage_guard": split_metadata["report_leakage_guard"],
         "review_case_count": len(case_refs),
         "split_seed": split_seed,
         "calibration_fraction": calibration_fraction,
+        "split_strategy": split_strategy,
         "pair_split_counts": split_counts,
         "case_split_counts": case_split_counts,
         "blind_review": True,
@@ -429,6 +518,11 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("--output-dir", required=True, type=Path)
     build.add_argument("--split-seed", default="incident-correlation-review-v1")
     build.add_argument("--calibration-fraction", type=float, default=0.70)
+    build.add_argument(
+        "--split-strategy",
+        choices=sorted(SPLIT_STRATEGIES),
+        default="connected-component-v1",
+    )
     validate = sub.add_parser("validate-labels", help="Validate an exported review-label JSONL file.")
     validate.add_argument("--labels", required=True, type=Path)
     validate.add_argument("--manifest", type=Path)
@@ -445,6 +539,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 split_seed=args.split_seed,
                 calibration_fraction=args.calibration_fraction,
+                split_strategy=args.split_strategy,
             )
         else:
             result = validate_labels_file(args.labels, args.manifest, allow_partial=args.allow_partial)
