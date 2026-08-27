@@ -1104,3 +1104,31 @@ func ptrTime(value time.Time) *time.Time {
 func ptrFloat(value float64) *float64 {
 	return &value
 }
+
+func TestPEACurrentProfileHidesAISLegacyRoutes(t *testing.T) {
+	handler := NewServer(ServerConfig{RuntimeProfile: "pea-current", OutageIntegrationAPIKey: "outage-key"}, newFakeStore())
+	checks := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/metrics"},
+		{http.MethodGet, truthIntervalsPath},
+		{http.MethodGet, inboundPath},
+		{http.MethodPost, inboundPath},
+		{http.MethodGet, inboundPath + "/legacy-request"},
+	}
+	for _, check := range checks {
+		req := httptest.NewRequest(check.method, check.path, nil)
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+		if res.Code != http.StatusNotFound {
+			t.Fatalf("pea-current must hide legacy route %s %s, got %d", check.method, check.path, res.Code)
+		}
+	}
+	health := httptest.NewRequest(http.MethodGet, "/health", nil)
+	healthRes := httptest.NewRecorder()
+	handler.ServeHTTP(healthRes, health)
+	if healthRes.Code != http.StatusOK {
+		t.Fatalf("health must remain available in pea-current, got %d", healthRes.Code)
+	}
+}

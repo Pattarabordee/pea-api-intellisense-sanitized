@@ -177,3 +177,43 @@ func TestMeterOpenIntervalQueryRequiresSameMappingVersion(t *testing.T) {
 		t.Fatal("meter-state pairing must reject cross-version intervals")
 	}
 }
+
+func TestPEACurrentMigrationProfileExcludesAISLegacySchema(t *testing.T) {
+	allowed := []string{
+		"006_buengkan_tester_feedback.sql",
+		"008_buengkan_outage_resolution.sql",
+		"009_buengkan_secondary_validation.sql",
+		"010_buengkan_unknown_place_queue.sql",
+		"011_planned_outage_shadow.sql",
+		"012_incident_correlation_shadow.sql",
+		"013_incident_correlation_jobs.sql",
+	}
+	for _, name := range allowed {
+		ok, err := migrationAllowed("pea-current", name)
+		if err != nil || !ok {
+			t.Fatalf("pea-current migration %s should be allowed: ok=%v err=%v", name, ok, err)
+		}
+	}
+	excluded := []string{
+		"001_init.sql",
+		"002_send_controls.sql",
+		"003_ais_truth_ledger.sql",
+		"004_ais_truth_intervals.sql",
+		"005_strict_prospective_identity_bridge.sql",
+		"006_meter_state_truth_capture.sql",
+		"007_restore_semantic_v2_activation.sql",
+	}
+	for _, name := range excluded {
+		ok, err := migrationAllowed("pea-current", name)
+		if err != nil || ok {
+			t.Fatalf("pea-current migration %s must be excluded: ok=%v err=%v", name, ok, err)
+		}
+		legacyOK, legacyErr := migrationAllowed("legacy-full", name)
+		if legacyErr != nil || !legacyOK {
+			t.Fatalf("legacy-full migration %s must remain allowed: ok=%v err=%v", name, legacyOK, legacyErr)
+		}
+	}
+	if _, err := migrationAllowed("unknown", "008_buengkan_outage_resolution.sql"); err == nil {
+		t.Fatal("unknown migration profile must fail closed")
+	}
+}

@@ -44,6 +44,7 @@ var testerQueryHash = regexp.MustCompile(`^[a-f0-9]{20,64}$`)
 var safeRequestReference = regexp.MustCompile(`^request_[a-f0-9]{16}$`)
 
 type ServerConfig struct {
+	RuntimeProfile      string
 	APIKey             string
 	OutageIntegrationAPIKey string
 	RateLimitPerMinute int
@@ -97,12 +98,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
+	legacyRoutes := !strings.EqualFold(strings.TrimSpace(s.cfg.RuntimeProfile), "pea-current")
 	switch {
 	case r.URL.Path == "/health" && r.Method == http.MethodGet:
 		s.handleHealth(w, r)
-	case r.URL.Path == "/metrics" && r.Method == http.MethodGet:
+	case legacyRoutes && r.URL.Path == "/metrics" && r.Method == http.MethodGet:
 		s.handleMetrics(w, r)
-	case r.URL.Path == truthIntervalsPath && r.Method == http.MethodGet:
+	case legacyRoutes && r.URL.Path == truthIntervalsPath && r.Method == http.MethodGet:
 		s.handleTruthIntervals(w, r)
 	case r.URL.Path == buengKanTesterFeedbackPath && r.Method == http.MethodGet:
 		s.handleBuengKanTesterFeedbackList(w, r)
@@ -132,11 +134,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleBuengKanOutageResult(w, r)
 	case strings.HasPrefix(r.URL.Path, transformerPathPrefix) && r.Method == http.MethodGet:
 		s.handleTransformerLookup(w, r)
-	case r.URL.Path == inboundPath && r.Method == http.MethodGet:
+	case legacyRoutes && r.URL.Path == inboundPath && r.Method == http.MethodGet:
 		s.handleContract(w, r)
-	case r.URL.Path == inboundPath && r.Method == http.MethodPost:
+	case legacyRoutes && r.URL.Path == inboundPath && r.Method == http.MethodPost:
 		s.handlePost(w, r)
-	case strings.HasPrefix(r.URL.Path, inboundPath+"/") && r.Method == http.MethodGet:
+	case legacyRoutes && strings.HasPrefix(r.URL.Path, inboundPath+"/") && r.Method == http.MethodGet:
 		s.handleStatus(w, r)
 	default:
 		writeJSON(w, http.StatusNotFound, errorPayload("NOT_FOUND", "Unknown endpoint", ""))

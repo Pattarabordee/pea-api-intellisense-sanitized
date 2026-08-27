@@ -8,10 +8,13 @@ import (
 )
 
 type Config struct {
+	RuntimeProfile                   string
+	ListenAddress                    string
 	Port                             int
 	APIKey                           string
 	OutageIntegrationAPIKey          string
 	DatabaseURL                      string
+	RunDBMigrations                  bool
 	RateLimitPerMinute               int
 	AllowedOrigin                    string
 	ProductionSendMode               string
@@ -31,10 +34,13 @@ type Config struct {
 
 func Load() Config {
 	return Config{
+		RuntimeProfile:                   envString("RUNTIME_PROFILE", "legacy-full"),
+		ListenAddress:                    os.Getenv("LISTEN_ADDRESS"),
 		Port:                             envInt("PORT", 8090),
 		APIKey:                           os.Getenv("AIS_INBOUND_API_KEY"),
 		OutageIntegrationAPIKey:          os.Getenv("OUTAGE_INTEGRATION_API_KEY"),
 		DatabaseURL:                      os.Getenv("DATABASE_URL"),
+		RunDBMigrations:                  envBool("RUN_DB_MIGRATIONS", true),
 		RateLimitPerMinute:               envInt("RATE_LIMIT_PER_MINUTE", 120),
 		AllowedOrigin:                    os.Getenv("ALLOWED_ORIGIN"),
 		ProductionSendMode:               os.Getenv("PRODUCTION_SEND_MODE"),
@@ -54,8 +60,18 @@ func Load() Config {
 }
 
 func (c Config) Validate() error {
-	if strings.TrimSpace(c.APIKey) == "" {
-		return errors.New("AIS_INBOUND_API_KEY is required")
+	profile := strings.ToLower(strings.TrimSpace(c.RuntimeProfile))
+	if profile == "" {
+		profile = "legacy-full"
+	}
+	if profile != "legacy-full" && profile != "pea-current" {
+		return errors.New("RUNTIME_PROFILE must be legacy-full or pea-current")
+	}
+	if profile == "legacy-full" && strings.TrimSpace(c.APIKey) == "" {
+		return errors.New("AIS_INBOUND_API_KEY is required for legacy-full runtime profile")
+	}
+	if profile == "pea-current" && strings.TrimSpace(c.OutageIntegrationAPIKey) == "" {
+		return errors.New("OUTAGE_INTEGRATION_API_KEY is required for pea-current runtime profile")
 	}
 	if strings.TrimSpace(c.DatabaseURL) == "" {
 		return errors.New("DATABASE_URL is required")
@@ -65,6 +81,19 @@ func (c Config) Validate() error {
 		return errors.New("INCIDENT_CORRELATION_MODE must be off or shadow")
 	}
 	return nil
+}
+
+// ListenHost preserves the legacy all-interface default while making the
+// pre-cutover PEA runtime fail closed to loopback unless an operator explicitly
+// supplies LISTEN_ADDRESS.
+func (c Config) ListenHost() string {
+	if host := strings.TrimSpace(c.ListenAddress); host != "" {
+		return host
+	}
+	if strings.EqualFold(strings.TrimSpace(c.RuntimeProfile), "pea-current") {
+		return "127.0.0.1"
+	}
+	return ""
 }
 
 func envString(name, fallback string) string {
