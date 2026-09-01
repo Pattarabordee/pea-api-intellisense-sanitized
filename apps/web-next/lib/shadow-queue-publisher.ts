@@ -253,7 +253,7 @@ export async function publishShadowIncidentQueue(): Promise<ShadowQueuePublisher
       if (normalized.adapter_status === "contract_invalid") {
         priorityState = "CONTRACT_INVALID";
       } else {
-        priorityState = "OK";
+        priorityState = normalized.adapter_status === "unavailable" ? "UNAVAILABLE" : "OK";
         priority = normalized;
       }
     }

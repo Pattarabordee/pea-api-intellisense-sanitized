@@ -22,6 +22,7 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
         if (a.status !== "RESTORED" && b.status === "RESTORED") return -1;
         const aRank = typeof a.queue_rank === "number" ? a.queue_rank : Number.MAX_SAFE_INTEGER;
         const bRank = typeof b.queue_rank === "number" ? b.queue_rank : Number.MAX_SAFE_INTEGER;
+        if (area === "ALL" && a.area !== b.area) return a.area.localeCompare(b.area);
         if (aRank !== bRank) return aRank - bRank;
         const aScore = typeof a.priority_score === "number" ? a.priority_score : Number.NEGATIVE_INFINITY;
         const bScore = typeof b.priority_score === "number" ? b.priority_score : Number.NEGATIVE_INFINITY;
@@ -110,7 +111,7 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
               <IncidentRow
                 key={item.incident_id}
                 item={item}
-                rank={item.queue_rank ?? index + 1}
+                rankLabel={item.queue_rank ? `${area === "ALL" ? `${item.area} ` : ""}#${item.queue_rank}` : `#${index + 1}`}
                 selected={selected?.incident_id === item.incident_id}
                 onSelect={() => setActiveIncidentId(item.incident_id)}
               />
@@ -145,10 +146,10 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
   );
 }
 
-function IncidentRow({ item, rank, selected, onSelect }: { item: IncidentPriorityItem; rank: number; selected: boolean; onSelect: () => void }) {
+function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPriorityItem; rankLabel: string; selected: boolean; onSelect: () => void }) {
   return (
     <button type="button" className={selected ? "incident-row selected" : "incident-row"} onClick={onSelect}>
-      <div className="rank">#{rank}</div>
+      <div className="rank">{rankLabel}</div>
       <div className={`score score-${item.priority_level.toLowerCase()}`}>
         <strong>{item.priority_score ?? "—"}</strong>
         <span>{item.priority_level}</span>

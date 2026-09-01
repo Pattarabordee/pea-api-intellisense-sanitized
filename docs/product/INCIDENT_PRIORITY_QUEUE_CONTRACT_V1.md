@@ -126,3 +126,16 @@ A server-side candidate now exists at `GET /api/incidents/publish-shadow`:
 The incident source is mandatory and privacy/fail-closed validated. Priority is decision-support only: if priority transport/contract fails while incident evidence remains valid, real incidents stay visible as `UNRATED` with no fabricated score. The publisher never enables customer send and does not expose source credentials to the browser.
 
 Real-source activation remains blocked on two explicit projections: an aggregate incident-evidence read source and a read-only priority-adapter snapshot wrapper. `PEAPriorityAdapterV01` itself remains inactive and has no GET snapshot trigger.
+
+
+## Shadow source candidates — 2026-09-01
+
+Two read-only source candidates now sit in front of the publisher boundary:
+
+`aggregate incident source -> /api/incidents/evidence-projection -> pea-incident-evidence.v1`
+
+`area-scoped priority source -> /api/priority-adapter/snapshot?area=BKN|PKN -> priority-adapter-v0.1`
+
+Both candidates are disabled by default and require a dedicated candidate endpoint key when enabled. The incident projection rejects privacy-unsafe input. The priority wrapper requires exact area match and does not infer score scales or bands.
+
+Important ranking semantic: `queue_rank` is preserved as an area-scoped rank. BKN and PKN ranks are not a proven global cross-area ranking contract. Do not compare or re-scale opaque priority scores across areas until the upstream owner defines and verifies a shared cross-area scoring semantic.
