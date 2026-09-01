@@ -114,3 +114,10 @@ A separate runtime-integration gate is required to:
 5. keep fallback visible and fail closed if either source is missing/stale/invalid.
 
 Runtime promotion/activation remains a separate consequential decision.
+
+
+## Superseding runtime gate update — 2026-09-01
+
+The later isolated runtime gate is now accepted as `LIVE_SHADOW_READ_ONLY_ACCEPTED` for the real-incident / stale-priority fail-closed path. See `LIVE_SHADOW_READ_ONLY_RUNTIME_ACCEPTANCE_20260901.md`.
+
+This does not alter the historical result recorded above. Persistent deployment/canonical promotion remains separate, and the fresh real-priority path is still unproven.
