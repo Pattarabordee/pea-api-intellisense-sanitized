@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { IncidentPriorityItem, IncidentPrioritySnapshot, PriorityLevel } from "../lib/incident-priority";
+import type { IncidentPriorityItem, IncidentPrioritySnapshot, IncidentQueueSourceHealth, PriorityLevel } from "../lib/incident-priority";
 
 const levels: Array<"ALL" | PriorityLevel> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "UNRATED"];
 const areas = ["ALL", "BKN", "PKN"] as const;
 
 type AreaFilter = (typeof areas)[number];
 
-export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPrioritySnapshot }) {
+export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: IncidentPrioritySnapshot; sourceHealth: IncidentQueueSourceHealth }) {
   const [area, setArea] = useState<AreaFilter>("ALL");
   const [level, setLevel] = useState<(typeof levels)[number]>("ALL");
   const [activeIncidentId, setActiveIncidentId] = useState(snapshot.items[0]?.incident_id ?? "");
@@ -46,6 +46,9 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
           <span>SHADOW MODE</span>
           <span>production_send = blocked</span>
           <span>{snapshot.source === "synthetic_demo" ? "synthetic demo data" : "priority adapter + PEA evidence"}</span>
+          <span className={`source-indicator source-${sourceHealth.status.toLowerCase().replace(/_/g, "-")}`} title={sourceHealth.detail}>
+            SOURCE {sourceHealth.status.replace(/_/g, " ")}
+          </span>
         </div>
       </header>
 
@@ -62,6 +65,7 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
           <span>Canonical contract</span>
           <strong>{snapshot.schema_version}</strong>
           <small>Frontend ไม่ผูกกับ BKN/PKN n8n flow โดยตรง</small>
+          <small>Queue source: {sourceHealth.source_label}{sourceHealth.fallback_active ? " (fallback)" : ""}</small>
         </div>
       </section>
 
