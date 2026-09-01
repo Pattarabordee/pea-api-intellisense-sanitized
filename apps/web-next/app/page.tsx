@@ -1,6 +1,10 @@
 ﻿import { IncidentPriorityQueue } from "./incident-priority-queue";
-import { incidentPriorityDemo } from "../lib/incident-priority";
+import { loadIncidentQueueFeed } from "../lib/incident-queue-feed";
 
-export default function Page() {
-  return <IncidentPriorityQueue snapshot={incidentPriorityDemo} />;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function Page() {
+  const { snapshot, source_health } = await loadIncidentQueueFeed();
+  return <IncidentPriorityQueue snapshot={snapshot} sourceHealth={source_health} />;
 }

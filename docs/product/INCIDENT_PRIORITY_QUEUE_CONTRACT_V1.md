@@ -106,3 +106,13 @@ The verified web-side join is now:
 Matching is fail-closed: exact unique `transformer_id` plus compatible `service_area`. No queue item is assigned by array position, fuzzy text, score similarity, or guessed area mapping. Priority score/level remains decision-support metadata; missing score/level is represented as `null` / `UNRATED` rather than fabricated.
 
 The browser route still uses labeled synthetic demo data until an approved stable read-only queue feed is available. See `INCIDENT_PRIORITY_COMPOSE_ACCEPTANCE_20260901.md`.
+
+## Read-only feed layer — 2026-09-01
+
+The web app now has a stable server-side feed boundary:
+
+`approved shadow publisher -> incident-queue-feed.v1 -> /api/incidents/feed -> operator page`
+
+The browser does not call n8n directly. Upstream URL/API key remain server-only. Source health is explicit (`LIVE_SHADOW`, `NOT_CONFIGURED`, `UPSTREAM_UNAVAILABLE`, `CONTRACT_INVALID`). Invalid or unavailable live data fails closed to visibly labeled synthetic fallback; live and synthetic data are never silently merged.
+
+Real feed activation is still a separate gate because no approved read-only publisher URL is configured yet.

@@ -2,6 +2,14 @@ export type PriorityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNRATED";
 export type IncidentStatus = "NEW" | "ACKNOWLEDGED" | "DISPATCHED" | "IN_PROGRESS" | "RESTORED";
 export type EvidenceStrength = "STRONG" | "MODERATE" | "LIMITED";
 export type PriorityState = "AVAILABLE" | "UNMATCHED" | "UNAVAILABLE" | "INPUT_INSUFFICIENT" | "CONTRACT_INVALID";
+export type IncidentQueueSourceHealthStatus = "LIVE_SHADOW" | "NOT_CONFIGURED" | "UPSTREAM_UNAVAILABLE" | "CONTRACT_INVALID";
+export type IncidentQueueSourceHealth = {
+  status: IncidentQueueSourceHealthStatus;
+  checked_at: string;
+  source_label: string;
+  fallback_active: boolean;
+  detail: string;
+};
 
 export type IncidentPriorityItem = {
   incident_id: string;

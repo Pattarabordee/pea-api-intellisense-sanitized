@@ -24,6 +24,11 @@ button { font: inherit; }
 .command-topbar strong { font-size: 18px; letter-spacing: .01em; }
 .brand-kicker { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #e5d8f8; }
 .mode-strip { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.source-indicator { border-width: 2px !important; }
+.source-live-shadow { background: rgba(29, 146, 78, .28) !important; border-color: rgba(119, 231, 158, .72) !important; }
+.source-not-configured,
+.source-upstream-unavailable,
+.source-contract-invalid { background: rgba(189, 125, 22, .24) !important; border-color: rgba(255, 214, 138, .7) !important; }
 .mode-strip span {
   border: 1px solid rgba(255,255,255,.28);
   background: rgba(255,255,255,.1);
