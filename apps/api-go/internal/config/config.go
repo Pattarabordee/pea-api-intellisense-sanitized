@@ -26,6 +26,7 @@ type Config struct {
 	PlannedOutageHotTTLSeconds       int
 	PlannedOutageTimeoutMS           int
 	IncidentCorrelationMode          string
+	IncidentCorrelationWorkerEnabled bool
 	IncidentCorrelationMaxAttempts   int
 	IncidentCorrelationPollMS        int
 	IncidentCorrelationLeaseSeconds  int
@@ -52,6 +53,7 @@ func Load() Config {
 		PlannedOutageHotTTLSeconds:       envInt("PLANNED_OUTAGE_HOT_TTL_SECONDS", 300),
 		PlannedOutageTimeoutMS:           envInt("PLANNED_OUTAGE_TIMEOUT_MS", 1200),
 		IncidentCorrelationMode:          envString("INCIDENT_CORRELATION_MODE", "off"),
+		IncidentCorrelationWorkerEnabled: envBool("INCIDENT_CORRELATION_WORKER_ENABLED", true),
 		IncidentCorrelationMaxAttempts:   envInt("INCIDENT_CORRELATION_MAX_ATTEMPTS", 5),
 		IncidentCorrelationPollMS:        envInt("INCIDENT_CORRELATION_POLL_MS", 1000),
 		IncidentCorrelationLeaseSeconds:  envInt("INCIDENT_CORRELATION_LEASE_SECONDS", 30),

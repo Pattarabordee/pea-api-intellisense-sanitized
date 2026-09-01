@@ -65,7 +65,7 @@ func main() {
 		Logger:                         logger,
 	}, store)
 
-	if strings.EqualFold(strings.TrimSpace(cfg.IncidentCorrelationMode), "shadow") {
+	if strings.EqualFold(strings.TrimSpace(cfg.IncidentCorrelationMode), "shadow") && cfg.IncidentCorrelationWorkerEnabled {
 		workerID := fmt.Sprintf("correlation-%d", os.Getpid())
 		worker := correlation.NewWorker(store, correlation.WorkerConfig{
 			WorkerID:      workerID,
@@ -81,6 +81,8 @@ func main() {
 			"poll_ms", cfg.IncidentCorrelationPollMS,
 			"lease_seconds", cfg.IncidentCorrelationLeaseSeconds,
 			"snapshot_limit", cfg.IncidentCorrelationSnapshotLimit)
+	} else if strings.EqualFold(strings.TrimSpace(cfg.IncidentCorrelationMode), "shadow") {
+		logger.Info("incident correlation shadow worker disabled by runtime flag")
 	}
 
 	listenAddr := net.JoinHostPort(cfg.ListenHost(), strconv.Itoa(cfg.Port))

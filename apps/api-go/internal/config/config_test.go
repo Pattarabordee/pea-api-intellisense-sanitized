@@ -44,6 +44,17 @@ func TestLoadRunDBMigrationsDefaultsTrueAndCanDisable(t *testing.T) {
 	}
 }
 
+func TestIncidentCorrelationWorkerEnabledDefaultsTrueAndCanDisable(t *testing.T) {
+	t.Setenv("INCIDENT_CORRELATION_WORKER_ENABLED", "")
+	if cfg := Load(); !cfg.IncidentCorrelationWorkerEnabled {
+		t.Fatal("INCIDENT_CORRELATION_WORKER_ENABLED must default true for backward compatibility")
+	}
+	t.Setenv("INCIDENT_CORRELATION_WORKER_ENABLED", "false")
+	if cfg := Load(); cfg.IncidentCorrelationWorkerEnabled {
+		t.Fatal("INCIDENT_CORRELATION_WORKER_ENABLED=false must disable the runtime worker")
+	}
+}
+
 func TestListenHostDefaultsPEACurrentToLoopback(t *testing.T) {
 	if got := (Config{RuntimeProfile: "pea-current"}).ListenHost(); got != "127.0.0.1" {
 		t.Fatalf("pea-current listen host = %q, want loopback", got)
