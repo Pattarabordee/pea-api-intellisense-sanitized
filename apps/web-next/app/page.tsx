@@ -1,10 +1,6 @@
-﻿import { IncidentPriorityQueue } from "./incident-priority-queue";
-import { loadIncidentQueueFeed } from "../lib/incident-queue-feed";
+import { MissionControl } from "./mission-control";
+import { demoOperatorData } from "../lib/demo-data";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-export default async function Page() {
-  const { snapshot, source_health } = await loadIncidentQueueFeed();
-  return <IncidentPriorityQueue snapshot={snapshot} sourceHealth={source_health} />;
+export default function Page() {
+  return <MissionControl initialData={{ ...demoOperatorData, source: "DEMO DATA - synthetic only" }} />;
 }

@@ -14,7 +14,7 @@ The organization-server n8n lane already has a tested candidate adapter:
 
 - workflow: `PEAPriorityAdapterV01`
 - schema: `priority-adapter-v0.1`
-- status at this checkpoint: inactive/unpublished candidate after synthetic verification
+- status at this checkpoint: published child subworkflow for controlled internal execution; no public webhook trigger; parent/team integration remains shadow-gated
 - guardrails: `mode=shadow`, `production_send=blocked`, `purpose=decision_support_only`, `authoritative_outage_truth=false`
 - output: `ticket_id`, `service_area`, `adapter_status`, `queue_count`, `queues[]`
 - queue item fields: `queue_rank`, `transformer_id`, `feeder_code`, `event_type`, `event_status`, `priority_score`, optional `raw_priority_score`, optional `score_max`, optional `priority_level`, `ai_summary`, optional `source`
@@ -50,7 +50,8 @@ The current mock-first `incident-priority.v1` view model contains:
 - `priority_score`, `priority_level`
 - `event_type`
 - `transformer_id`, `feeder_id`
-- `affected_customers`
+- `affected_customers` (nullable when no authoritative impact count exists)
+- optional `report_count` (accepted reports in the correlated incident; never treated as affected customers)
 - `critical_customer_risk`
 - `evidence_strength`
 - `first_reported_at`, `waiting_minutes`
@@ -76,9 +77,9 @@ The fields beyond the n8n priority signal (for example affected scope, evidence 
 
 - Frontend: `apps/web-next/app/incident-priority-queue.tsx`
 - Contract/demo fixture: `apps/web-next/lib/incident-priority.ts`
-- Route: `/`
+- Route: `/incident-priority` (existing `/` Mission Control remains intact)
 - Filters: area and priority level
-- Mock ordering: synthetic active incidents before restored, then synthetic score order for demonstration only
+- Ordering: restored incidents last; ranks/scores remain area-scoped and are not treated as a global BKN-vs-PKN comparison
 - Detail view: rationale + evidence chain + explicit operator gate
 
 ## Next integration gate
@@ -105,7 +106,7 @@ The verified web-side join is now:
 
 Matching is fail-closed: exact unique `transformer_id` plus compatible `service_area`. No queue item is assigned by array position, fuzzy text, score similarity, or guessed area mapping. Priority score/level remains decision-support metadata; missing score/level is represented as `null` / `UNRATED` rather than fabricated.
 
-The browser route still uses labeled synthetic demo data until an approved stable read-only queue feed is available. See `INCIDENT_PRIORITY_COMPOSE_ACCEPTANCE_20260901.md`.
+The `/incident-priority` route uses the server-side feed loader and visibly falls back to labeled synthetic demo data until an approved live-shadow feed is available. See `INCIDENT_PRIORITY_COMPOSE_ACCEPTANCE_20260901.md`.
 
 ## Read-only feed layer — 2026-09-01
 
@@ -139,3 +140,12 @@ Two read-only source candidates now sit in front of the publisher boundary:
 Both candidates are disabled by default and require a dedicated candidate endpoint key when enabled. The incident projection rejects privacy-unsafe input. The priority wrapper requires exact area match and does not infer score scales or bands.
 
 Important ranking semantic: `queue_rank` is preserved as an area-scoped rank. BKN and PKN ranks are not a proven global cross-area ranking contract. Do not compare or re-scale opaque priority scores across areas until the upstream owner defines and verifies a shared cross-area scoring semantic.
+
+## Real read-projection candidates — 2026-09-01
+
+Current integration lane adds two non-triggering read candidates:
+
+- `GET /api/v1/incidents/correlation-aggregate` in the Go API projects durable Incident Correlation state into `pea-incident-aggregate-source.v0.1`. It emits only active correlated clusters with strict BKN/PKN area resolution, hashes the cluster identity, omits raw ticket/cluster identifiers, keeps ambiguous transformer/feeder evidence nullable, sets `affected_customers=null` when no authoritative count exists, and keeps `report_count` separate. It never claims outage truth, root cause, dispatch state, or critical-customer risk.
+- The web priority snapshot wrapper can read successful `PEAPriorityAdapterV01` execution history through the n8n Public API without executing the workflow. It requires API-key authentication, exact `service_area`, successful adapter guardrails, and a freshness window. Stale/missing executions fail closed instead of becoming live priority.
+
+These are source/read projections only. They do not activate customer-facing workflows, do not enable `production_send`, and do not create a browser-to-n8n dependency.

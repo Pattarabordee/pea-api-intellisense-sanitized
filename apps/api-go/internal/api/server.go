@@ -128,6 +128,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleChatbotReportStatus(w, r)
 	case strings.HasPrefix(r.URL.Path, chatbotReportsPath+"/") && strings.HasSuffix(r.URL.Path, "/correlation") && r.Method == http.MethodGet:
 		s.handleChatbotCorrelationStatus(w, r)
+	case r.URL.Path == correlationAggregatePath && r.Method == http.MethodGet:
+		s.handleCorrelationAggregate(w, r)
 	case r.URL.Path == outageResolvePath && r.Method == http.MethodPost:
 		s.handleBuengKanOutageResolve(w, r)
 	case strings.HasPrefix(r.URL.Path, outageResultPathPrefix) && r.Method == http.MethodGet:

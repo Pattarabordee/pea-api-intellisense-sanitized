@@ -18,8 +18,9 @@ const safeIncidentSource = {
       area_label: "บึงกาฬ",
       transformer_id: "63-006344",
       feeder_id: "BUA03",
-      affected_customers: 12,
-      critical_customer_risk: "synthetic critical-load flag",
+      affected_customers: null,
+      report_count: 2,
+      critical_customer_risk: "NOT_EVALUATED",
       evidence_strength: "MODERATE",
       first_reported_at: now,
       waiting_minutes: 4,
@@ -66,6 +67,24 @@ function priority(area) {
   };
 }
 
+function n8nExecution(id, stoppedAt, payload) {
+  return {
+    id,
+    workflowId: "PEAPriorityAdapterV01",
+    status: "success",
+    stoppedAt,
+    data: {
+      resultData: {
+        runData: {
+          "Normalize Priority Result": [
+            { data: { main: [[{ json: payload }]] } }
+          ]
+        }
+      }
+    }
+  };
+}
+
 function json(res, status, body) {
   const payload = JSON.stringify(body);
   res.writeHead(status, { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) });
@@ -73,6 +92,16 @@ function json(res, status, body) {
 }
 
 const upstream = http.createServer((req, res) => {
+  if (req.url?.startsWith("/api/v1/executions")) {
+    if (req.headers["x-n8n-api-key"] !== "n8n-read-test-key") return json(res, 401, { error: "missing n8n api key" });
+    const fresh = new Date().toISOString();
+    const stale = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    return json(res, 200, {
+      data: [n8nExecution("n8n-fresh-bkn", fresh, priority("BKN")), n8nExecution("n8n-stale-pkn", stale, priority("PKN"))],
+      nextCursor: null
+    });
+  }
+
   if (req.headers["x-api-key"] !== "upstream-test-key") return json(res, 401, { error: "missing upstream test key" });
   if (req.url === "/incident-safe") return json(res, 200, safeIncidentSource);
   if (req.url === "/incident-sensitive") return json(res, 200, sensitiveIncidentSource);
@@ -147,6 +176,7 @@ try {
     assert(evidence.schema_version === "pea-incident-evidence.v1", "projection must emit canonical evidence schema");
     assert(evidence.items?.[0]?.incident_id === "INC-BKN-CANDIDATE-001", "projection must preserve safe incident identity");
     assert(!("customer_phone" in evidence.items[0]), "projection must not emit customer phone");
+    assert(evidence.items[0].affected_customers === null && evidence.items[0].report_count === 2, "unknown affected-customer count must remain separate from report_count");
 
     const priorityResponse = await fetch(`http://127.0.0.1:${port}/api/priority-adapter/snapshot?area=BKN`, { headers });
     const snapshot = await priorityResponse.json();
@@ -173,9 +203,27 @@ try {
     const priorityResponse = await fetch(`http://127.0.0.1:${port}/api/priority-adapter/snapshot?area=BKN`, { headers });
     assert(priorityResponse.status === 502, "area-mismatched priority source must be rejected");
   });
+
+  await runServer(3124, {
+    SHADOW_CANDIDATE_ENDPOINTS_ENABLED: "true",
+    SHADOW_CANDIDATE_ENDPOINT_API_KEY: "candidate-test-key",
+    N8N_PRIORITY_READ_BASE_URL: `http://127.0.0.1:${upstreamPort}`,
+    N8N_PRIORITY_READ_API_KEY: "n8n-read-test-key",
+    N8N_PRIORITY_WORKFLOW_ID: "PEAPriorityAdapterV01",
+    PRIORITY_SNAPSHOT_MAX_AGE_MS: "900000"
+  }, async (port) => {
+    const headers = { "X-API-Key": "candidate-test-key" };
+    const bkn = await fetch(`http://127.0.0.1:${port}/api/priority-adapter/snapshot?area=BKN`, { headers });
+    const bknBody = await bkn.json();
+    assert(bkn.status === 200 && bknBody.service_area === "BKN", "fresh BKN n8n execution-history snapshot must be accepted read-only");
+
+    const pkn = await fetch(`http://127.0.0.1:${port}/api/priority-adapter/snapshot?area=PKN`, { headers });
+    const pknBody = await pkn.json();
+    assert(pkn.status === 503 && pknBody.error_code === "PRIORITY_PKN_SNAPSHOT_STALE", "stale PKN execution must not be surfaced as live priority");
+  });
 } finally {
   upstream.close();
 }
 
 console.log("SHADOW_SOURCE_CANDIDATES_SMOKE_PASS");
-console.log(JSON.stringify({ cases: 7, projection: "pea-incident-evidence.v1", priority_scope: "area-specific", default_state: "disabled", production_send: "blocked" }));
+console.log(JSON.stringify({ cases: 10, projection: "pea-incident-evidence.v1", priority_scope: "area-specific", n8n_execution_history: "read-only + freshness-gated", default_state: "disabled", production_send: "blocked" }));

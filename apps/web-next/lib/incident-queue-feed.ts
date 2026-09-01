@@ -86,8 +86,8 @@ function normalizeItem(input: unknown): IncidentPriorityItem | null {
   const areaLabel = stringValue(input.area_label, 80);
   const priorityLevel = stringValue(input.priority_level, 32);
   const eventType = stringValue(input.event_type, 120);
-  const transformerId = stringValue(input.transformer_id, 96);
-  const feederId = stringValue(input.feeder_id, 96);
+  const transformerId = input.transformer_id === null ? null : stringValue(input.transformer_id, 96);
+  const feederId = input.feeder_id === null ? null : stringValue(input.feeder_id, 96);
   const criticalRisk = stringValue(input.critical_customer_risk, 300);
   const evidenceStrength = stringValue(input.evidence_strength, 32);
   const firstReportedAt = stringValue(input.first_reported_at, 64);
@@ -96,14 +96,19 @@ function normalizeItem(input: unknown): IncidentPriorityItem | null {
   const sourceMode = stringValue(input.source_mode, 40);
   const reasons = stringArray(input.priority_reasons);
   const evidenceChain = stringArray(input.evidence_chain);
-  const affectedCustomers = nonNegativeInteger(input.affected_customers);
+  const affectedCustomers = input.affected_customers === null ? null : nonNegativeInteger(input.affected_customers);
+  const reportCount = input.report_count === undefined ? undefined : nonNegativeInteger(input.report_count);
   const waitingMinutes = nonNegativeInteger(input.waiting_minutes);
 
   if (!incidentId || !area || !AREAS.has(area) || !areaLabel || !priorityLevel || !LEVELS.has(priorityLevel)) return null;
-  if (!eventType || !transformerId || !feederId || !criticalRisk || !evidenceStrength || !EVIDENCE.has(evidenceStrength)) return null;
+  if (!eventType || !criticalRisk || !evidenceStrength || !EVIDENCE.has(evidenceStrength)) return null;
+  if (input.transformer_id !== null && !transformerId) return null;
+  if (input.feeder_id !== null && !feederId) return null;
+  if (input.affected_customers !== null && affectedCustomers === null) return null;
+  if (input.report_count !== undefined && reportCount === null) return null;
   if (!firstReportedAt || Number.isNaN(Date.parse(firstReportedAt)) || !status || !INCIDENT_STATUS.has(status)) return null;
   if (!aiSummary || !sourceMode || !SOURCE_MODES.has(sourceMode) || !reasons || !evidenceChain) return null;
-  if (affectedCustomers === null || waitingMinutes === null) return null;
+  if (waitingMinutes === null) return null;
 
   const priorityScore = input.priority_score === null ? null : finiteNumber(input.priority_score);
   if (input.priority_score !== null && priorityScore === null) return null;

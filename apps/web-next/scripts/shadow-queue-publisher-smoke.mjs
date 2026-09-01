@@ -197,11 +197,13 @@ try {
       assert(body.upstream_health.incident_source === "OK", "incident source should be OK");
       assert(body.upstream_health.priority_source === "OK", "priority source should be OK");
       assert(body.snapshot.items.length === 2, "both incidents must be published");
-      assert(body.snapshot.items[0].incident_id === "INC-PKN-PUBLISH-002", "queue_rank must order composed feed");
-      assert(body.snapshot.items[0].priority_level === "CRITICAL", "upstream priority level must be preserved");
-      const page = await (await fetch(`http://127.0.0.1:${port}/`)).text();
-      assert(page.includes("INC-PKN-PUBLISH-002"), "operator page must consume publisher feed through read-only feed layer");
-      assert(page.includes("LIVE SHADOW"), "operator page must show LIVE SHADOW source state");
+      assert(body.snapshot.items[0].incident_id === "INC-BKN-PUBLISH-001", "multi-area feed must not treat area-scoped queue_rank as a global rank");
+      assert(body.snapshot.items.find((item) => item.area === "PKN")?.priority_level === "CRITICAL", "upstream priority level must be preserved within its area");
+      const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
+      assert(page.includes("INC-PKN-PUBLISH-002"), "incident-priority page must consume publisher feed through read-only feed layer");
+      assert(page.includes("LIVE SHADOW"), "incident-priority page must show LIVE SHADOW source state");
+      const rootPage = await (await fetch(`http://127.0.0.1:${port}/`)).text();
+      assert(!rootPage.includes("INC-PKN-PUBLISH-002"), "queue feature must not replace the existing root Mission Control page");
     }
   });
 

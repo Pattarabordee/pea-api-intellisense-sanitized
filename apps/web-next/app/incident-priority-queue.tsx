@@ -34,7 +34,8 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
   const activeItems = snapshot.items.filter((item) => item.status !== "RESTORED");
   const criticalCount = activeItems.filter((item) => item.priority_level === "CRITICAL").length;
   const highCount = activeItems.filter((item) => item.priority_level === "HIGH").length;
-  const affected = activeItems.reduce((sum, item) => sum + item.affected_customers, 0);
+  const knownAffected = activeItems.filter((item) => typeof item.affected_customers === "number");
+  const affected = knownAffected.reduce((sum, item) => sum + (item.affected_customers ?? 0), 0);
 
   return (
     <main className="command-shell">
@@ -74,7 +75,7 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
         <SummaryCard label="Critical" value={String(criticalCount)} note="active incidents" emphasis="critical" />
         <SummaryCard label="High" value={String(highCount)} note="active incidents" emphasis="high" />
         <SummaryCard label="Active" value={String(activeItems.length)} note="excluding restored" />
-        <SummaryCard label="Affected scope" value={affected.toLocaleString("th-TH")} note="estimated customers" />
+        <SummaryCard label="Affected scope" value={knownAffected.length ? affected.toLocaleString("th-TH") : "—"} note={knownAffected.length ? "known estimated customers" : "authoritative count unavailable"} />
       </section>
 
       <section className="workspace-grid">
@@ -156,13 +157,14 @@ function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPr
       </div>
       <div className="incident-main">
         <div className="incident-title-line">
-          <strong>{item.area_label} · {item.transformer_id}</strong>
+          <strong>{item.area_label} · {item.transformer_id ?? "Transformer ยังไม่ยืนยัน"}</strong>
           <StatusPill status={item.status} />
         </div>
         <p>{item.ai_summary}</p>
         <div className="incident-meta">
-          <span>{item.feeder_id}</span>
-          <span>{item.affected_customers.toLocaleString("th-TH")} ราย</span>
+          <span>{item.feeder_id ?? "Feeder ยังไม่ยืนยัน"}</span>
+          <span>{typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "จำนวนผู้ใช้ไฟยังไม่ยืนยัน"}</span>
+          {typeof item.report_count === "number" ? <span>{item.report_count.toLocaleString("th-TH")} reports</span> : null}
           <span>รอ {item.waiting_minutes} นาที</span>
           <span>Evidence {item.evidence_strength}</span>
           {item.priority_state && item.priority_state !== "AVAILABLE" ? <span>Priority {item.priority_state}</span> : null}
@@ -186,14 +188,15 @@ function IncidentDetail({ item }: { item: IncidentPriorityItem }) {
       <div className="detail-facts">
         <Fact label="พื้นที่" value={item.area_label} />
         <Fact label="เหตุการณ์" value={item.event_type} />
-        <Fact label="Transformer" value={item.transformer_id} />
-        <Fact label="Feeder" value={item.feeder_id} />
-        <Fact label="Affected scope" value={`${item.affected_customers.toLocaleString("th-TH")} ราย`} />
+        <Fact label="Transformer" value={item.transformer_id ?? "ยังไม่ยืนยัน"} />
+        <Fact label="Feeder" value={item.feeder_id ?? "ยังไม่ยืนยัน"} />
+        <Fact label="Affected scope" value={typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "ยังไม่มี authoritative count"} />
+        {typeof item.report_count === "number" ? <Fact label="Reports in incident" value={item.report_count.toLocaleString("th-TH")} /> : null}
         <Fact label="Evidence" value={item.evidence_strength} />
       </div>
 
       <div className="detail-section">
-        <span className="section-label">AI explanation</span>
+        <span className="section-label">Decision-support explanation</span>
         <p className="explanation">{item.ai_summary}</p>
       </div>
 

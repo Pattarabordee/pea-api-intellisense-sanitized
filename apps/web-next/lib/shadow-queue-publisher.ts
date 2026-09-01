@@ -93,9 +93,10 @@ function normalizeIncidentEvidenceItem(input: unknown): PeaIncidentEvidence | nu
   const incidentId = text(input.incident_id, 96);
   const area = text(input.area, 8);
   const areaLabel = safeText(input.area_label, 80);
-  const transformerId = text(input.transformer_id, 96);
-  const feederId = text(input.feeder_id, 96);
-  const affectedCustomers = nonNegativeInt(input.affected_customers);
+  const transformerId = input.transformer_id === null ? null : text(input.transformer_id, 96);
+  const feederId = input.feeder_id === null ? null : text(input.feeder_id, 96);
+  const affectedCustomers = input.affected_customers === null ? null : nonNegativeInt(input.affected_customers);
+  const reportCount = input.report_count === undefined ? undefined : nonNegativeInt(input.report_count);
   const criticalRisk = safeText(input.critical_customer_risk, 300);
   const evidenceStrength = text(input.evidence_strength, 32);
   const firstReportedAt = text(input.first_reported_at, 64);
@@ -106,8 +107,12 @@ function normalizeIncidentEvidenceItem(input: unknown): PeaIncidentEvidence | nu
   const priorityReasons = input.priority_reasons === undefined ? undefined : safeStringArray(input.priority_reasons);
   const evidenceChain = input.evidence_chain === undefined ? undefined : safeStringArray(input.evidence_chain);
 
-  if (!incidentId || !area || !AREA.has(area) || !areaLabel || !transformerId || !feederId) return null;
-  if (affectedCustomers === null || !criticalRisk || !evidenceStrength || !EVIDENCE.has(evidenceStrength)) return null;
+  if (!incidentId || !area || !AREA.has(area) || !areaLabel) return null;
+  if (input.transformer_id !== null && !transformerId) return null;
+  if (input.feeder_id !== null && !feederId) return null;
+  if (input.affected_customers !== null && affectedCustomers === null) return null;
+  if (input.report_count !== undefined && reportCount === null) return null;
+  if (!criticalRisk || !evidenceStrength || !EVIDENCE.has(evidenceStrength)) return null;
   if (!firstReportedAt || Number.isNaN(Date.parse(firstReportedAt)) || waitingMinutes === null) return null;
   if (!status || !STATUS.has(status) || !eventType) return null;
   if (input.ai_summary !== undefined && !aiSummary) return null;
@@ -121,6 +126,7 @@ function normalizeIncidentEvidenceItem(input: unknown): PeaIncidentEvidence | nu
     transformer_id: transformerId,
     feeder_id: feederId,
     affected_customers: affectedCustomers,
+    ...(typeof reportCount === "number" ? { report_count: reportCount } : {}),
     critical_customer_risk: criticalRisk,
     evidence_strength: evidenceStrength as PeaIncidentEvidence["evidence_strength"],
     first_reported_at: firstReportedAt,

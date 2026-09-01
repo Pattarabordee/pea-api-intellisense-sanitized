@@ -22,9 +22,10 @@ export type IncidentPriorityItem = {
   priority_level: PriorityLevel;
   priority_state?: PriorityState;
   event_type: string;
-  transformer_id: string;
-  feeder_id: string;
-  affected_customers: number;
+  transformer_id: string | null;
+  feeder_id: string | null;
+  affected_customers: number | null;
+  report_count?: number;
   critical_customer_risk: string;
   evidence_strength: EvidenceStrength;
   first_reported_at: string;

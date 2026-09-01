@@ -5,9 +5,10 @@ export type PeaIncidentEvidence = {
   incident_id: string;
   area: "BKN" | "PKN";
   area_label: string;
-  transformer_id: string;
-  feeder_id: string;
-  affected_customers: number;
+  transformer_id: string | null;
+  feeder_id: string | null;
+  affected_customers: number | null;
+  report_count?: number;
   critical_customer_risk: string;
   evidence_strength: "STRONG" | "MODERATE" | "LIMITED";
   first_reported_at: string;
@@ -64,6 +65,7 @@ function sortItems(items: IncidentPriorityItem[]): IncidentPriorityItem[] {
   return [...items].sort((a, b) => {
     if (a.status === "RESTORED" && b.status !== "RESTORED") return 1;
     if (a.status !== "RESTORED" && b.status === "RESTORED") return -1;
+    if (a.area !== b.area) return a.area.localeCompare(b.area);
     const rankDiff = activeRank(a) - activeRank(b);
     if (rankDiff !== 0) return rankDiff;
     return numericScore(b) - numericScore(a);
@@ -99,8 +101,9 @@ function composeMatched(incident: PeaIncidentEvidence, signal: PriorityAdapterQu
     priority_state: "AVAILABLE",
     event_type: incident.event_type || signal.event_type,
     transformer_id: incident.transformer_id,
-    feeder_id: incident.feeder_id || signal.feeder_code,
+    feeder_id: incident.feeder_id || signal.feeder_code || null,
     affected_customers: incident.affected_customers,
+    ...(incident.report_count === undefined ? {} : { report_count: incident.report_count }),
     critical_customer_risk: incident.critical_customer_risk,
     evidence_strength: incident.evidence_strength,
     first_reported_at: incident.first_reported_at,
@@ -127,6 +130,7 @@ function composeUnrated(incident: PeaIncidentEvidence, state: IncidentPriorityIt
     transformer_id: incident.transformer_id,
     feeder_id: incident.feeder_id,
     affected_customers: incident.affected_customers,
+    ...(incident.report_count === undefined ? {} : { report_count: incident.report_count }),
     critical_customer_risk: incident.critical_customer_risk,
     evidence_strength: incident.evidence_strength,
     first_reported_at: incident.first_reported_at,
@@ -147,7 +151,7 @@ export function composeIncidentPrioritySnapshot(
   const warnings: string[] = [];
   const transformerMap = new Map<string, PeaIncidentEvidence[]>();
   for (const incident of incidents) {
-    const transformer = incident.transformer_id.trim();
+    const transformer = incident.transformer_id?.trim() || "";
     if (!transformer) continue;
     const group = transformerMap.get(transformer) ?? [];
     group.push(incident);

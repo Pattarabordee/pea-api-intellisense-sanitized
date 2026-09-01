@@ -118,7 +118,7 @@ async function runCase({ port, path, expectedStatus, expectedFallback, expectedI
     if (expectedItem) assert(body.snapshot.items[0]?.incident_id === expectedItem, `${port}: live item not preserved`);
     if (expectedFallback) assert(body.snapshot.source === "synthetic_demo", `${port}: fallback must be visibly synthetic`);
 
-    const page = await (await fetch(`http://127.0.0.1:${port}/`)).text();
+    const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
     assert(page.includes("SOURCE") && page.includes(expectPageText.replace("SOURCE ", "")), `${port}: page source-health indicator missing ${expectPageText}`);
   } finally {
     await stopChild(child);
