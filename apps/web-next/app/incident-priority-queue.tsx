@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { IncidentPriorityItem, IncidentPrioritySnapshot, PriorityLevel } from "../lib/incident-priority";
 
-const levels: Array<"ALL" | PriorityLevel> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
+const levels: Array<"ALL" | PriorityLevel> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "UNRATED"];
 const areas = ["ALL", "BKN", "PKN"] as const;
 
 type AreaFilter = (typeof areas)[number];
@@ -20,7 +20,12 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
       .sort((a, b) => {
         if (a.status === "RESTORED" && b.status !== "RESTORED") return 1;
         if (a.status !== "RESTORED" && b.status === "RESTORED") return -1;
-        return b.priority_score - a.priority_score;
+        const aRank = typeof a.queue_rank === "number" ? a.queue_rank : Number.MAX_SAFE_INTEGER;
+        const bRank = typeof b.queue_rank === "number" ? b.queue_rank : Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+        const aScore = typeof a.priority_score === "number" ? a.priority_score : Number.NEGATIVE_INFINITY;
+        const bScore = typeof b.priority_score === "number" ? b.priority_score : Number.NEGATIVE_INFINITY;
+        return bScore - aScore;
       });
   }, [area, level, snapshot.items]);
 
@@ -40,7 +45,7 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
         <div className="mode-strip" aria-label="runtime guardrails">
           <span>SHADOW MODE</span>
           <span>production_send = blocked</span>
-          <span>synthetic demo data</span>
+          <span>{snapshot.source === "synthetic_demo" ? "synthetic demo data" : "priority adapter + PEA evidence"}</span>
         </div>
       </header>
 
@@ -101,7 +106,7 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
               <IncidentRow
                 key={item.incident_id}
                 item={item}
-                rank={index + 1}
+                rank={item.queue_rank ?? index + 1}
                 selected={selected?.incident_id === item.incident_id}
                 onSelect={() => setActiveIncidentId(item.incident_id)}
               />
@@ -141,7 +146,7 @@ function IncidentRow({ item, rank, selected, onSelect }: { item: IncidentPriorit
     <button type="button" className={selected ? "incident-row selected" : "incident-row"} onClick={onSelect}>
       <div className="rank">#{rank}</div>
       <div className={`score score-${item.priority_level.toLowerCase()}`}>
-        <strong>{item.priority_score}</strong>
+        <strong>{item.priority_score ?? "—"}</strong>
         <span>{item.priority_level}</span>
       </div>
       <div className="incident-main">
@@ -155,6 +160,7 @@ function IncidentRow({ item, rank, selected, onSelect }: { item: IncidentPriorit
           <span>{item.affected_customers.toLocaleString("th-TH")} ราย</span>
           <span>รอ {item.waiting_minutes} นาที</span>
           <span>Evidence {item.evidence_strength}</span>
+          {item.priority_state && item.priority_state !== "AVAILABLE" ? <span>Priority {item.priority_state}</span> : null}
         </div>
       </div>
     </button>
@@ -169,7 +175,7 @@ function IncidentDetail({ item }: { item: IncidentPriorityItem }) {
           <p className="eyebrow">Selected incident</p>
           <h2>{item.incident_id}</h2>
         </div>
-        <span className={`level-badge level-${item.priority_level.toLowerCase()}`}>{item.priority_level} {item.priority_score}</span>
+        <span className={`level-badge level-${item.priority_level.toLowerCase()}`}>{item.priority_level} {item.priority_score ?? "—"}</span>
       </div>
 
       <div className="detail-facts">
