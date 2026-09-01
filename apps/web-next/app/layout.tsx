@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PEA API Intellisense Mission Control",
-  description: "Production-path shadow console for AIS outage verification"
+  title: "PEA Intellisense Incident Command Center",
+  description: "Shadow operator decision-support for incident priority queue"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="th">
       <body>{children}</body>
     </html>
   );

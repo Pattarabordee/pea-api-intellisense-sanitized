@@ -1,6 +1,6 @@
-import { MissionControl } from "./mission-control";
-import { demoOperatorData } from "../lib/demo-data";
+﻿import { IncidentPriorityQueue } from "./incident-priority-queue";
+import { incidentPriorityDemo } from "../lib/incident-priority";
 
 export default function Page() {
-  return <MissionControl initialData={{ ...demoOperatorData, source: "DEMO DATA - synthetic only" }} />;
+  return <IncidentPriorityQueue snapshot={incidentPriorityDemo} />;
 }
