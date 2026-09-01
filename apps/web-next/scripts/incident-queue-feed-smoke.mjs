@@ -123,7 +123,7 @@ async function runCase({ port, path, expectedStatus, expectedFallback, expectedI
     if (expectedFallback) assert(body.snapshot.source === "synthetic_demo", `${port}: fallback must be visibly synthetic`);
 
     const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
-    assert(page.includes("SOURCE") && page.includes(expectPageText.replace("SOURCE ", "")), `${port}: page source-health indicator missing ${expectPageText}`);
+    assert(page.includes(expectPageText), `${port}: page source-health indicator missing ${expectPageText}`);
   } finally {
     await stopChild(child);
   }
@@ -137,7 +137,7 @@ try {
     expectedStatus: "LIVE_SHADOW",
     expectedFallback: false,
     expectedItem: "INC-BKN-FEED-SMOKE-001",
-    expectPageText: "SOURCE LIVE SHADOW",
+    expectPageText: "เชื่อมข้อมูลจริง · SHADOW",
     apiKey: true
   });
   await runCase({
@@ -145,21 +145,21 @@ try {
     path: "/invalid",
     expectedStatus: "CONTRACT_INVALID",
     expectedFallback: true,
-    expectPageText: "SOURCE CONTRACT INVALID"
+    expectPageText: "ข้อมูลไม่ผ่านการตรวจสอบ"
   });
   await runCase({
     port: 3106,
     path: "/unavailable",
     expectedStatus: "UPSTREAM_UNAVAILABLE",
     expectedFallback: true,
-    expectPageText: "SOURCE UPSTREAM UNAVAILABLE"
+    expectPageText: "แหล่งข้อมูลขัดข้อง"
   });
   await runCase({
     port: 3107,
     path: null,
     expectedStatus: "NOT_CONFIGURED",
     expectedFallback: true,
-    expectPageText: "SOURCE NOT CONFIGURED"
+    expectPageText: "ยังไม่เชื่อมข้อมูล"
   });
 } finally {
   upstream.close();
