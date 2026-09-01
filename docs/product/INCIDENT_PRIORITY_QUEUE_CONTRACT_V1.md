@@ -116,3 +116,13 @@ The web app now has a stable server-side feed boundary:
 The browser does not call n8n directly. Upstream URL/API key remain server-only. Source health is explicit (`LIVE_SHADOW`, `NOT_CONFIGURED`, `UPSTREAM_UNAVAILABLE`, `CONTRACT_INVALID`). Invalid or unavailable live data fails closed to visibly labeled synthetic fallback; live and synthetic data are never silently merged.
 
 Real feed activation is still a separate gate because no approved read-only publisher URL is configured yet.
+
+## Shadow publisher candidate — 2026-09-01
+
+A server-side candidate now exists at `GET /api/incidents/publish-shadow`:
+
+`pea-incident-evidence.v1 + priority-adapter-v0.1 -> compose -> incident-queue-feed.v1`
+
+The incident source is mandatory and privacy/fail-closed validated. Priority is decision-support only: if priority transport/contract fails while incident evidence remains valid, real incidents stay visible as `UNRATED` with no fabricated score. The publisher never enables customer send and does not expose source credentials to the browser.
+
+Real-source activation remains blocked on two explicit projections: an aggregate incident-evidence read source and a read-only priority-adapter snapshot wrapper. `PEAPriorityAdapterV01` itself remains inactive and has no GET snapshot trigger.

@@ -11,7 +11,8 @@
     "smoke:buengkan:api": "node scripts/buengkan-integration-api-smoke.mjs",
     "smoke:priority-adapter": "node scripts/priority-adapter-contract-smoke.mjs",
     "smoke:incident-compose": "node scripts/incident-priority-compose-smoke.mjs",
-    "smoke:incident-feed": "node scripts/incident-queue-feed-smoke.mjs"
+    "smoke:incident-feed": "node scripts/incident-queue-feed-smoke.mjs",
+    "smoke:shadow-publisher": "node scripts/shadow-queue-publisher-smoke.mjs"
   },
   "dependencies": {
     "next": "15.5.23",
