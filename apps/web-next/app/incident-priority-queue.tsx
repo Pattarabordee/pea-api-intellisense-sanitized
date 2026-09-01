@@ -5,7 +5,6 @@ import type { IncidentPriorityItem, IncidentPrioritySnapshot, IncidentQueueSourc
 
 const levels: Array<"ALL" | PriorityLevel> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "UNRATED"];
 const areas = ["ALL", "BKN", "PKN"] as const;
-
 type AreaFilter = (typeof areas)[number];
 
 export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: IncidentPrioritySnapshot; sourceHealth: IncidentQueueSourceHealth }) {
@@ -15,8 +14,8 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
 
   const filtered = useMemo(() => {
     return [...snapshot.items]
-      .filter((item) => (area === "ALL" ? true : item.area === area))
-      .filter((item) => (level === "ALL" ? true : item.priority_level === level))
+      .filter((item) => area === "ALL" || item.area === area)
+      .filter((item) => level === "ALL" || item.priority_level === level)
       .sort((a, b) => {
         if (a.status === "RESTORED" && b.status !== "RESTORED") return 1;
         if (a.status !== "RESTORED" && b.status === "RESTORED") return -1;
@@ -36,118 +35,174 @@ export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: In
   const highCount = activeItems.filter((item) => item.priority_level === "HIGH").length;
   const knownAffected = activeItems.filter((item) => typeof item.affected_customers === "number");
   const affected = knownAffected.reduce((sum, item) => sum + (item.affected_customers ?? 0), 0);
+  const reportCount = activeItems.reduce((sum, item) => sum + (item.report_count ?? 0), 0);
 
   return (
     <main className="command-shell">
       <header className="command-topbar">
-        <div>
-          <span className="brand-kicker">PEA INTELLISENSE</span>
-          <strong>Incident Command Center</strong>
+        <div className="command-brand">
+          <span className="brand-mark" aria-hidden="true">P</span>
+          <span className="brand-word">PEA INTELLISENSE</span>
+          <span className="brand-dot" aria-hidden="true" />
         </div>
-        <div className="mode-strip" aria-label="runtime guardrails">
-          <span>SHADOW MODE</span>
-          <span>production_send = blocked</span>
-          <span>{snapshot.source === "synthetic_demo" ? "synthetic demo data" : "priority adapter + PEA evidence"}</span>
-          <span className={`source-indicator source-${sourceHealth.status.toLowerCase().replace(/_/g, "-")}`} title={sourceHealth.detail}>
-            SOURCE {sourceHealth.status.replace(/_/g, " ")}
-          </span>
-        </div>
+        <nav className="command-nav" aria-label="สถานะระบบ">
+          <span>INCIDENT QUEUE</span>
+          <span>OPERATOR VIEW</span>
+          <span className="nav-live"><i />{sourceHealth.status.replace(/_/g, " ")}</span>
+        </nav>
       </header>
 
       <section className="hero-panel">
-        <div>
-          <p className="eyebrow">Operator decision-support</p>
-          <h1>จัดคิวงานแก้ไฟตามความสำคัญของ Incident</h1>
+        <div className="hero-copy-block">
+          <p className="dot-label"><span /> LIVE DECISION SUPPORT</p>
+          <h1>จัดคิวเหตุไฟดับ<br />ให้สิ่งสำคัญขึ้นก่อน.</h1>
           <p className="hero-copy">
-            รวมเหตุจากหลายรายงาน แล้วจัดลำดับด้วยผลกระทบ ความเสี่ยง ความแข็งแรงของหลักฐาน และสถานะการปฏิบัติงาน
-            โดย operator ยังเป็นผู้ตัดสินใจสุดท้าย
+            รวมเหตุที่เกี่ยวข้องให้เป็น Incident เดียว จัดลำดับตามหลักฐานและความเร่งด่วน
+            แล้วส่งให้ Operator เห็นสิ่งที่ควรตรวจสอบก่อน โดยไม่เดาข้อมูลที่ระบบยังยืนยันไม่ได้
           </p>
+          <div className="hero-status-row">
+            <span>SHADOW MODE</span>
+            <span>PRODUCTION SEND / BLOCKED</span>
+            <span>OPERATOR DECIDES</span>
+          </div>
         </div>
-        <div className="schema-card">
-          <span>Canonical contract</span>
-          <strong>{snapshot.schema_version}</strong>
-          <small>Frontend ไม่ผูกกับ BKN/PKN n8n flow โดยตรง</small>
-          <small>Queue source: {sourceHealth.source_label}{sourceHealth.fallback_active ? " (fallback)" : ""}</small>
+
+        <div className="product-visual" aria-label="ภาพรวมสถานะ Incident Queue">
+          <div className="visual-top">
+            <span>PEA INCIDENT QUEUE / LIVE</span>
+            <b>●</b>
+          </div>
+          <div className="visual-stage">
+            <section className="visual-stack">
+              <p>INCIDENT SOURCE</p>
+              <div className="visual-node active">
+                <i />
+                <strong>Correlation</strong>
+                <span>DURABLE STATE</span>
+              </div>
+              <div className="visual-node">
+                <i />
+                <strong>Priority</strong>
+                <span>{activeItems.some((item) => item.priority_state === "AVAILABLE") ? "AVAILABLE" : "UNAVAILABLE / STALE"}</span>
+              </div>
+            </section>
+            <div className="visual-route"><i /><span /><em>FEED</em></div>
+            <section className="visual-core">
+              <small>OPERATOR SURFACE</small>
+              <strong>{activeItems.length.toString().padStart(2, "0")} ACTIVE</strong>
+              <div className="visual-tool-grid">
+                <span>RANK</span><span>FILTER</span><span>EVIDENCE</span><span>REVIEW</span>
+              </div>
+            </section>
+            <div className="visual-route"><i /><span /><em>HUMAN</em></div>
+            <section className="visual-stack">
+              <p>CONTROL</p>
+              <div className="visual-node active-green">
+                <i />
+                <strong>Operator</strong>
+                <span>FINAL DECISION</span>
+              </div>
+              <div className="visual-node muted-node">
+                <i />
+                <strong>Auto Send</strong>
+                <span>BLOCKED</span>
+              </div>
+            </section>
+          </div>
+          <div className="visual-activity">
+            <div><b>READ</b><code>incident-queue-feed.v1</code><span>✓</span></div>
+            <div><b>SOURCE</b><code>{sourceHealth.source_label}</code><span>{sourceHealth.fallback_active ? "FALLBACK" : "LIVE"}</span></div>
+            <div className="running"><b>MODE</b><code>operator decision-support</code><span>ACTIVE</span></div>
+          </div>
         </div>
       </section>
 
       <section className="summary-grid" aria-label="incident summary">
-        <SummaryCard label="Critical" value={String(criticalCount)} note="active incidents" emphasis="critical" />
-        <SummaryCard label="High" value={String(highCount)} note="active incidents" emphasis="high" />
-        <SummaryCard label="Active" value={String(activeItems.length)} note="excluding restored" />
-        <SummaryCard label="Affected scope" value={knownAffected.length ? affected.toLocaleString("th-TH") : "—"} note={knownAffected.length ? "known estimated customers" : "authoritative count unavailable"} />
+        <SummaryCard value={String(activeItems.length).padStart(2, "0")} label="Active incidents" note="excluding restored" />
+        <SummaryCard value={String(criticalCount).padStart(2, "0")} label="Critical" note="active queue" emphasis="critical" />
+        <SummaryCard value={String(highCount).padStart(2, "0")} label="High" note="active queue" emphasis="high" />
+        <SummaryCard value={knownAffected.length ? affected.toLocaleString("th-TH") : reportCount ? `${reportCount}R` : "—"} label="Known impact" note={knownAffected.length ? "estimated customers" : reportCount ? "reports / impact unknown" : "authoritative count unavailable"} />
       </section>
 
-      <section className="workspace-grid">
-        <section className="queue-panel" aria-labelledby="queue-title">
-          <div className="panel-heading queue-heading">
-            <div>
-              <p className="eyebrow">Incident priority queue</p>
-              <h2 id="queue-title">คิวที่ operator ต้องเห็นก่อน</h2>
-            </div>
-            <span className="record-count">{filtered.length} incidents</span>
-          </div>
-
-          <div className="filter-row" aria-label="queue filters">
-            <div className="filter-group">
-              <span>พื้นที่</span>
-              {areas.map((item) => (
-                <button key={item} type="button" className={area === item ? "filter active" : "filter"} onClick={() => setArea(item)}>
-                  {item === "ALL" ? "ทั้งหมด" : item}
-                </button>
-              ))}
-            </div>
-            <div className="filter-group">
-              <span>ระดับ</span>
-              {levels.map((item) => (
-                <button key={item} type="button" className={level === item ? "filter active" : "filter"} onClick={() => setLevel(item)}>
-                  {item === "ALL" ? "ทั้งหมด" : item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="queue-list">
-            {filtered.map((item, index) => (
-              <IncidentRow
-                key={item.incident_id}
-                item={item}
-                rankLabel={item.queue_rank ? `${area === "ALL" ? `${item.area} ` : ""}#${item.queue_rank}` : `#${index + 1}`}
-                selected={selected?.incident_id === item.incident_id}
-                onSelect={() => setActiveIncidentId(item.incident_id)}
-              />
-            ))}
-            {filtered.length === 0 ? <div className="empty-state">ไม่พบ incident ตาม filter ที่เลือก</div> : null}
-          </div>
-        </section>
-
-        <aside className="detail-panel" aria-live="polite">
-          {selected ? <IncidentDetail item={selected} /> : <div className="empty-state">เลือก incident เพื่อดูหลักฐาน</div>}
-        </aside>
-      </section>
-
-      <section className="contract-panel" aria-labelledby="contract-title">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Integration boundary</p>
-            <h2 id="contract-title">Mock-first UI วันนี้ → verified Priority Adapter boundary พร้อมเชื่อม</h2>
-          </div>
+      <section className="queue-section">
+        <div className="section-kicker"><span>001</span><p>OPERATOR QUEUE</p></div>
+        <div className="section-title-row">
+          <h2>คิวที่ต้องเห็นก่อน.</h2>
+          <p>เรียงตามพื้นที่และอันดับที่แหล่งข้อมูลยืนยันได้ ไม่สร้างอันดับข้ามพื้นที่ขึ้นเอง</p>
         </div>
-        <div className="flow-contract">
-          <FlowBox title="PEAPriorityAdapterV01" detail="shadow / blocked / multi-area signal" />
-          <span className="arrow">→</span>
-          <FlowBox title="Web normalizer" detail="validate guardrails + preserve queue_rank" />
-          <span className="arrow">→</span>
-          <FlowBox title="Incident view model" detail="join priority signal + PEA evidence" />
-          <span className="arrow">→</span>
-          <FlowBox title="Operator Queue" detail="read-only decision support" />
+
+        <div className="filter-row" aria-label="queue filters">
+          <FilterGroup label="AREA" values={areas} current={area} onChange={(value) => setArea(value as AreaFilter)} />
+          <FilterGroup label="LEVEL" values={levels} current={level} onChange={(value) => setLevel(value as (typeof levels)[number])} />
+          <span className="record-count">{filtered.length.toString().padStart(2, "0")} INCIDENTS</span>
+        </div>
+
+        <div className="workspace-grid">
+          <section className="queue-panel" aria-label="Incident priority queue">
+            <div className="queue-column-head">
+              <span>RANK</span><span>PRIORITY</span><span>INCIDENT / EVIDENCE</span>
+            </div>
+            <div className="queue-list">
+              {filtered.map((item, index) => (
+                <IncidentRow
+                  key={item.incident_id}
+                  item={item}
+                  rankLabel={item.queue_rank ? `${area === "ALL" ? `${item.area} ` : ""}#${item.queue_rank}` : `#${index + 1}`}
+                  selected={selected?.incident_id === item.incident_id}
+                  onSelect={() => setActiveIncidentId(item.incident_id)}
+                />
+              ))}
+              {filtered.length === 0 ? <div className="empty-state">ไม่พบ Incident ตามตัวกรองที่เลือก</div> : null}
+            </div>
+          </section>
+
+          <aside className="detail-panel" aria-live="polite">
+            {selected ? <IncidentDetail item={selected} /> : <div className="empty-state">เลือก Incident เพื่อดูหลักฐาน</div>}
+          </aside>
         </div>
       </section>
+
+      <section className="integration-section">
+        <div className="integration-inner">
+          <div className="section-kicker light"><span>002</span><p>DECISION BOUNDARY</p></div>
+          <div className="integration-title">
+            <h2>AI ช่วยจัดลำดับ.<br />คนเป็นผู้ตัดสินใจ.</h2>
+            <p>ข้อมูลที่ไม่ยืนยันจะคงเป็น Unknown / Unrated แทนการเติมค่าขึ้นมาเอง</p>
+          </div>
+          <div className="flow-contract">
+            <FlowBox index="01" title="Incident evidence" detail="durable correlation state" />
+            <FlowBox index="02" title="Priority signal" detail="fresh signal only" />
+            <FlowBox index="03" title="Queue model" detail="rank + evidence + state" />
+            <FlowBox index="04" title="Operator review" detail="human decision remains final" />
+          </div>
+        </div>
+      </section>
+
+      <footer className="command-footer">
+        <span>PEA INTELLISENSE / INCIDENT PRIORITY</span>
+        <span>SHADOW / READ ONLY / READY</span>
+      </footer>
     </main>
   );
 }
 
+function FilterGroup({ label, values, current, onChange }: { label: string; values: readonly string[]; current: string; onChange: (value: string) => void }) {
+  return (
+    <div className="filter-group">
+      <span>{label}</span>
+      <div>
+        {values.map((value) => (
+          <button key={value} type="button" className={current === value ? "filter active" : "filter"} onClick={() => onChange(value)}>
+            {value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPriorityItem; rankLabel: string; selected: boolean; onSelect: () => void }) {
+  const asset = item.transformer_id ?? item.feeder_id ?? "ASSET UNCONFIRMED";
   return (
     <button type="button" className={selected ? "incident-row selected" : "incident-row"} onClick={onSelect}>
       <div className="rank">{rankLabel}</div>
@@ -157,17 +212,17 @@ function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPr
       </div>
       <div className="incident-main">
         <div className="incident-title-line">
-          <strong>{item.area_label} · {item.transformer_id ?? "Transformer ยังไม่ยืนยัน"}</strong>
+          <strong>{item.area} / {asset}</strong>
           <StatusPill status={item.status} />
         </div>
         <p>{item.ai_summary}</p>
         <div className="incident-meta">
-          <span>{item.feeder_id ?? "Feeder ยังไม่ยืนยัน"}</span>
-          <span>{typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "จำนวนผู้ใช้ไฟยังไม่ยืนยัน"}</span>
-          {typeof item.report_count === "number" ? <span>{item.report_count.toLocaleString("th-TH")} reports</span> : null}
-          <span>รอ {item.waiting_minutes} นาที</span>
-          <span>Evidence {item.evidence_strength}</span>
-          {item.priority_state && item.priority_state !== "AVAILABLE" ? <span>Priority {item.priority_state}</span> : null}
+          <span>{item.area_label}</span>
+          {item.feeder_id ? <span>FDR {item.feeder_id}</span> : null}
+          {typeof item.affected_customers === "number" ? <span>{item.affected_customers.toLocaleString("th-TH")} CUSTOMERS</span> : <span>IMPACT UNKNOWN</span>}
+          {typeof item.report_count === "number" ? <span>{item.report_count} REPORTS</span> : null}
+          <span>{item.waiting_minutes} MIN</span>
+          <span>EVIDENCE {item.evidence_strength}</span>
         </div>
       </div>
     </button>
@@ -176,68 +231,52 @@ function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPr
 
 function IncidentDetail({ item }: { item: IncidentPriorityItem }) {
   return (
-    <div>
-      <div className="panel-heading detail-heading">
+    <div className="detail-content">
+      <div className="detail-topline">
         <div>
-          <p className="eyebrow">Selected incident</p>
-          <h2>{item.incident_id}</h2>
+          <span className="detail-kicker">SELECTED INCIDENT</span>
+          <h3>{item.incident_id}</h3>
         </div>
         <span className={`level-badge level-${item.priority_level.toLowerCase()}`}>{item.priority_level} {item.priority_score ?? "—"}</span>
       </div>
 
       <div className="detail-facts">
-        <Fact label="พื้นที่" value={item.area_label} />
-        <Fact label="เหตุการณ์" value={item.event_type} />
-        <Fact label="Transformer" value={item.transformer_id ?? "ยังไม่ยืนยัน"} />
-        <Fact label="Feeder" value={item.feeder_id ?? "ยังไม่ยืนยัน"} />
-        <Fact label="Affected scope" value={typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "ยังไม่มี authoritative count"} />
-        {typeof item.report_count === "number" ? <Fact label="Reports in incident" value={item.report_count.toLocaleString("th-TH")} /> : null}
-        <Fact label="Evidence" value={item.evidence_strength} />
+        <Fact label="AREA" value={`${item.area} / ${item.area_label}`} />
+        <Fact label="EVENT" value={item.event_type} />
+        <Fact label="TRANSFORMER" value={item.transformer_id ?? "UNCONFIRMED"} />
+        <Fact label="FEEDER" value={item.feeder_id ?? "UNCONFIRMED"} />
+        <Fact label="AFFECTED" value={typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} customers` : "UNKNOWN"} />
+        <Fact label="REPORTS" value={typeof item.report_count === "number" ? String(item.report_count) : "—"} />
       </div>
 
-      <div className="detail-section">
-        <span className="section-label">Decision-support explanation</span>
+      <DetailSection label="DECISION-SUPPORT EXPLANATION">
         <p className="explanation">{item.ai_summary}</p>
-      </div>
+      </DetailSection>
 
-      <div className="detail-section">
-        <span className="section-label">เหตุผลที่ได้ลำดับนี้</span>
-        <ul className="reason-list">
-          {item.priority_reasons.map((reason) => <li key={reason}>{reason}</li>)}
-        </ul>
-      </div>
+      <DetailSection label="PRIORITY REASONS">
+        <ul className="reason-list">{item.priority_reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+      </DetailSection>
 
-      <div className="detail-section">
-        <span className="section-label">Evidence chain</span>
+      <DetailSection label="EVIDENCE CHAIN">
         <div className="evidence-chain">
-          {item.evidence_chain.map((node, index) => (
-            <div className="evidence-node" key={`${node}-${index}`}>
-              <span>{index + 1}</span>
-              <strong>{node}</strong>
-            </div>
-          ))}
+          {item.evidence_chain.map((node, index) => <div className="evidence-node" key={`${node}-${index}`}><span>{String(index + 1).padStart(2, "0")}</span><strong>{node}</strong></div>)}
         </div>
-      </div>
+      </DetailSection>
 
       <div className="operator-gate">
-        <div>
-          <span>Operator gate</span>
-          <strong>Review only — ไม่มีการสั่งทีมช่างจริง</strong>
-        </div>
-        <button type="button" disabled>Operator Review</button>
+        <div><span>OPERATOR GATE</span><strong>REVIEW ONLY / NO AUTOMATIC DISPATCH</strong></div>
+        <button type="button" disabled>REVIEW</button>
       </div>
     </div>
   );
 }
 
+function DetailSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return <section className="detail-section"><span className="section-label">{label}</span>{children}</section>;
+}
+
 function SummaryCard({ label, value, note, emphasis }: { label: string; value: string; note: string; emphasis?: "critical" | "high" }) {
-  return (
-    <div className={emphasis ? `summary-card ${emphasis}` : "summary-card"}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{note}</small>
-    </div>
-  );
+  return <article className={emphasis ? `summary-card ${emphasis}` : "summary-card"}><strong>{value}</strong><div><span>{label}</span><small>{note}</small></div></article>;
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -248,6 +287,6 @@ function StatusPill({ status }: { status: IncidentPriorityItem["status"] }) {
   return <span className={`status-pill status-${status.toLowerCase()}`}>{status.replace(/_/g, " ")}</span>;
 }
 
-function FlowBox({ title, detail }: { title: string; detail: string }) {
-  return <div className="flow-box"><strong>{title}</strong><span>{detail}</span></div>;
+function FlowBox({ index, title, detail }: { index: string; title: string; detail: string }) {
+  return <article className="flow-box"><span>{index}</span><h3>{title}</h3><p>{detail}</p></article>;
 }
