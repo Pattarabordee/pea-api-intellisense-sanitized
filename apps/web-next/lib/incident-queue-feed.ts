@@ -136,6 +136,7 @@ function normalizeItem(input: unknown): IncidentPriorityItem | null {
     transformer_id: transformerId,
     feeder_id: feederId,
     affected_customers: affectedCustomers,
+    ...(typeof reportCount === "number" ? { report_count: reportCount } : {}),
     critical_customer_risk: criticalRisk,
     evidence_strength: evidenceStrength as IncidentPriorityItem["evidence_strength"],
     first_reported_at: firstReportedAt,

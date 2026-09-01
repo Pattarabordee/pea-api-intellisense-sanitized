@@ -32,6 +32,7 @@ const liveFeed = {
         transformer_id: "SYNTHETIC-TX-001",
         feeder_id: "SYNTHETIC-FDR-01",
         affected_customers: 12,
+        report_count: 4,
         critical_customer_risk: "synthetic only",
         evidence_strength: "MODERATE",
         first_reported_at: now,
@@ -115,7 +116,10 @@ async function runCase({ port, path, expectedStatus, expectedFallback, expectedI
     assert(response.status === 200, `feed endpoint ${port} should return 200`);
     assert(body.source_health.status === expectedStatus, `${port}: expected ${expectedStatus}, got ${body.source_health.status}`);
     assert(body.source_health.fallback_active === expectedFallback, `${port}: fallback mismatch`);
-    if (expectedItem) assert(body.snapshot.items[0]?.incident_id === expectedItem, `${port}: live item not preserved`);
+    if (expectedItem) {
+      assert(body.snapshot.items[0]?.incident_id === expectedItem, `${port}: live item not preserved`);
+      assert(body.snapshot.items[0]?.report_count === 4, `${port}: report_count must survive feed normalization`);
+    }
     if (expectedFallback) assert(body.snapshot.source === "synthetic_demo", `${port}: fallback must be visibly synthetic`);
 
     const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
