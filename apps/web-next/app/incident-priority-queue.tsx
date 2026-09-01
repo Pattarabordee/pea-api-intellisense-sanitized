@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import type { IncidentPriorityItem, IncidentPrioritySnapshot, PriorityLevel } from "../lib/incident-priority";
@@ -119,15 +119,15 @@ export function IncidentPriorityQueue({ snapshot }: { snapshot: IncidentPriority
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Integration boundary</p>
-            <h2 id="contract-title">Mock-first วันนี้ → Priority Adapter จริงภายหลัง</h2>
+            <h2 id="contract-title">Mock-first UI วันนี้ → verified Priority Adapter boundary พร้อมเชื่อม</h2>
           </div>
         </div>
         <div className="flow-contract">
-          <FlowBox title="n8n / AI scoring" detail="BKN, PKN หรือแหล่งอื่น" />
+          <FlowBox title="PEAPriorityAdapterV01" detail="shadow / blocked / multi-area signal" />
           <span className="arrow">→</span>
-          <FlowBox title="Priority Adapter" detail="normalize + validate + fail-closed" />
+          <FlowBox title="Web normalizer" detail="validate guardrails + preserve queue_rank" />
           <span className="arrow">→</span>
-          <FlowBox title="incident-priority.v1" detail="canonical UI contract" />
+          <FlowBox title="Incident view model" detail="join priority signal + PEA evidence" />
           <span className="arrow">→</span>
           <FlowBox title="Operator Queue" detail="read-only decision support" />
         </div>
