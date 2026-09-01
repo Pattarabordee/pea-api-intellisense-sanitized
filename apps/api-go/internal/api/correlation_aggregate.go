@@ -351,12 +351,14 @@ func uniqueTopology(reports []storage.CorrelationReportSnapshot) (any, any, stri
 						transformers[value] = struct{}{}
 					}
 				}
+			}
 		case []string:
 			for _, value := range values {
 				value = strings.ToUpper(strings.TrimSpace(value))
 				if value != "" {
 					transformers[value] = struct{}{}
 				}
+			}
 		}
 	}
 
