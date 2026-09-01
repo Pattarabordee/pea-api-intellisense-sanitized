@@ -1,5 +1,10 @@
 import { incidentPriorityDemo, type IncidentPriorityItem, type IncidentPrioritySnapshot, type IncidentQueueSourceHealth } from "./incident-priority";
 
+export type IncidentQueueFeedUpstreamHealth = {
+  incident_source: "OK" | "UNAVAILABLE" | "CONTRACT_INVALID" | "NOT_CONFIGURED";
+  priority_source: "OK" | "UNAVAILABLE" | "CONTRACT_INVALID" | "NOT_CONFIGURED";
+};
+
 export type IncidentQueueFeedEnvelope = {
   schema_version: "incident-queue-feed.v1";
   mode: "shadow";
@@ -7,6 +12,7 @@ export type IncidentQueueFeedEnvelope = {
   authoritative_outage_truth: false;
   generated_at: string;
   source_id: string;
+  upstream_health?: IncidentQueueFeedUpstreamHealth;
   snapshot: IncidentPrioritySnapshot;
 };
 
@@ -23,6 +29,7 @@ const STATES = new Set(["AVAILABLE", "UNMATCHED", "UNAVAILABLE", "INPUT_INSUFFIC
 const EVIDENCE = new Set(["STRONG", "MODERATE", "LIMITED"]);
 const INCIDENT_STATUS = new Set(["NEW", "ACKNOWLEDGED", "DISPATCHED", "IN_PROGRESS", "RESTORED"]);
 const SOURCE_MODES = new Set(["PRIORITY_ADAPTER"]);
+const UPSTREAM_STATES = new Set(["OK", "UNAVAILABLE", "CONTRACT_INVALID", "NOT_CONFIGURED"]);
 const MAX_ITEMS = 250;
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -57,6 +64,18 @@ function stringArray(value: unknown, maxItems = 24): string[] | null {
     result.push(text);
   }
   return result;
+}
+
+function normalizeUpstreamHealth(input: unknown): IncidentQueueFeedUpstreamHealth | null | undefined {
+  if (input === undefined) return undefined;
+  if (!isRecord(input)) return null;
+  const incidentSource = stringValue(input.incident_source, 40);
+  const prioritySource = stringValue(input.priority_source, 40);
+  if (!incidentSource || !prioritySource || !UPSTREAM_STATES.has(incidentSource) || !UPSTREAM_STATES.has(prioritySource)) return null;
+  return {
+    incident_source: incidentSource as IncidentQueueFeedUpstreamHealth["incident_source"],
+    priority_source: prioritySource as IncidentQueueFeedUpstreamHealth["priority_source"]
+  };
 }
 
 function normalizeItem(input: unknown): IncidentPriorityItem | null {
@@ -132,6 +151,9 @@ export function normalizeIncidentQueueFeed(input: unknown): IncidentQueueFeedEnv
   const generatedAt = stringValue(input.generated_at, 64);
   const sourceId = stringValue(input.source_id, 120);
   if (!generatedAt || Number.isNaN(Date.parse(generatedAt)) || !sourceId) return null;
+
+  const upstreamHealth = normalizeUpstreamHealth(input.upstream_health);
+  if (upstreamHealth === null) return null;
   if (!isRecord(input.snapshot)) return null;
 
   const snapshot = input.snapshot;
@@ -157,6 +179,7 @@ export function normalizeIncidentQueueFeed(input: unknown): IncidentQueueFeedEnv
     authoritative_outage_truth: false,
     generated_at: generatedAt,
     source_id: sourceId,
+    ...(upstreamHealth ? { upstream_health: upstreamHealth } : {}),
     snapshot: {
       schema_version: "incident-priority.v1",
       generated_at: snapshotGeneratedAt,
@@ -212,6 +235,7 @@ export async function loadIncidentQueueFeed(): Promise<IncidentQueueFeedLoadResu
     const normalized = normalizeIncidentQueueFeed(body);
     if (!normalized) return fallback("CONTRACT_INVALID", "Shadow feed contract validation failed closed.", checkedAt);
 
+    const priorityState = normalized.upstream_health?.priority_source;
     return {
       snapshot: normalized.snapshot,
       source_health: {
@@ -219,7 +243,9 @@ export async function loadIncidentQueueFeed(): Promise<IncidentQueueFeedLoadResu
         checked_at: checkedAt,
         source_label: normalized.source_id,
         fallback_active: false,
-        detail: "Read-only shadow queue feed is healthy."
+        detail: priorityState && priorityState !== "OK"
+          ? `Read-only incident feed is healthy; priority source is ${priorityState}, so affected incidents remain UNRATED.`
+          : "Read-only shadow queue feed is healthy."
       }
     };
   } catch {
