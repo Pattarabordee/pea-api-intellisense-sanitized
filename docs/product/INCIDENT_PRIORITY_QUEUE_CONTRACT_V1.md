@@ -95,3 +95,14 @@ Build a small incident-priority view-model join that combines the normalized `pr
 8. restored/closed incident handling without silently overriding upstream queue semantics.
 
 Do not connect the browser directly to the teammate calculator workflow.
+
+
+## Compose boundary — 2026-09-01
+
+The verified web-side join is now:
+
+`PEAPriorityAdapterV01 -> web normalizer -> /api/incidents/compose + PEA incident evidence -> incident-priority.v1 -> Operator Queue`
+
+Matching is fail-closed: exact unique `transformer_id` plus compatible `service_area`. No queue item is assigned by array position, fuzzy text, score similarity, or guessed area mapping. Priority score/level remains decision-support metadata; missing score/level is represented as `null` / `UNRATED` rather than fabricated.
+
+The browser route still uses labeled synthetic demo data until an approved stable read-only queue feed is available. See `INCIDENT_PRIORITY_COMPOSE_ACCEPTANCE_20260901.md`.

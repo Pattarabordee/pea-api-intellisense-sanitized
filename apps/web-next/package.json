@@ -9,7 +9,8 @@
     "lint": "next lint",
     "smoke:buengkan": "node scripts/buengkan-tester-smoke.mjs",
     "smoke:buengkan:api": "node scripts/buengkan-integration-api-smoke.mjs",
-    "smoke:priority-adapter": "node scripts/priority-adapter-contract-smoke.mjs"
+    "smoke:priority-adapter": "node scripts/priority-adapter-contract-smoke.mjs",
+    "smoke:incident-compose": "node scripts/incident-priority-compose-smoke.mjs"
   },
   "dependencies": {
     "next": "15.5.23",

@@ -1,13 +1,18 @@
-﻿export type PriorityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+export type PriorityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNRATED";
 export type IncidentStatus = "NEW" | "ACKNOWLEDGED" | "DISPATCHED" | "IN_PROGRESS" | "RESTORED";
 export type EvidenceStrength = "STRONG" | "MODERATE" | "LIMITED";
+export type PriorityState = "AVAILABLE" | "UNMATCHED" | "UNAVAILABLE" | "INPUT_INSUFFICIENT" | "CONTRACT_INVALID";
 
 export type IncidentPriorityItem = {
   incident_id: string;
   area: "BKN" | "PKN";
   area_label: string;
-  priority_score: number;
+  queue_rank?: number;
+  priority_score: number | null;
+  raw_priority_score?: number | string | null;
+  score_max?: number | null;
   priority_level: PriorityLevel;
+  priority_state?: PriorityState;
   event_type: string;
   transformer_id: string;
   feeder_id: string;
@@ -20,7 +25,7 @@ export type IncidentPriorityItem = {
   ai_summary: string;
   priority_reasons: string[];
   evidence_chain: string[];
-  source_mode: "MOCK_CONTRACT";
+  source_mode: "MOCK_CONTRACT" | "PRIORITY_ADAPTER";
 };
 
 export type IncidentPrioritySnapshot = {
@@ -28,7 +33,7 @@ export type IncidentPrioritySnapshot = {
   generated_at: string;
   mode: "shadow";
   production_send: "blocked";
-  source: "synthetic_demo";
+  source: "synthetic_demo" | "priority_adapter_composed";
   items: IncidentPriorityItem[];
 };
 
