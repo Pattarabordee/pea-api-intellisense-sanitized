@@ -12,7 +12,10 @@ import type {
 
 const levels: Array<"ALL" | PriorityLevel> = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "UNRATED"];
 const areas = ["ALL", "BKN", "PKN"] as const;
+const statuses: Array<"ALL" | IncidentStatus> = ["ALL", "NEW", "ACKNOWLEDGED", "DISPATCHED", "IN_PROGRESS", "RESTORED"];
+
 type AreaFilter = (typeof areas)[number];
+type DetailTab = "DETAIL" | "WORK" | "AI";
 
 const priorityLabels: Record<PriorityLevel, string> = {
   CRITICAL: "วิกฤต",
@@ -22,12 +25,15 @@ const priorityLabels: Record<PriorityLevel, string> = {
   UNRATED: "ยังไม่ประเมิน"
 };
 
+// Presentation mapping follows the e-Response Event Management vocabulary where the
+// source semantics align. RESTORED remains conservative because it is not equivalent
+// to e-Response's completed/closed states.
 const statusLabels: Record<IncidentStatus, string> = {
-  NEW: "ใหม่",
-  ACKNOWLEDGED: "รับทราบแล้ว",
-  DISPATCHED: "มอบหมายแล้ว",
-  IN_PROGRESS: "กำลังดำเนินการ",
-  RESTORED: "จ่ายไฟคืนแล้ว"
+  NEW: "รอแก้ไข",
+  ACKNOWLEDGED: "รับทราบ",
+  DISPATCHED: "มอบหมายงานแล้ว",
+  IN_PROGRESS: "อยู่ระหว่างดำเนินการ",
+  RESTORED: "จ่ายไฟคืนแล้ว · รอตรวจสอบ"
 };
 
 const evidenceLabels: Record<EvidenceStrength, string> = {
@@ -56,183 +62,203 @@ const eventTypeLabels: Record<string, string> = {
 export function IncidentPriorityQueue({ snapshot, sourceHealth }: { snapshot: IncidentPrioritySnapshot; sourceHealth: IncidentQueueSourceHealth }) {
   const [area, setArea] = useState<AreaFilter>("ALL");
   const [level, setLevel] = useState<(typeof levels)[number]>("ALL");
+  const [status, setStatus] = useState<(typeof statuses)[number]>("ALL");
+  const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(true);
+  const [nativeCondition, setNativeCondition] = useState(true);
+  const [detailTab, setDetailTab] = useState<DetailTab>("DETAIL");
   const [activeIncidentId, setActiveIncidentId] = useState(snapshot.items[0]?.incident_id ?? "");
 
   const filtered = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase("th-TH");
     return [...snapshot.items]
+      .filter((item) => !nativeCondition || item.status === "NEW")
       .filter((item) => area === "ALL" || item.area === area)
       .filter((item) => level === "ALL" || item.priority_level === level)
+      .filter((item) => status === "ALL" || item.status === status)
+      .filter((item) => {
+        if (!needle) return true;
+        return [
+          item.incident_id,
+          item.area,
+          item.area_label,
+          item.transformer_id ?? "",
+          item.feeder_id ?? "",
+          item.ai_summary,
+          eventTypeLabel(item.event_type),
+          statusLabels[item.status]
+        ].join(" ").toLocaleLowerCase("th-TH").includes(needle);
+      })
       .sort((a, b) => {
         if (a.status === "RESTORED" && b.status !== "RESTORED") return 1;
         if (a.status !== "RESTORED" && b.status === "RESTORED") return -1;
         const aRank = typeof a.queue_rank === "number" ? a.queue_rank : Number.MAX_SAFE_INTEGER;
         const bRank = typeof b.queue_rank === "number" ? b.queue_rank : Number.MAX_SAFE_INTEGER;
+        // queue_rank is area-scoped. Never manufacture a cross-area global rank.
         if (area === "ALL" && a.area !== b.area) return a.area.localeCompare(b.area);
         if (aRank !== bRank) return aRank - bRank;
         const aScore = typeof a.priority_score === "number" ? a.priority_score : Number.NEGATIVE_INFINITY;
         const bScore = typeof b.priority_score === "number" ? b.priority_score : Number.NEGATIVE_INFINITY;
         return bScore - aScore;
       });
-  }, [area, level, snapshot.items]);
+  }, [area, level, nativeCondition, search, snapshot.items, status]);
 
   const selected = snapshot.items.find((item) => item.incident_id === activeIncidentId) ?? filtered[0];
   const activeItems = snapshot.items.filter((item) => item.status !== "RESTORED");
-  const criticalCount = activeItems.filter((item) => item.priority_level === "CRITICAL").length;
-  const highCount = activeItems.filter((item) => item.priority_level === "HIGH").length;
+  const waitingCount = snapshot.items.filter((item) => item.status === "NEW").length;
+  const criticalHighCount = activeItems.filter((item) => item.priority_level === "CRITICAL" || item.priority_level === "HIGH").length;
   const knownAffected = activeItems.filter((item) => typeof item.affected_customers === "number");
   const affected = knownAffected.reduce((sum, item) => sum + (item.affected_customers ?? 0), 0);
   const reportCount = activeItems.reduce((sum, item) => sum + (item.report_count ?? 0), 0);
-  const hasFreshPriority = activeItems.some((item) => item.priority_state === "AVAILABLE");
+
+  const chooseStatus = (value: string) => {
+    const next = value as (typeof statuses)[number];
+    setStatus(next);
+    if (next !== "ALL") setNativeCondition(false);
+  };
 
   return (
-    <main className="command-shell">
-      <header className="command-topbar">
-        <div className="command-brand">
-          <span className="brand-mark" aria-hidden="true">P</span>
-          <span className="brand-word">PEA INTELLISENSE</span>
-          <span className="brand-dot" aria-hidden="true" />
+    <main className="command-shell eres-shell">
+      <header className="eres-header">
+        <div className="eres-brand">
+          <span className="eres-pea-mark" aria-hidden="true">PEA</span>
+          <div>
+            <strong>e-Response</strong>
+            <small>OMS · EVENT MANAGEMENT</small>
+          </div>
         </div>
-        <nav className="command-nav" aria-label="สถานะและมุมมองของระบบ">
-          <span>คิวเหตุการณ์</span>
-          <span>หน้า OPERATOR</span>
-          <span className="nav-live"><i />{sourceHealthLabel(sourceHealth.status)}</span>
+        <nav className="eres-main-nav" aria-label="เมนู Event Management">
+          <span className="active">เหตุการณ์ทั้งหมด</span>
+          <span>แผนดับไฟ</span>
+          <span>งาน</span>
         </nav>
+        <div className="eres-module-state">
+          <span>PEA Intellisense · AI PRIORITY</span>
+          <strong><i />{sourceHealthLabel(sourceHealth.status)}</strong>
+        </div>
       </header>
 
-      <section className="hero-panel">
-        <div className="hero-copy-block">
-          <p className="dot-label"><span /> ระบบสนับสนุนการตัดสินใจ · LIVE</p>
-          <h1>จัดลำดับเหตุไฟฟ้าขัดข้อง<br />ให้เหตุเร่งด่วนขึ้นก่อน</h1>
-          <p className="hero-copy">
-            รวมรายงานที่เกี่ยวข้องให้เป็น Incident เดียว ประเมินความเร่งด่วนจากหลักฐานที่มี
-            และช่วยให้ Operator เห็นว่างานใดควรตรวจสอบก่อน โดยข้อมูลที่ยังยืนยันไม่ได้จะคงสถานะว่า
-            ไม่ทราบหรือยังไม่ประเมิน แทนการคาดเดา
-          </p>
-          <div className="hero-status-row">
-            <span>โหมดเฝ้าดู · SHADOW</span>
-            <span>ไม่ส่งคำสั่งอัตโนมัติ</span>
-            <span>OPERATOR ตัดสินใจ</span>
+      <div className="eres-body">
+        <div className="eres-breadcrumb">OMS <b>/</b> Event Management <b>/</b> เหตุการณ์ทั้งหมด <b>/</b> <strong>ลำดับความสำคัญ</strong></div>
+
+        <section className="eres-titlebar">
+          <div>
+            <p>EVENT MANAGEMENT</p>
+            <h1>เหตุการณ์ทั้งหมด</h1>
+            <span>มุมมองลำดับความสำคัญช่วยให้ Operator เห็นเหตุที่ควรตรวจสอบก่อน โดยไม่เปลี่ยนขั้นตอนงานเดิมของ e-Response</span>
           </div>
-        </div>
-
-        <div className="product-visual" aria-label="ภาพรวมการทำงานของ Incident Queue">
-          <div className="visual-top">
-            <span>PEA INCIDENT QUEUE / LIVE</span>
-            <b>●</b>
+          <div className="eres-safety-badges">
+            <span>AI PRIORITY · DECISION SUPPORT</span>
+            <span>SHADOW · READ ONLY</span>
           </div>
-          <div className="visual-stage">
-            <section className="visual-stack">
-              <p>แหล่งข้อมูล</p>
-              <div className="visual-node active">
-                <i />
-                <strong>รวมเหตุการณ์</strong>
-                <span>สถานะที่บันทึกแล้ว</span>
-              </div>
-              <div className="visual-node">
-                <i />
-                <strong>ความสำคัญ</strong>
-                <span>{hasFreshPriority ? "พร้อมใช้" : "ยังไม่พร้อม / ข้อมูลเก่า"}</span>
-              </div>
-            </section>
-            <div className="visual-route"><i /><span /><em>ข้อมูล</em></div>
-            <section className="visual-core">
-              <small>OPERATOR VIEW</small>
-              <strong>{activeItems.length.toString().padStart(2, "0")} เหตุที่กำลังดำเนินการ</strong>
-              <div className="visual-tool-grid">
-                <span>ลำดับ</span><span>ตัวกรอง</span><span>หลักฐาน</span><span>ตรวจสอบ</span>
-              </div>
-            </section>
-            <div className="visual-route"><i /><span /><em>คน</em></div>
-            <section className="visual-stack">
-              <p>การควบคุม</p>
-              <div className="visual-node active-green">
-                <i />
-                <strong>Operator</strong>
-                <span>ตัดสินใจขั้นสุดท้าย</span>
-              </div>
-              <div className="visual-node muted-node">
-                <i />
-                <strong>สั่งงานอัตโนมัติ</strong>
-                <span>ปิดอยู่</span>
-              </div>
-            </section>
-          </div>
-          <div className="visual-activity">
-            <div><b>ข้อมูล</b><code>incident-queue-feed.v1</code><span>พร้อม</span></div>
-            <div><b>แหล่ง</b><code>{sourceHealth.source_label}</code><span>{sourceHealth.fallback_active ? "สำรอง" : "LIVE"}</span></div>
-            <div className="running"><b>โหมด</b><code>สนับสนุนการตัดสินใจ</code><span>ทำงาน</span></div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="summary-grid" aria-label="สรุปสถานการณ์เหตุการณ์">
-        <SummaryCard value={String(activeItems.length).padStart(2, "0")} label="เหตุที่กำลังดำเนินการ" note="ไม่นับเหตุที่จ่ายไฟคืนแล้ว" />
-        <SummaryCard value={String(criticalCount).padStart(2, "0")} label="วิกฤต" note="ในคิวปัจจุบัน" emphasis="critical" />
-        <SummaryCard value={String(highCount).padStart(2, "0")} label="เร่งด่วน" note="ในคิวปัจจุบัน" emphasis="high" />
-        <SummaryCard
-          value={knownAffected.length ? affected.toLocaleString("th-TH") : reportCount ? reportCount.toLocaleString("th-TH") : "ยังไม่มีข้อมูล"}
-          label={knownAffected.length ? "ผลกระทบที่ทราบ" : "รายงานที่รับ"}
-          note={knownAffected.length ? "จำนวนผู้ใช้ไฟจากข้อมูลปัจจุบัน" : reportCount ? "จำนวนผู้ใช้ไฟยังไม่ยืนยัน" : "ยังไม่มีข้อมูลยืนยัน"}
-        />
-      </section>
+        <section className="eres-toolbar" aria-label="เครื่องมือ Event Management">
+          <label className="eres-search">
+            <span>ค้นหา</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="รหัสเหตุการณ์, พื้นที่, สายป้อน, หม้อแปลง..."
+              aria-label="ค้นหาเหตุการณ์"
+            />
+          </label>
+          <button type="button" className={showFilters ? "eres-tool-button active" : "eres-tool-button"} onClick={() => setShowFilters((value) => !value)}>
+            ตัวกรอง
+          </button>
+          <button type="button" className="eres-tool-button" onClick={() => window.location.reload()}>
+            รีเฟรชข้อมูล
+          </button>
+          <div className="eres-toolbar-spacer" />
+          <label className="eres-native-condition" title="ตามรูปแบบ Event Management ในคู่มือ: เงื่อนไขที่กำหนดไว้แสดงเหตุรอแก้ไข">
+            <input type="checkbox" checked={nativeCondition} onChange={(event) => { setNativeCondition(event.target.checked); if (event.target.checked) setStatus("ALL"); }} />
+            <span>ใช้เงื่อนไขที่กำหนดไว้</span>
+            <small>รอแก้ไข</small>
+          </label>
+        </section>
 
-      <section className="queue-section">
-        <div className="section-kicker"><span>001</span><p>คิวเหตุการณ์ · OPERATOR</p></div>
-        <div className="section-title-row">
-          <h2>เหตุที่ควรตรวจสอบก่อน</h2>
-          <p>แต่ละพื้นที่จัดอันดับแยกกันตามข้อมูลที่แหล่งต้นทางยืนยันได้ จึงไม่สร้างอันดับรวมข้ามพื้นที่ขึ้นเอง</p>
-        </div>
-
-        <div className="filter-row" aria-label="ตัวกรองคิวเหตุการณ์">
-          <FilterGroup label="พื้นที่ · AREA" values={areas} current={area} onChange={(value) => setArea(value as AreaFilter)} />
-          <FilterGroup label="ระดับ · LEVEL" values={levels} current={level} onChange={(value) => setLevel(value as (typeof levels)[number])} />
-          <span className="record-count">{filtered.length.toString().padStart(2, "0")} เหตุการณ์</span>
-        </div>
-
-        <div className="workspace-grid">
-          <section className="queue-panel" aria-label="คิวจัดลำดับเหตุการณ์">
-            <div className="queue-column-head">
-              <span>ลำดับ</span><span>ระดับ</span><span>เหตุการณ์ / หลักฐาน</span>
+        {showFilters ? (
+          <section className="eres-filter-panel" aria-label="ตัวกรองเหตุการณ์">
+            <FilterGroup label="พื้นที่" values={areas} current={area} onChange={(value) => setArea(value as AreaFilter)} />
+            <FilterGroup label="ระดับความสำคัญ" values={levels} current={level} onChange={(value) => setLevel(value as (typeof levels)[number])} />
+            <FilterGroup label="สถานะ" values={statuses} current={status} onChange={chooseStatus} />
+            <div className="eres-filter-summary">
+              <span>ผลลัพธ์</span>
+              <strong>{filtered.length.toLocaleString("th-TH")} เหตุการณ์</strong>
             </div>
-            <div className="queue-list">
+          </section>
+        ) : null}
+
+        <section className="eres-summary-grid" aria-label="สรุปเหตุการณ์">
+          <SummaryCard value={snapshot.items.length.toLocaleString("th-TH")} label="เหตุการณ์ทั้งหมด" note="ข้อมูลในมุมมองปัจจุบัน" />
+          <SummaryCard value={waitingCount.toLocaleString("th-TH")} label="รอแก้ไข" note="สถานะที่ e-Response ใช้ในคิวเริ่มต้น" emphasis="waiting" />
+          <SummaryCard value={criticalHighCount.toLocaleString("th-TH")} label="วิกฤต / เร่งด่วน" note="คำแนะนำจาก AI Priority" emphasis="priority" />
+          <SummaryCard
+            value={knownAffected.length ? affected.toLocaleString("th-TH") : reportCount ? reportCount.toLocaleString("th-TH") : "—"}
+            label={knownAffected.length ? "ผู้ใช้ไฟได้รับผลกระทบ" : "รายงานที่รวมได้"}
+            note={knownAffected.length ? "เฉพาะจำนวนที่มีข้อมูล" : "จำนวนผู้ใช้ไฟยังไม่ยืนยัน"}
+          />
+        </section>
+
+        <section className="eres-workspace">
+          <div className="eres-event-list">
+            <div className="eres-list-heading">
+              <div>
+                <strong>เหตุการณ์ทั้งหมด</strong>
+                <span>เพิ่มคอลัมน์ AI Priority โดยไม่สร้างอันดับรวมข้าม BKN / PKN</span>
+              </div>
+              <span className="eres-record-count">{filtered.length.toLocaleString("th-TH")} รายการ</span>
+            </div>
+
+            <div className="eres-table-head" aria-hidden="true">
+              <span>สถานะ</span>
+              <span>AI PRIORITY</span>
+              <span>เหตุการณ์</span>
+              <span>พื้นที่ / อุปกรณ์</span>
+              <span>แจ้งเมื่อ / รอ</span>
+              <span>ผลกระทบ / หลักฐาน</span>
+            </div>
+
+            <div className="eres-event-rows">
               {filtered.map((item, index) => (
                 <IncidentRow
                   key={item.incident_id}
                   item={item}
-                  rankLabel={item.queue_rank ? `${area === "ALL" ? `${item.area} ` : ""}#${item.queue_rank}` : `#${index + 1}`}
+                  rankLabel={item.queue_rank ? `${area === "ALL" ? `${item.area} ` : ""}#${item.queue_rank}` : `${item.area} #${index + 1}`}
                   selected={selected?.incident_id === item.incident_id}
-                  onSelect={() => setActiveIncidentId(item.incident_id)}
+                  onSelect={() => { setActiveIncidentId(item.incident_id); setDetailTab("DETAIL"); }}
                 />
               ))}
-              {filtered.length === 0 ? <div className="empty-state">ไม่พบเหตุการณ์ตามตัวกรองที่เลือก</div> : null}
+              {filtered.length === 0 ? <div className="empty-state">ไม่พบเหตุการณ์ตามเงื่อนไขที่เลือก</div> : null}
             </div>
-          </section>
+          </div>
 
-          <aside className="detail-panel" aria-live="polite">
-            {selected ? <IncidentDetail item={selected} /> : <div className="empty-state">เลือกเหตุการณ์เพื่อดูรายละเอียดและหลักฐาน</div>}
+          <aside className="eres-detail-panel" aria-live="polite">
+            {selected ? (
+              <IncidentDetail item={selected} tab={detailTab} onTabChange={setDetailTab} />
+            ) : (
+              <div className="empty-state">เลือกเหตุการณ์เพื่อดูรายละเอียด</div>
+            )}
           </aside>
-        </div>
-      </section>
+        </section>
 
-      <section className="integration-section">
-        <div className="integration-inner">
-          <div className="section-kicker light"><span>002</span><p>ขอบเขตการตัดสินใจ</p></div>
-          <div className="integration-title">
-            <h2>AI ช่วยจัดลำดับ<br />Operator ตัดสินใจขั้นสุดท้าย</h2>
-            <p>ข้อมูลที่ยังยืนยันไม่ได้จะแสดงว่า “ไม่ทราบ” หรือ “ยังไม่ประเมิน” แทนการคาดเดา</p>
+        <section className="eres-integration-note">
+          <div>
+            <strong>AI Priority เป็นมุมมองเสริมของ Event Management</strong>
+            <p>ระบบนี้อ่านข้อมูลเพื่อช่วยจัดลำดับเท่านั้น ขั้นตอน รับทราบ → มอบหมายงาน → อยู่ระหว่างดำเนินการ → เสร็จสิ้น → ปิดงาน ยังคงเป็น workflow ของ e-Response และ Operator</p>
           </div>
-          <div className="flow-contract">
-            <FlowBox index="01" title="หลักฐานเหตุการณ์" detail="รวมข้อมูลที่เชื่อมโยงกันโดยไม่ยืนยันเกินกว่าหลักฐาน" />
-            <FlowBox index="02" title="สัญญาณความสำคัญ" detail="ใช้เฉพาะข้อมูลที่ยังสดและผ่านการตรวจสอบรูปแบบ" />
-            <FlowBox index="03" title="คิวงาน" detail="จัดอันดับแยกตามพื้นที่ พร้อมสถานะและหลักฐาน" />
-            <FlowBox index="04" title="Operator ตรวจสอบ" detail="การตัดสินใจและการมอบหมายงานยังเป็นของคน" />
+          <div className="eres-boundary-tags">
+            <span>ไม่เปลี่ยนสถานะ e-Response</span>
+            <span>ไม่มอบหมายงานอัตโนมัติ</span>
+            <span>ไม่ส่งข้อความลูกค้า</span>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <footer className="command-footer">
-        <span>PEA INTELLISENSE / INCIDENT PRIORITY</span>
-        <span>โหมดเฝ้าดู · ดูข้อมูลเท่านั้น · ไม่สั่งงานอัตโนมัติ</span>
+      <footer className="eres-footer">
+        <span>e-Response / OMS · Event Management</span>
+        <span>PEA Intellisense AI Priority · SHADOW / READ ONLY</span>
       </footer>
     </main>
   );
@@ -254,60 +280,155 @@ function FilterGroup({ label, values, current, onChange }: { label: string; valu
 }
 
 function IncidentRow({ item, rankLabel, selected, onSelect }: { item: IncidentPriorityItem; rankLabel: string; selected: boolean; onSelect: () => void }) {
-  const asset = item.transformer_id ?? item.feeder_id ?? "อุปกรณ์ยังไม่ยืนยัน";
+  const asset = item.transformer_id ?? item.feeder_id ?? "ยังไม่ยืนยันอุปกรณ์";
+  const impact = typeof item.affected_customers === "number"
+    ? `${item.affected_customers.toLocaleString("th-TH")} ผู้ใช้ไฟ`
+    : typeof item.report_count === "number"
+      ? `${item.report_count.toLocaleString("th-TH")} รายงาน · ผลกระทบยังไม่ยืนยัน`
+      : "ผลกระทบยังไม่ยืนยัน";
+
   return (
-    <button type="button" className={selected ? "incident-row selected" : "incident-row"} onClick={onSelect}>
-      <div className="rank">{rankLabel}</div>
-      <div className={`score score-${item.priority_level.toLowerCase()}`} title={item.priority_level}>
-        <strong>{formatPriorityScore(item, "N/A")}</strong>
-        <span>{priorityLabels[item.priority_level]}</span>
+    <button type="button" className={selected ? "eres-event-row selected" : "eres-event-row"} onClick={onSelect}>
+      <div className="eres-status-cell"><StatusPill status={item.status} /></div>
+      <div className="eres-priority-cell">
+        <span className={`eres-priority-dot level-${item.priority_level.toLowerCase()}`} />
+        <div>
+          <strong>{rankLabel}</strong>
+          <span>{priorityLabels[item.priority_level]} · {formatPriorityScore(item, "N/A")}</span>
+        </div>
       </div>
-      <div className="incident-main">
-        <div className="incident-title-line">
-          <strong>{item.area} / {asset}</strong>
-          <StatusPill status={item.status} />
-        </div>
-        <p>{item.ai_summary}</p>
-        <div className="incident-meta">
-          <span>{item.area_label}</span>
-          <span>{eventTypeLabel(item.event_type)}</span>
-          {item.feeder_id ? <span>สายป้อน {item.feeder_id}</span> : null}
-          {typeof item.affected_customers === "number" ? <span>{item.affected_customers.toLocaleString("th-TH")} ผู้ใช้ไฟ</span> : <span>ผลกระทบยังไม่ยืนยัน</span>}
-          {typeof item.report_count === "number" ? <span>{item.report_count.toLocaleString("th-TH")} รายงาน</span> : null}
-          <span>รอ {item.waiting_minutes.toLocaleString("th-TH")} นาที</span>
-          <span>หลักฐาน: {evidenceLabels[item.evidence_strength]}</span>
-        </div>
+      <div className="eres-event-cell">
+        <strong>{item.incident_id}</strong>
+        <span>{eventTypeLabel(item.event_type)}</span>
+      </div>
+      <div className="eres-asset-cell">
+        <strong>{item.area_label}</strong>
+        <span>{item.feeder_id ? `สายป้อน ${item.feeder_id}` : asset}</span>
+        {item.transformer_id ? <small>หม้อแปลง {item.transformer_id}</small> : null}
+      </div>
+      <div className="eres-time-cell">
+        <strong>{formatThaiDateTimeShort(item.first_reported_at)}</strong>
+        <span>รอ {item.waiting_minutes.toLocaleString("th-TH")} นาที</span>
+      </div>
+      <div className="eres-impact-cell">
+        <strong>{impact}</strong>
+        <span>หลักฐาน: {evidenceLabels[item.evidence_strength]}</span>
       </div>
     </button>
   );
 }
 
-function IncidentDetail({ item }: { item: IncidentPriorityItem }) {
+function IncidentDetail({ item, tab, onTabChange }: { item: IncidentPriorityItem; tab: DetailTab; onTabChange: (tab: DetailTab) => void }) {
   return (
-    <div className="detail-content">
-      <div className="detail-topline">
+    <div className="eres-detail-content">
+      <div className="eres-detail-topline">
         <div>
-          <span className="detail-kicker">เหตุการณ์ที่เลือก · INCIDENT</span>
-          <h3>{item.incident_id}</h3>
+          <span className="detail-kicker">รายละเอียดเหตุการณ์</span>
+          <h2>{item.incident_id}</h2>
+          <p>{eventTypeLabel(item.event_type)}</p>
         </div>
-        <span className={`level-badge level-${item.priority_level.toLowerCase()}`} title={item.priority_level}>
-          {priorityLabels[item.priority_level]} {formatPriorityScore(item)}
-        </span>
+        <StatusPill status={item.status} />
       </div>
 
-      <div className="detail-facts">
-        <Fact label="พื้นที่" value={`${item.area} / ${item.area_label}`} />
-        <Fact label="ประเภทเหตุ" value={eventTypeLabel(item.event_type)} />
-        <Fact label="สถานะ" value={statusLabels[item.status]} />
-        <Fact label="แจ้งเหตุครั้งแรก" value={formatThaiDateTime(item.first_reported_at)} />
-        <Fact label="รอมาแล้ว" value={`${item.waiting_minutes.toLocaleString("th-TH")} นาที`} />
-        <Fact label="หม้อแปลง" value={item.transformer_id ?? "ยังไม่ยืนยัน"} />
-        <Fact label="สายป้อน" value={item.feeder_id ?? "ยังไม่ยืนยัน"} />
-        <Fact label="ผู้ใช้ไฟที่ได้รับผลกระทบ" value={typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "ยังไม่ยืนยัน"} />
-        <Fact label="จำนวนรายงาน" value={typeof item.report_count === "number" ? `${item.report_count.toLocaleString("th-TH")} รายงาน` : "ยังไม่มีข้อมูล"} />
-        <Fact label="ลูกค้าสำคัญ / พื้นที่เสี่ยง" value={criticalRiskLabel(item.critical_customer_risk)} />
-        <Fact label="ความแข็งแรงของหลักฐาน" value={evidenceLabels[item.evidence_strength]} />
+      <div className="eres-detail-tabs" role="tablist" aria-label="รายละเอียดเหตุการณ์">
+        <button type="button" role="tab" aria-selected={tab === "DETAIL"} className={tab === "DETAIL" ? "active" : ""} onClick={() => onTabChange("DETAIL")}>รายละเอียด</button>
+        <button type="button" role="tab" aria-selected={tab === "WORK"} className={tab === "WORK" ? "active" : ""} onClick={() => onTabChange("WORK")}>งาน</button>
+        <button type="button" role="tab" aria-selected={tab === "AI"} className={tab === "AI" ? "active" : ""} onClick={() => onTabChange("AI")}>AI PRIORITY</button>
       </div>
+
+      {tab === "DETAIL" ? <EventDetailTab item={item} /> : null}
+      {tab === "WORK" ? <EventWorkTab item={item} /> : null}
+      {tab === "AI" ? <EventAiTab item={item} /> : null}
+    </div>
+  );
+}
+
+function EventDetailTab({ item }: { item: IncidentPriorityItem }) {
+  return (
+    <div className="eres-tab-panel">
+      <section className="eres-detail-section">
+        <h3>ข้อมูลเหตุการณ์</h3>
+        <div className="detail-facts">
+          <Fact label="สถานะ" value={statusLabels[item.status]} />
+          <Fact label="พื้นที่" value={`${item.area} / ${item.area_label}`} />
+          <Fact label="วันที่ / เวลาแจ้งเหตุ" value={formatThaiDateTime(item.first_reported_at)} />
+          <Fact label="เวลารอ" value={`${item.waiting_minutes.toLocaleString("th-TH")} นาที`} />
+          <Fact label="สายป้อน" value={item.feeder_id ?? "ยังไม่ยืนยัน"} />
+          <Fact label="หม้อแปลง" value={item.transformer_id ?? "ยังไม่ยืนยัน"} />
+          <Fact label="ผู้ใช้ไฟได้รับผลกระทบ" value={typeof item.affected_customers === "number" ? `${item.affected_customers.toLocaleString("th-TH")} ราย` : "ยังไม่ยืนยัน"} />
+          <Fact label="จำนวนรายงาน" value={typeof item.report_count === "number" ? `${item.report_count.toLocaleString("th-TH")} รายงาน` : "ยังไม่มีข้อมูล"} />
+        </div>
+      </section>
+
+      <section className="eres-detail-section">
+        <h3>ข้อมูลประกอบ</h3>
+        <div className="eres-info-list">
+          <InfoRow label="ประเภทเหตุ" value={eventTypeLabel(item.event_type)} />
+          <InfoRow label="ลูกค้าสำคัญ / พื้นที่เสี่ยง" value={criticalRiskLabel(item.critical_customer_risk)} />
+          <InfoRow label="หลักฐาน" value={evidenceLabels[item.evidence_strength]} />
+          <InfoRow label="ข้อมูลลูกค้า" value="ไม่แสดงข้อมูลระบุตัวบุคคลในมุมมอง AI Priority" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function EventWorkTab({ item }: { item: IncidentPriorityItem }) {
+  const activeIndex = workflowActiveIndex(item.status);
+  const workflow = ["รอแก้ไข", "รับทราบ", "มอบหมายงาน", "อยู่ระหว่างดำเนินการ", "เสร็จสิ้น", "ปิดงาน"];
+
+  return (
+    <div className="eres-tab-panel">
+      <section className="eres-detail-section">
+        <h3>สถานะการดำเนินงาน</h3>
+        <div className="eres-workflow">
+          {workflow.map((label, index) => (
+            <div key={label} className={index < activeIndex ? "done" : index === activeIndex ? "current" : "future"}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{label}</strong>
+            </div>
+          ))}
+        </div>
+        {item.status === "RESTORED" ? <p className="eres-work-note">PEA Intellisense ทราบเพียงว่ามีหลักฐานการจ่ายไฟคืน จึงยังไม่ถือว่าเท่ากับ “เสร็จสิ้น” หรือ “ปิดงาน” ใน e-Response</p> : null}
+      </section>
+
+      <section className="eres-detail-section">
+        <h3>มอบหมายงาน</h3>
+        <div className="eres-assignment-card">
+          <label>
+            <span>ทีมงานของฉัน</span>
+            <select disabled aria-label="ทีมงานของฉัน"><option>ยังไม่อ่านข้อมูลทีมจาก e-Response</option></select>
+          </label>
+          <button type="button" disabled>ยืนยันมอบหมายงาน</button>
+          <p>โหมดเดโมเป็น Read Only จึงไม่เปลี่ยนสถานะ ไม่เลือกทีม และไม่ส่งงานจริง</p>
+        </div>
+      </section>
+
+      <section className="eres-detail-section">
+        <h3>เมนูเหตุการณ์</h3>
+        <div className="eres-event-actions" aria-label="ตัวอย่างเมนูเหตุการณ์ e-Response">
+          {["รับทราบ", "อยู่ระหว่างดำเนินการ", "เสร็จสิ้น", "ปิดงาน", "ยกเลิก", "ย้ายไป", "สร้างเหตุการณ์ต่อเนื่อง"].map((label) => <button type="button" key={label} disabled>{label}</button>)}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function EventAiTab({ item }: { item: IncidentPriorityItem }) {
+  return (
+    <div className="eres-tab-panel">
+      <section className="eres-ai-score-panel">
+        <div>
+          <span>ลำดับแนะนำ</span>
+          <strong>{item.queue_rank ? `${item.area} #${item.queue_rank}` : "ยังไม่มีอันดับ"}</strong>
+          <small>อันดับแยกตามพื้นที่ ไม่ใช่อันดับรวม BKN / PKN</small>
+        </div>
+        <div>
+          <span>ระดับความสำคัญ</span>
+          <strong className={`text-${item.priority_level.toLowerCase()}`}>{priorityLabels[item.priority_level]}</strong>
+          <small>คะแนน {formatPriorityScore(item)}</small>
+        </div>
+      </section>
 
       <DetailSection label="คำอธิบายประกอบการตัดสินใจ">
         <p className="explanation">{item.ai_summary}</p>
@@ -336,12 +457,9 @@ function IncidentDetail({ item }: { item: IncidentPriorityItem }) {
         )}
       </DetailSection>
 
-      <div className="operator-gate">
-        <div>
-          <span>การตัดสินใจของ OPERATOR</span>
-          <strong>ดูข้อมูลเพื่อประกอบการตัดสินใจเท่านั้น · ระบบไม่มอบหมายงานอัตโนมัติ</strong>
-        </div>
-        <span className="gate-state" title="ฟังก์ชันมอบหมายงานยังไม่เปิดในโหมดเดโม">DEMO · NO DISPATCH</span>
+      <div className="eres-ai-boundary">
+        <strong>AI ช่วยจัดลำดับ · Operator เป็นผู้ตัดสินใจ</strong>
+        <span>ข้อมูลที่ไม่ยืนยันจะคงเป็น “ไม่ทราบ / ยังไม่ประเมิน” และไม่ถูกเติมขึ้นเอง</span>
       </div>
     </div>
   );
@@ -351,7 +469,7 @@ function DetailSection({ label, children }: { label: string; children: React.Rea
   return <section className="detail-section"><span className="section-label">{label}</span>{children}</section>;
 }
 
-function SummaryCard({ label, value, note, emphasis }: { label: string; value: string; note: string; emphasis?: "critical" | "high" }) {
+function SummaryCard({ label, value, note, emphasis }: { label: string; value: string; note: string; emphasis?: "waiting" | "priority" }) {
   return <article className={emphasis ? `summary-card ${emphasis}` : "summary-card"}><strong>{value}</strong><div><span>{label}</span><small>{note}</small></div></article>;
 }
 
@@ -359,17 +477,18 @@ function Fact({ label, value }: { label: string; value: string }) {
   return <div className="fact"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function StatusPill({ status }: { status: IncidentPriorityItem["status"] }) {
-  return <span className={`status-pill status-${status.toLowerCase()}`} title={status}>{statusLabels[status]}</span>;
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return <div className="eres-info-row"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function FlowBox({ index, title, detail }: { index: string; title: string; detail: string }) {
-  return <article className="flow-box"><span>{index}</span><h3>{title}</h3><p>{detail}</p></article>;
+function StatusPill({ status }: { status: IncidentPriorityItem["status"] }) {
+  return <span className={`status-pill status-${status.toLowerCase()}`} title={status}>{statusLabels[status]}</span>;
 }
 
 function filterValueLabel(value: string) {
   if (value === "ALL") return "ทั้งหมด";
   if (value in priorityLabels) return priorityLabels[value as PriorityLevel];
+  if (value in statusLabels) return statusLabels[value as IncidentStatus];
   return value;
 }
 
@@ -405,11 +524,35 @@ function formatThaiDateTime(value: string) {
   return new Intl.DateTimeFormat("th-TH", {
     day: "numeric",
     month: "short",
+    year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
     timeZone: "Asia/Bangkok"
   }).format(date) + " น.";
+}
+
+function formatThaiDateTimeShort(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "ยังไม่ยืนยัน";
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Bangkok"
+  }).format(date) + " น.";
+}
+
+function workflowActiveIndex(status: IncidentStatus) {
+  switch (status) {
+    case "NEW": return 0;
+    case "ACKNOWLEDGED": return 1;
+    case "DISPATCHED": return 2;
+    case "IN_PROGRESS": return 3;
+    case "RESTORED": return 3;
+  }
 }
 
 function displayEvidenceNode(value: string) {

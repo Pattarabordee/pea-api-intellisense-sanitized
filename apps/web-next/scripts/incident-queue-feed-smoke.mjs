@@ -124,6 +124,13 @@ async function runCase({ port, path, expectedStatus, expectedFallback, expectedI
 
     const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
     assert(page.includes(expectPageText), `${port}: page source-health indicator missing ${expectPageText}`);
+    assert(page.includes("e-Response") && page.includes("เหตุการณ์ทั้งหมด"), `${port}: e-Response Event Management framing missing`);
+    assert(page.includes("ใช้เงื่อนไขที่กำหนดไว้"), `${port}: native e-Response condition control missing`);
+    assert(page.includes("AI PRIORITY") && page.includes("SHADOW · READ ONLY"), `${port}: additive AI Priority read-only framing missing`);
+    if (expectedItem) {
+      assert(page.includes("BKN #1"), `${port}: area-scoped rank must remain visible`);
+      assert(page.includes("รอแก้ไข"), `${port}: NEW event must use e-Response waiting status presentation`);
+    }
   } finally {
     await stopChild(child);
   }
