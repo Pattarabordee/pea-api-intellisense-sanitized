@@ -13,7 +13,8 @@
     "smoke:incident-compose": "node scripts/incident-priority-compose-smoke.mjs",
     "smoke:incident-feed": "node scripts/incident-queue-feed-smoke.mjs",
     "smoke:shadow-publisher": "node scripts/shadow-queue-publisher-smoke.mjs",
-    "smoke:shadow-source-candidates": "node scripts/shadow-source-candidates-smoke.mjs"
+    "smoke:shadow-source-candidates": "node scripts/shadow-source-candidates-smoke.mjs",
+    "smoke:eresponse-operator": "node scripts/eresponse-operator-state-smoke.mjs"
   },
   "dependencies": {
     "next": "15.5.23",

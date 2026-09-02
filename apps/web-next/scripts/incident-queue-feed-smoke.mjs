@@ -126,7 +126,7 @@ async function runCase({ port, path, expectedStatus, expectedFallback, expectedI
     assert(page.includes(expectPageText), `${port}: page source-health indicator missing ${expectPageText}`);
     assert(page.includes("e-Response") && page.includes("เหตุการณ์ทั้งหมด"), `${port}: e-Response Event Management framing missing`);
     assert(page.includes("ใช้เงื่อนไขที่กำหนดไว้"), `${port}: native e-Response condition control missing`);
-    assert(page.includes("AI PRIORITY") && page.includes("SHADOW · READ ONLY"), `${port}: additive AI Priority read-only framing missing`);
+    assert(page.includes("AI PRIORITY") && page.includes("OPERATOR WORKFLOW"), `${port}: e-Response AI Priority operator workflow framing missing`);
     if (expectedItem) {
       assert(page.includes("BKN #1"), `${port}: area-scoped rank must remain visible`);
       assert(page.includes("รอแก้ไข"), `${port}: NEW event must use e-Response waiting status presentation`);
@@ -144,7 +144,7 @@ try {
     expectedStatus: "LIVE_SHADOW",
     expectedFallback: false,
     expectedItem: "INC-BKN-FEED-SMOKE-001",
-    expectPageText: "เชื่อมข้อมูลจริง · SHADOW",
+    expectPageText: "เชื่อมข้อมูลออนไลน์",
     apiKey: true
   });
   await runCase({
@@ -152,21 +152,21 @@ try {
     path: "/invalid",
     expectedStatus: "CONTRACT_INVALID",
     expectedFallback: true,
-    expectPageText: "ข้อมูลไม่ผ่านการตรวจสอบ"
+    expectPageText: "กำลังตรวจสอบข้อมูล"
   });
   await runCase({
     port: 3106,
     path: "/unavailable",
     expectedStatus: "UPSTREAM_UNAVAILABLE",
     expectedFallback: true,
-    expectPageText: "แหล่งข้อมูลขัดข้อง"
+    expectPageText: "กำลังเชื่อมต่อใหม่"
   });
   await runCase({
     port: 3107,
     path: null,
     expectedStatus: "NOT_CONFIGURED",
     expectedFallback: true,
-    expectPageText: "ยังไม่เชื่อมข้อมูล"
+    expectPageText: "กำลังเชื่อมต่อข้อมูล"
   });
 } finally {
   upstream.close();

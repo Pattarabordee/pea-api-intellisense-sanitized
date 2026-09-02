@@ -200,8 +200,7 @@ try {
       assert(body.snapshot.items[0].incident_id === "INC-BKN-PUBLISH-001", "multi-area feed must not treat area-scoped queue_rank as a global rank");
       assert(body.snapshot.items.find((item) => item.area === "PKN")?.priority_level === "CRITICAL", "upstream priority level must be preserved within its area");
       const page = await (await fetch(`http://127.0.0.1:${port}/incident-priority`)).text();
-      assert(page.includes("INC-PKN-PUBLISH-002"), "incident-priority page must consume publisher feed through read-only feed layer");
-      assert(page.includes("เชื่อมข้อมูลจริง · SHADOW"), "incident-priority page must show the human-readable LIVE_SHADOW source state");
+      assert(page.includes("INC-PKN-PUBLISH-002"), "incident-priority page must consume publisher feed through read-only feed layer");      assert(page.includes("เชื่อมข้อมูลออนไลน์"), "incident-priority page must show the presentation-safe live source state");
       const rootPage = await (await fetch(`http://127.0.0.1:${port}/`)).text();
       assert(!rootPage.includes("INC-PKN-PUBLISH-002"), "queue feature must not replace the existing root Mission Control page");
     }

@@ -921,3 +921,23 @@ td {
   .eres-body{width:min(100% - 18px,var(--er-max))}.eres-brand{padding:7px 10px}.eres-brand small{display:none}.eres-module-state{padding:7px 10px}.eres-module-state>span{display:none}.eres-titlebar{padding:14px}.eres-titlebar h1{font-size:1.35rem}.eres-summary-grid{grid-template-columns:1fr 1fr;gap:6px}.command-shell .summary-card{min-height:78px;padding:10px}.command-shell .summary-card>strong{font-size:1.35rem}.eres-toolbar{align-items:stretch}.eres-tool-button{flex:1}.eres-native-condition{width:100%;margin-left:0;border-left:0;border-top:1px solid var(--er-line)}
   .eres-list-heading,.eres-table-head,.eres-event-rows{min-width:0}.eres-table-head{display:none}.eres-event-row{min-width:0;padding:10px;grid-template-columns:1fr 1fr;gap:10px}.eres-status-cell{grid-column:1}.eres-priority-cell{grid-column:2;justify-self:end}.eres-event-cell{grid-column:1/3;padding-top:7px;border-top:1px solid var(--er-line)}.eres-asset-cell,.eres-time-cell,.eres-impact-cell{padding-top:7px;border-top:1px dashed var(--er-line)}.eres-impact-cell{grid-column:1/3}.command-shell .detail-facts{grid-template-columns:1fr}.eres-ai-score-panel{grid-template-columns:1fr}.eres-info-row{grid-template-columns:1fr;gap:3px}.eres-integration-note{align-items:flex-start;flex-direction:column}.eres-boundary-tags{justify-content:flex-start}.eres-footer{padding:10px 12px;align-items:flex-start;flex-direction:column;gap:4px}.eres-main-nav span{font-size:.67rem}
 }
+
+/* e-Response interactive operator workflow */
+.command-shell .status-waiting{background:#fff0d2;border-color:#e0a649;color:#915208}
+.command-shell .status-assigned{background:#e9eff8;border-color:#8faad0;color:#365f96}
+.command-shell .status-completed{background:#eaf5ee;border-color:#7db394;color:#397052}
+.command-shell .status-closed{background:#e8edf2;border-color:#8e9baa;color:#4f5f70}
+.command-shell .status-cancelled{background:#f6eaea;border-color:#c58a8a;color:#914646}
+.command-shell .eres-assignment-card select{background:#fff;color:#34445a}
+.command-shell .eres-assignment-card button,.command-shell .eres-event-actions button,.command-shell .eres-move-row button{background:var(--er-blue);border-color:var(--er-blue);color:#fff}
+.command-shell .eres-assignment-card button:hover,.command-shell .eres-event-actions button:hover,.command-shell .eres-move-row button:hover{background:var(--er-blue-dark)}
+.command-shell .eres-assignment-card button:disabled,.command-shell .eres-event-actions button:disabled,.command-shell .eres-move-row button:disabled{background:#dfe5ed;border-color:#c8d1dc;color:#8a96a5}
+.command-shell .eres-move-row{margin-top:8px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+.command-shell .eres-move-row input{height:31px;padding:0 8px;border:1px solid var(--er-line);border-radius:3px;background:#fff;color:#34445a;font-size:.6rem}
+.command-shell .eres-move-row button{min-height:31px;padding:0 9px;border-radius:3px;font-size:.57rem;font-weight:700}
+.command-shell .eres-action-message{margin:8px 0 0;padding:7px 9px;border:1px solid #a9c3e3;background:#eef5fd;color:#355f93;font-size:.58rem}
+.command-shell .eres-timeline{border:1px solid var(--er-line);border-bottom:0}
+.command-shell .eres-timeline>div{padding:8px 9px;display:grid;gap:3px;border-bottom:1px solid var(--er-line);background:#fbfcfe}
+.command-shell .eres-timeline strong{font-size:.61rem;color:#34445a}
+.command-shell .eres-timeline span{font-size:.55rem;color:var(--er-muted)}
+@media(max-width:650px){.command-shell .eres-move-row{grid-template-columns:1fr}.command-shell .eres-move-row button{width:100%}}
