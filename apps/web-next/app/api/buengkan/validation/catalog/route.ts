@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID_ACCESS_CODE" }, { status: 401 });
     }
     const baseUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
-    const apiKey = process.env.OUTAGE_INTEGRATION_API_KEY || process.env.AIS_INBOUND_API_KEY;
+    const apiKey = process.env.AIS_INBOUND_API_KEY;
     if (!baseUrl || !apiKey) {
       return NextResponse.json({ error: "VALIDATION_API_UNAVAILABLE" }, { status: 503 });
     }
